@@ -30,10 +30,12 @@
         .theme-switch:hover { background: rgba(255,255,255,0.4); }
 
         /* 検索とツール */
-        .tools-container { max-width: 600px; margin: 15px auto 0; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+        .tools-container { max-width: 700px; margin: 15px auto 0; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
         .search-input { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; outline: none; min-width: 200px; }
-        .tool-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-size: 0.9rem; transition: 0.2s; }
+        
+        .tool-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; white-space: nowrap; }
         .tool-btn:hover { background: rgba(255,255,255,0.4); }
+        .tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; }
 
         /* ナビゲーション */
         nav { display: flex; justify-content: center; gap: 10px; padding: 20px; }
@@ -82,8 +84,16 @@
 
     <div class="tools-container">
         <input type="text" id="searchInput" class="search-input" placeholder="検索: うるは、○○さん..." oninput="handleSearch()">
-        <button class="tool-btn" onclick="sortData('new')"><i class="fas fa-sort-amount-down"></i> 新着順</button>
-        <button class="tool-btn" onclick="sortData('shuffle')"><i class="fas fa-random"></i> シャッフル</button>
+        
+        <button class="tool-btn active" id="btn-new" onclick="sortData('new')">
+            <i class="fas fa-sort-amount-down"></i> 新着順
+        </button>
+        <button class="tool-btn" id="btn-original" onclick="sortData('original')">
+            <i class="fas fa-sort-numeric-down"></i> 登録順
+        </button>
+        <button class="tool-btn" id="btn-shuffle" onclick="sortData('shuffle')">
+            <i class="fas fa-random"></i> シャッフル
+        </button>
     </div>
 </header>
 
@@ -112,16 +122,17 @@
 </div>
 
 <script>
-    // ▼ APIのURL (あなたのURL)
+    // ▼ APIのURL (あなたのGASのURL)
     const API_URL = "https://script.google.com/macros/s/AKfycbxvb3zcpHRMQDJgq0Ngk92cBG3bXWRMSWVBtKg17CB93xSbuTimDj_5p1Lkq4B5wH2q/exec"; 
 
     let allData = [];
     let filteredData = [];
     let currentMode = 'member'; 
+    let currentSort = 'new'; // 現在のソート状態
 
     // 初期化
     fetchData();
-    checkTheme(); // ダークモード設定の確認
+    checkTheme();
 
     // データ取得
     async function fetchData() {
@@ -130,10 +141,10 @@
         try {
             const res = await fetch(API_URL);
             const data = await res.json();
-            // IDの降順（大きい順＝新しい順）で初期ソート
-            allData = data.sort((a, b) => b.id - a.id);
-            filteredData = allData;
-            render();
+            
+            // データを取得したら、まずは新着順(デフォルト)でソート
+            allData = data; 
+            sortData('new'); // ここで初期表示
         } catch (e) {
             container.innerHTML = '<p style="text-align:center; color:red;">エラーが発生しました</p>';
         }
@@ -163,7 +174,6 @@
             
             let gridHtml = '<div class="grid">';
             groups[groupName].forEach(item => {
-                // 文字列のエスケープ処理（簡易）
                 const safeMember = item.member.replace(/'/g, "\\'");
                 const safeCos = item.cosplayer.replace(/'/g, "\\'");
                 const safeImg = item.image;
@@ -191,10 +201,42 @@
     function handleSearch() {
         const keyword = document.getElementById('searchInput').value.toLowerCase();
         const keywords = keyword.split(/\s+/);
+        
+        // 元データをフィルタリング
         filteredData = allData.filter(item => {
             const text = (item.member + item.cosplayer).toLowerCase();
             return keywords.every(k => text.includes(k));
         });
+        
+        // 検索後も現在のソート順を維持する
+        applySort(currentSort);
+    }
+
+    // ソート機能（ボタン用）
+    function sortData(type) {
+        currentSort = type;
+        
+        // ボタンの見た目切り替え
+        document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+        if(document.getElementById('btn-' + type)) {
+            document.getElementById('btn-' + type).classList.add('active');
+        }
+
+        applySort(type);
+    }
+
+    // 実際の並び替えロジック
+    function applySort(type) {
+        if (type === 'new') {
+            // ID降順（新しい順）
+            filteredData.sort((a, b) => b.id - a.id);
+        } else if (type === 'original') {
+            // ID昇順（登録順＝スプレッドシート順）
+            filteredData.sort((a, b) => a.id - b.id);
+        } else if (type === 'shuffle') {
+            // ランダム
+            filteredData.sort(() => Math.random() - 0.5);
+        }
         render();
     }
 
@@ -206,18 +248,6 @@
         render();
     }
 
-    // ソート機能
-    function sortData(type) {
-        if (type === 'new') {
-            // ID降順（新しい順）
-            filteredData.sort((a, b) => b.id - a.id);
-        } else if (type === 'shuffle') {
-            // ランダム
-            filteredData.sort(() => Math.random() - 0.5);
-        }
-        render();
-    }
-
     // モーダル機能
     function openModal(img, member, cosplayer, link) {
         const modal = document.getElementById('modal');
@@ -225,13 +255,13 @@
         document.getElementById('modalTitle').innerText = `${member} / ${cosplayer}`;
         document.getElementById('modalLink').href = link;
         modal.classList.add('open');
-        document.body.style.overflow = 'hidden'; // 背景スクロール固定
+        document.body.style.overflow = 'hidden'; 
     }
 
     function closeModal(e) {
         if (e.target.id === 'modal' || e.target.classList.contains('modal-close')) {
             document.getElementById('modal').classList.remove('open');
-            document.body.style.overflow = ''; // スクロール解除
+            document.body.style.overflow = ''; 
         }
     }
 
