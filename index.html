@@ -122,41 +122,75 @@
 </div>
 
 <script>
-    // ▼ APIのURL (あなたのGASのURL)
+    // ▼ ここにURLが入っているか確認してください
     const API_URL = "https://script.google.com/macros/s/AKfycbxvb3zcpHRMQDJgq0Ngk92cBG3bXWRMSWVBtKg17CB93xSbuTimDj_5p1Lkq4B5wH2q/exec"; 
 
     let allData = [];
     let filteredData = [];
     let currentMode = 'member'; 
-    let currentSort = 'new'; // 現在のソート状態
+    let currentSort = 'new';
 
-    // 初期化
+    // 起動時の処理
     fetchData();
     checkTheme();
 
-    // データ取得
     async function fetchData() {
         const container = document.getElementById('content-area');
-        container.innerHTML = '<p style="text-align:center; padding:50px;">読み込み中...</p>';
+        container.innerHTML = '<p style="text-align:center; padding:50px;">通信中...</p>';
+
         try {
+            // 1. 通信開始の確認
+            console.log("Fetching data from:", API_URL);
             const res = await fetch(API_URL);
+
+            // 2. 通信成功かチェック
+            if (!res.ok) {
+                alert("【エラー1】通信に失敗しました。\nステータスコード: " + res.status);
+                throw new Error("Network response was not ok");
+            }
+
+            // 3. データ形式のチェック
             const data = await res.json();
             
-            // データを取得したら、まずは新着順(デフォルト)でソート
-            allData = data; 
-            sortData('new'); // ここで初期表示
+            // 診断ポップアップを表示
+            if (!Array.isArray(data)) {
+                alert("【エラー2】データが「リスト形式」ではありません。\nGASのコードを確認してください。");
+                container.innerHTML = '<p>データ形式エラー</p>';
+                return;
+            }
+
+            if (data.length === 0) {
+                alert("【注意】データは受け取れましたが、中身が「0件」です。\nスプレッドシートに行を追加してください。");
+            } else {
+                // 成功パターン：データの最初の1件を表示してみる
+                const firstItem = JSON.stringify(data[0]);
+                // alert("【成功！】データを " + data.length + " 件取得しました。\n最初のデータ:\n" + firstItem);
+            }
+
+            // データを保存して描画
+            allData = data;
+            // エラー回避のため、IDがない場合は擬似的に付与
+            allData.forEach((item, index) => {
+                if(!item.id) item.id = index;
+            });
+
+            sortData('new'); // 描画実行
+
         } catch (e) {
-            container.innerHTML = '<p style="text-align:center; color:red;">エラーが発生しました</p>';
+            console.error(e);
+            alert("【エラー3】処理中にエラーが発生しました。\n" + e.message);
+            container.innerHTML = '<p style="text-align:center; color:red;">エラーが発生しました。<br>F12キーのConsoleを確認してください。</p>';
         }
     }
 
-    // 表示処理
+    // --- 以下は以前と同じ表示機能 ---
+
     function render() {
         const container = document.getElementById('content-area');
         container.innerHTML = '';
         
         if(filteredData.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#666;">データが見つかりません</p>';
+            container.innerHTML = '<p style="text-align:center; color:#666;">表示するデータがありません。</p>';
             return;
         }
 
@@ -164,6 +198,7 @@
         const groups = {};
         
         filteredData.forEach(item => {
+            if(!item.member) return; // メンバー名がないデータはスキップ
             if (!groups[item[key]]) groups[item[key]] = [];
             groups[item[key]].push(item);
         });
@@ -171,18 +206,17 @@
         Object.keys(groups).forEach(groupName => {
             const section = document.createElement('div');
             section.innerHTML = `<div class="section-title">■ ${groupName}</div>`;
-            
             let gridHtml = '<div class="grid">';
             groups[groupName].forEach(item => {
-                const safeMember = item.member.replace(/'/g, "\\'");
-                const safeCos = item.cosplayer.replace(/'/g, "\\'");
-                const safeImg = item.image;
-                const safeLink = item.link;
+                const safeMember = item.member ? item.member.replace(/'/g, "\\'") : "";
+                const safeCos = item.cosplayer ? item.cosplayer.replace(/'/g, "\\'") : "";
+                const safeImg = item.image || "";
+                const safeLink = item.link || "#";
 
                 gridHtml += `
                     <div class="card" onclick="openModal('${safeImg}', '${safeMember}', '${safeCos}', '${safeLink}')">
                         <div class="card-img-box">
-                            <img src="${safeImg}" loading="lazy" alt="cosplay">
+                            <img src="${safeImg}" loading="lazy" alt="cosplay" onerror="this.style.display='none'">
                         </div>
                         <div class="card-info">
                             <span class="tag-member">${item.member}</span>
@@ -197,50 +231,31 @@
         });
     }
 
-    // 検索・絞り込み
+    // 必要な機能だけ残しています
     function handleSearch() {
         const keyword = document.getElementById('searchInput').value.toLowerCase();
         const keywords = keyword.split(/\s+/);
-        
-        // 元データをフィルタリング
         filteredData = allData.filter(item => {
-            const text = (item.member + item.cosplayer).toLowerCase();
+            const text = ((item.member||"") + (item.cosplayer||"")).toLowerCase();
             return keywords.every(k => text.includes(k));
         });
-        
-        // 検索後も現在のソート順を維持する
         applySort(currentSort);
     }
 
-    // ソート機能（ボタン用）
     function sortData(type) {
         currentSort = type;
-        
-        // ボタンの見た目切り替え
         document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-        if(document.getElementById('btn-' + type)) {
-            document.getElementById('btn-' + type).classList.add('active');
-        }
-
+        if(document.getElementById('btn-' + type)) document.getElementById('btn-' + type).classList.add('active');
         applySort(type);
     }
 
-    // 実際の並び替えロジック
     function applySort(type) {
-        if (type === 'new') {
-            // ID降順（新しい順）
-            filteredData.sort((a, b) => b.id - a.id);
-        } else if (type === 'original') {
-            // ID昇順（登録順＝スプレッドシート順）
-            filteredData.sort((a, b) => a.id - b.id);
-        } else if (type === 'shuffle') {
-            // ランダム
-            filteredData.sort(() => Math.random() - 0.5);
-        }
+        if (type === 'new') filteredData.sort((a, b) => b.id - a.id);
+        else if (type === 'original') filteredData.sort((a, b) => a.id - b.id);
+        else if (type === 'shuffle') filteredData.sort(() => Math.random() - 0.5);
         render();
     }
 
-    // 表示モード切替
     function switchView(mode) {
         currentMode = mode;
         document.querySelectorAll('.btn-view').forEach(btn => btn.classList.remove('active'));
@@ -248,7 +263,7 @@
         render();
     }
 
-    // モーダル機能
+    // モーダル・テーマ系
     function openModal(img, member, cosplayer, link) {
         const modal = document.getElementById('modal');
         document.getElementById('modalImg').src = img;
@@ -257,39 +272,26 @@
         modal.classList.add('open');
         document.body.style.overflow = 'hidden'; 
     }
-
     function closeModal(e) {
         if (e.target.id === 'modal' || e.target.classList.contains('modal-close')) {
             document.getElementById('modal').classList.remove('open');
             document.body.style.overflow = ''; 
         }
     }
-
-    // ダークモード
     function toggleTheme() {
         document.body.classList.toggle('dark-mode');
-        const isDark = document.body.classList.contains('dark-mode');
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
     }
-
     function checkTheme() {
-        const theme = localStorage.getItem('theme');
-        if (theme === 'dark') document.body.classList.add('dark-mode');
+        if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
     }
-
-    // トップへ戻るボタン
     window.onscroll = function() {
         const btn = document.getElementById('scrollTopBtn');
-        if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-            btn.style.display = "block";
-        } else {
-            btn.style.display = "none";
-        }
+        if (btn) btn.style.display = (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? "block" : "none";
     };
-    function scrollToTop() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 </script>
 
 </body>
 </html>
+
