@@ -4,59 +4,45 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ぶいすぽっ！コスプレアーカイブ</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* --- デザイン設定 --- */
-        :root { 
-            --primary: #5c6ac4; --primary-dark: #4653a1;
-            --bg: #f4f6f8; --card-bg: #ffffff; --text: #333; --text-sub: #666;
-            --border: #ddd; --modal-bg: rgba(0,0,0,0.85);
-            --shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        body.dark-mode {
-            --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --text-sub: #a0a0a0;
-            --border: #2c3e50; --shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; transition: background 0.3s, color 0.3s; }
+        :root { --primary: #5c6ac4; --bg: #f4f6f8; --card-bg: #fff; --text: #333; }
+        body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; }
+        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; }
         
-        header { background: var(--primary); color: #fff; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
-        h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; }
+        header { background: var(--primary); color: #fff; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .tools { margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+        input { padding: 10px; border-radius: 20px; border: none; min-width: 250px; }
+        button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+        button.active { background: #fff; color: var(--primary); font-weight: bold; }
         
-        .theme-switch { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 1.2rem; }
-        .tools-container { max-width: 700px; margin: 15px auto 0; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
-        .search-input { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; outline: none; min-width: 200px; }
-        .tool-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; white-space: nowrap; }
-        .tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; }
-
         nav { display: flex; justify-content: center; gap: 10px; padding: 20px; }
-        .btn-view { background: var(--card-bg); color: var(--primary); border: 1px solid var(--primary); padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
-        .btn-view.active { background: var(--primary); color: #fff; }
+        .view-btn { background: var(--card-bg); color: var(--primary); border: 1px solid var(--primary); padding: 8px 20px; border-radius: 20px; cursor: pointer; }
+        .view-btn.active { background: var(--primary); color: #fff; }
 
-        main { max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
-        .section-title { width: 100%; border-bottom: 2px solid var(--border); margin: 40px 0 20px; padding-bottom: 8px; font-size: 1.2rem; color: var(--primary); font-weight: bold; }
-
+        main { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .section-title { border-bottom: 2px solid #ddd; margin: 40px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
         
-        .card { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); cursor: pointer; transition: transform 0.2s; }
+        .card { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
         .card:hover { transform: translateY(-5px); }
-        .card-img-box { width: 100%; height: 250px; background: #333; overflow: hidden; position: relative; }
-        .card-img-box img { width: 100%; height: 100%; object-fit: cover; }
-        
-        .card-info { padding: 12px; }
-        .tag-member { display: inline-block; background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 10px; font-size: 0.75rem; margin-bottom: 5px; }
-        .cos-name { font-weight: bold; font-size: 1rem; margin-bottom: 5px; color: var(--text); }
-        
-        /* モーダル */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
-        .modal.open { display: flex; opacity: 1; }
-        .modal-content { max-width: 90%; max-height: 90%; position: relative; text-align: center; }
-        .modal-img { max-width: 100%; max-height: 80vh; border-radius: 8px; }
-        .modal-info { margin-top: 15px; color: #fff; }
-        .modal-link-btn { display: inline-block; background: #1da1f2; color: white; padding: 10px 20px; border-radius: 30px; text-decoration: none; margin-top: 10px; font-weight: bold; }
-        .modal-close { position: absolute; top: -40px; right: 0; color: #fff; font-size: 2rem; cursor: pointer; }
+        .card-img-box { width: 100%; height: 250px; background: #333; overflow: hidden; }
+        .card img { width: 100%; height: 100%; object-fit: cover; }
+        .info { padding: 12px; }
+        .tag { background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; }
+        .name { font-weight: bold; margin-top: 8px; }
 
-        .loading { text-align: center; padding: 50px; color: var(--text-sub); }
-        #scrollTopBtn { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #fff; border: none; padding: 15px; border-radius: 50%; cursor: pointer; display: none; z-index: 90; }
+        /* モーダル */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
+        .modal.open { display: flex; }
+        .modal-content { text-align: center; max-width: 90%; }
+        .modal img { max-height: 80vh; max-width: 100%; border-radius: 8px; }
+        .link-btn { display: inline-block; background: #1da1f2; color: white; padding: 10px 20px; margin-top: 15px; border-radius: 30px; text-decoration: none; font-weight: bold; }
+        .theme-switch { position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
+        
+        .loading { text-align: center; padding: 50px; }
     </style>
 </head>
 <body>
@@ -64,188 +50,159 @@
 <header>
     <h1>👘 VSPO! Cosplay Archive</h1>
     <button class="theme-switch" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
-
-    <div class="tools-container">
-        <input type="text" id="searchInput" class="search-input" placeholder="検索..." oninput="handleSearch()">
-        <button class="tool-btn active" id="btn-new" onclick="sortData('new')"><i class="fas fa-sort-amount-down"></i> 新着順</button>
-        <button class="tool-btn" id="btn-original" onclick="sortData('original')"><i class="fas fa-sort-numeric-down"></i> 登録順</button>
-        <button class="tool-btn" id="btn-shuffle" onclick="sortData('shuffle')"><i class="fas fa-random"></i> シャッフル</button>
+    <div class="tools">
+        <input type="text" id="searchInput" placeholder="検索: うるは、○○さん..." oninput="handleSearch()">
+        <button onclick="setSort('new')" id="btn-new" class="active">新着順</button>
+        <button onclick="setSort('shuffle')" id="btn-shuffle">シャッフル</button>
     </div>
 </header>
 
 <nav>
-    <button class="btn-view active" onclick="switchView('member')">メンバー別</button>
-    <button class="btn-view" onclick="switchView('cosplayer')">レイヤー別</button>
+    <button onclick="setMode('member')" class="view-btn active" id="nav-member">メンバー別</button>
+    <button onclick="setMode('cosplayer')" class="view-btn" id="nav-cosplayer">レイヤー別</button>
 </nav>
 
-<main>
-    <div id="content-area"></div>
+<main id="app">
+    <div class="loading">読み込み中...</div>
 </main>
-
-<button id="scrollTopBtn" onclick="scrollToTop()"><i class="fas fa-arrow-up"></i></button>
 
 <div id="modal" class="modal" onclick="closeModal(event)">
     <div class="modal-content">
-        <span class="modal-close">&times;</span>
-        <img id="modalImg" class="modal-img" src="" alt="">
-        <div class="modal-info">
-            <h3 id="modalTitle"></h3>
-            <a id="modalLink" href="#" target="_blank" class="modal-link-btn">元の投稿を見る</a>
-        </div>
+        <img id="m-img">
+        <div style="margin-top:10px;"><a id="m-link" href="#" target="_blank" class="link-btn">元の投稿を見る</a></div>
     </div>
 </div>
 
 <script>
-    // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-    // 【重要】ここにあなたのGASのURLを貼り付けてください
-    const API_URL = "https://script.google.com/macros/s/AKfycbxvb3zcpHRMQDJgq0Ngk92cBG3bXWRMSWVBtKg17CB93xSbuTimDj_5p1Lkq4B5wH2q/exec"; 
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    // ▼▼▼ここにコピーしたCSVのURLを貼り付けてください！▼▼▼
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     let allData = [];
     let filteredData = [];
-    let currentMode = 'member'; 
-    let currentSort = 'new'; 
+    let currentMode = 'member';
+    let currentSort = 'new';
 
-    fetchData();
-    checkTheme();
-
-    async function fetchData() {
-        const container = document.getElementById('content-area');
-        container.innerHTML = '<div class="loading">読み込み中...</div>';
-        try {
-            const res = await fetch(API_URL);
-            const data = await res.json();
-            
-            // データにIDを付与して保存
-            allData = data.map((item, index) => {
-                if(!item.id) item.id = index;
-                return item;
-            });
-
-            // 初期表示
-            sortData('new'); 
-        } catch (e) {
-            console.error(e);
-            container.innerHTML = '<p style="text-align:center; color:red;">読み込みエラー<br>URLを確認してください</p>';
-        }
-    }
+    // 起動時にCSVを読み込む
+    window.onload = function() {
+        Papa.parse(CSV_URL, {
+            download: true,
+            header: true, // 1行目を見出しとして扱う
+            complete: function(results) {
+                // 空白行などを除去して整形
+                allData = results.data.filter(item => item.member && item.image);
+                // 逆順（登録が新しい順）にしておく
+                allData.reverse();
+                
+                filteredData = allData;
+                render();
+            },
+            error: function(err) {
+                document.getElementById('app').innerHTML = '<p style="text-align:center; color:red;">読み込み失敗: URLを確認してください</p>';
+                console.error(err);
+            }
+        });
+    };
 
     function render() {
-        const container = document.getElementById('content-area');
-        container.innerHTML = '';
+        const app = document.getElementById('app');
+        app.innerHTML = '';
+
+        // グループ化
+        const groups = {};
+        const key = currentMode;
         
-        if(filteredData.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#666; margin-top:50px;">データが見つかりません</p>';
+        filteredData.forEach(item => {
+            const groupName = item[key] || "未分類";
+            if (!groups[groupName]) groups[groupName] = [];
+            groups[groupName].push(item);
+        });
+
+        // 表示
+        if(Object.keys(groups).length === 0) {
+            app.innerHTML = '<p style="text-align:center; margin-top:50px;">データが見つかりません</p>';
             return;
         }
 
-        const key = currentMode === 'member' ? 'member' : 'cosplayer';
-        const groups = {};
-        
-        filteredData.forEach(item => {
-            // グループ名が空なら「未分類」にする
-            const groupKey = item[key] || "未分類";
-            if (!groups[groupKey]) groups[groupKey] = [];
-            groups[groupKey].push(item);
-        });
-
-        Object.keys(groups).forEach(groupName => {
+        Object.keys(groups).forEach(name => {
             const section = document.createElement('div');
-            section.innerHTML = `<div class="section-title">■ ${groupName}</div>`;
+            section.innerHTML = `<div class="section-title">■ ${name}</div>`;
+            const grid = document.createElement('div');
+            grid.className = 'grid';
             
-            let gridHtml = '<div class="grid">';
-            groups[groupName].forEach(item => {
-                const safeMember = item.member || "名前なし";
-                const safeCos = item.cosplayer || "レイヤー名なし";
-                const safeImg = item.image || "https://placehold.jp/300x300.png?text=No+Image";
-                const safeLink = item.link || "#";
-
-                // 特殊文字の処理
-                const escMember = safeMember.replace(/'/g, "\\'");
-                const escCos = safeCos.replace(/'/g, "\\'");
+            groups[name].forEach(item => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => openModal(item.image, item.link);
                 
-                gridHtml += `
-                    <div class="card" onclick="openModal('${safeImg}', '${escMember}', '${escCos}', '${safeLink}')">
-                        <div class="card-img-box">
-                            <img src="${safeImg}" loading="lazy" alt="cosplay" onerror="this.src='https://placehold.jp/300x300.png?text=Image+Error'">
-                        </div>
-                        <div class="card-info">
-                            <span class="tag-member">${safeMember}</span>
-                            <div class="cos-name">${safeCos}</div>
-                        </div>
+                // エスケープ処理
+                const safeMember = (item.member || "").replace(/"/g, '&quot;');
+                const safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
+
+                card.innerHTML = `
+                    <div class="card-img-box">
+                        <img src="${item.image}" loading="lazy" onerror="this.src='https://placehold.jp/300x300.png?text=No+Image'">
+                    </div>
+                    <div class="info">
+                        <span class="tag">${safeMember}</span>
+                        <div class="name">${safeCos}</div>
                     </div>
                 `;
+                grid.appendChild(card);
             });
-            gridHtml += '</div>';
-            section.innerHTML += gridHtml;
-            container.appendChild(section);
+            section.appendChild(grid);
+            app.appendChild(section);
         });
     }
 
+    // 検索・ソート機能
     function handleSearch() {
         const keyword = document.getElementById('searchInput').value.toLowerCase();
-        const keywords = keyword.split(/\s+/);
         filteredData = allData.filter(item => {
-            const text = ((item.member||"") + (item.cosplayer||"")).toLowerCase();
-            return keywords.every(k => text.includes(k));
+            const text = (item.member + item.cosplayer).toLowerCase();
+            return text.includes(keyword);
         });
-        applySort(currentSort);
+        applySort();
     }
 
-    function sortData(type) {
-        currentSort = type;
-        document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-        if(document.getElementById('btn-' + type)) {
-            document.getElementById('btn-' + type).classList.add('active');
+    function setSort(sort) {
+        currentSort = sort;
+        document.querySelectorAll('header button').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-' + sort).classList.add('active');
+        applySort();
+    }
+
+    function applySort() {
+        if (currentSort === 'new') {
+            // CSVは上から順に読まれるので、allDataは既にreverse済み。
+            // filteredDataの順番をリセットしたければ再フィルタが必要だが、簡易的にシャッフル以外はそのままでOK
+            // シャッフルから戻すとき用に再取得
+            const keyword = document.getElementById('searchInput').value.toLowerCase();
+            filteredData = allData.filter(item => (item.member + item.cosplayer).toLowerCase().includes(keyword));
+        } else if (currentSort === 'shuffle') {
+            filteredData.sort(() => Math.random() - 0.5);
         }
-        applySort(type);
-    }
-
-    function applySort(type) {
-        if (type === 'new') filteredData.sort((a, b) => b.id - a.id);
-        else if (type === 'original') filteredData.sort((a, b) => a.id - b.id);
-        else if (type === 'shuffle') filteredData.sort(() => Math.random() - 0.5);
         render();
     }
 
-    function switchView(mode) {
+    function setMode(mode) {
         currentMode = mode;
-        document.querySelectorAll('.btn-view').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('nav-' + mode).classList.add('active');
         render();
     }
 
-    function openModal(img, member, cosplayer, link) {
-        const modal = document.getElementById('modal');
-        document.getElementById('modalImg').src = img;
-        document.getElementById('modalTitle').innerText = `${member} / ${cosplayer}`;
-        document.getElementById('modalLink').href = link;
-        modal.classList.add('open');
-        document.body.style.overflow = 'hidden'; 
+    // モーダル・テーマ
+    function openModal(img, link) {
+        document.getElementById('m-img').src = img;
+        document.getElementById('m-link').href = link;
+        document.getElementById('modal').classList.add('open');
     }
-
     function closeModal(e) {
-        if (e.target.id === 'modal' || e.target.classList.contains('modal-close')) {
-            document.getElementById('modal').classList.remove('open');
-            document.body.style.overflow = ''; 
-        }
+        if(e.target.id === 'modal') document.getElementById('modal').classList.remove('open');
     }
-
     function toggleTheme() {
         document.body.classList.toggle('dark-mode');
-        localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-    }
-
-    function checkTheme() {
-        if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
-    }
-
-    window.onscroll = function() {
-        const btn = document.getElementById('scrollTopBtn');
-        if (btn) btn.style.display = (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? "block" : "none";
-    };
-    function scrollToTop() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 </script>
 
