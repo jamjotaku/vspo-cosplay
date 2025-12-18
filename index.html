@@ -13,70 +13,50 @@
             --border: #ddd; --modal-bg: rgba(0,0,0,0.85);
             --shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
-        /* ダークモード用変数 */
         body.dark-mode {
             --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --text-sub: #a0a0a0;
             --border: #2c3e50; --shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
-
         body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; transition: background 0.3s, color 0.3s; }
         
-        /* ヘッダー */
         header { background: var(--primary); color: #fff; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
         h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; }
         
-        /* ダークモードスイッチ */
-        .theme-switch { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 1.2rem; transition: 0.3s; }
-        .theme-switch:hover { background: rgba(255,255,255,0.4); }
-
-        /* 検索とツール */
+        .theme-switch { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 1.2rem; }
         .tools-container { max-width: 700px; margin: 15px auto 0; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
         .search-input { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; outline: none; min-width: 200px; }
-        
-        .tool-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; white-space: nowrap; }
-        .tool-btn:hover { background: rgba(255,255,255,0.4); }
+        .tool-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; white-space: nowrap; }
         .tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; }
 
-        /* ナビゲーション */
         nav { display: flex; justify-content: center; gap: 10px; padding: 20px; }
-        .btn-view { background: var(--card-bg); color: var(--primary); border: 1px solid var(--primary); padding: 8px 20px; border-radius: 20px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .btn-view { background: var(--card-bg); color: var(--primary); border: 1px solid var(--primary); padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
         .btn-view.active { background: var(--primary); color: #fff; }
-        .btn-view:hover { opacity: 0.8; }
 
-        /* メイン */
         main { max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
         .section-title { width: 100%; border-bottom: 2px solid var(--border); margin: 40px 0 20px; padding-bottom: 8px; font-size: 1.2rem; color: var(--primary); font-weight: bold; }
 
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
         
-        /* カード */
         .card { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); cursor: pointer; transition: transform 0.2s; }
         .card:hover { transform: translateY(-5px); }
         .card-img-box { width: 100%; height: 250px; background: #333; overflow: hidden; position: relative; }
-        .card-img-box img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
-        .card:hover .card-img-box img { transform: scale(1.08); }
+        .card-img-box img { width: 100%; height: 100%; object-fit: cover; }
         
         .card-info { padding: 12px; }
         .tag-member { display: inline-block; background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 10px; font-size: 0.75rem; margin-bottom: 5px; }
         .cos-name { font-weight: bold; font-size: 1rem; margin-bottom: 5px; color: var(--text); }
         
-        /* モーダル（拡大表示） */
+        /* モーダル */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
         .modal.open { display: flex; opacity: 1; }
         .modal-content { max-width: 90%; max-height: 90%; position: relative; text-align: center; }
-        .modal-img { max-width: 100%; max-height: 80vh; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .modal-img { max-width: 100%; max-height: 80vh; border-radius: 8px; }
         .modal-info { margin-top: 15px; color: #fff; }
-        .modal-link-btn { display: inline-block; background: #1da1f2; color: white; padding: 10px 20px; border-radius: 30px; text-decoration: none; margin-top: 10px; font-weight: bold; transition: 0.3s; }
-        .modal-link-btn:hover { background: #0c85d0; transform: scale(1.05); }
+        .modal-link-btn { display: inline-block; background: #1da1f2; color: white; padding: 10px 20px; border-radius: 30px; text-decoration: none; margin-top: 10px; font-weight: bold; }
         .modal-close { position: absolute; top: -40px; right: 0; color: #fff; font-size: 2rem; cursor: pointer; }
 
-        /* トップへ戻るボタン */
-        #scrollTopBtn { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #fff; border: none; padding: 15px; border-radius: 50%; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: none; z-index: 90; }
-        #scrollTopBtn:hover { transform: scale(1.1); }
-
-        /* ローディング */
         .loading { text-align: center; padding: 50px; color: var(--text-sub); }
-
+        #scrollTopBtn { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #fff; border: none; padding: 15px; border-radius: 50%; cursor: pointer; display: none; z-index: 90; }
     </style>
 </head>
 <body>
@@ -86,17 +66,10 @@
     <button class="theme-switch" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
 
     <div class="tools-container">
-        <input type="text" id="searchInput" class="search-input" placeholder="検索: うるは、○○さん..." oninput="handleSearch()">
-        
-        <button class="tool-btn active" id="btn-new" onclick="sortData('new')">
-            <i class="fas fa-sort-amount-down"></i> 新着順
-        </button>
-        <button class="tool-btn" id="btn-original" onclick="sortData('original')">
-            <i class="fas fa-sort-numeric-down"></i> 登録順
-        </button>
-        <button class="tool-btn" id="btn-shuffle" onclick="sortData('shuffle')">
-            <i class="fas fa-random"></i> シャッフル
-        </button>
+        <input type="text" id="searchInput" class="search-input" placeholder="検索..." oninput="handleSearch()">
+        <button class="tool-btn active" id="btn-new" onclick="sortData('new')"><i class="fas fa-sort-amount-down"></i> 新着順</button>
+        <button class="tool-btn" id="btn-original" onclick="sortData('original')"><i class="fas fa-sort-numeric-down"></i> 登録順</button>
+        <button class="tool-btn" id="btn-shuffle" onclick="sortData('shuffle')"><i class="fas fa-random"></i> シャッフル</button>
     </div>
 </header>
 
@@ -117,51 +90,49 @@
         <img id="modalImg" class="modal-img" src="" alt="">
         <div class="modal-info">
             <h3 id="modalTitle"></h3>
-            <a id="modalLink" href="#" target="_blank" class="modal-link-btn">
-                <i class="fab fa-twitter"></i> 元の投稿を見る
-            </a>
+            <a id="modalLink" href="#" target="_blank" class="modal-link-btn">元の投稿を見る</a>
         </div>
     </div>
 </div>
 
 <script>
-    // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-    // 【重要】ここに「さきほど通信成功したURL」を貼り付けてください！
+    // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+    // ここにURLを貼り付けてください
     const API_URL = "https://script.google.com/macros/s/AKfycbxvb3zcpHRMQDJgq0Ngk92cBG3bXWRMSWVBtKg17CB93xSbuTimDj_5p1Lkq4B5wH2q/exec"; 
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     let allData = [];
     let filteredData = [];
     let currentMode = 'member'; 
-    let currentSort = 'new'; // 現在のソート状態
+    let currentSort = 'new'; 
 
-    // 初期化
     fetchData();
     checkTheme();
 
-    // データ取得
     async function fetchData() {
         const container = document.getElementById('content-area');
-        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> 読み込み中...</div>';
+        container.innerHTML = '<div class="loading">読み込み中...</div>';
         try {
             const res = await fetch(API_URL);
             const data = await res.json();
             
-            // データを受け取ったら、IDがない場合に備えて付与
+            // 【診断用ポップアップ】
+            // これが表示されれば通信は成功しています。0件ならGAS側の問題、件数があればHTML側の問題です。
+            alert("【診断】\nデータ受信件数: " + data.length + "件\n\n(OKを押すと表示処理に進みます)");
+
             allData = data.map((item, index) => {
                 if(!item.id) item.id = index;
                 return item;
             });
 
-            // 初期表示
             sortData('new'); 
         } catch (e) {
             console.error(e);
-            container.innerHTML = '<p style="text-align:center; color:red;">読み込みエラーが発生しました。<br>URL設定を確認してください。</p>';
+            alert("通信エラーが発生しました: " + e.message);
+            container.innerHTML = '<p style="text-align:center; color:red;">読み込みエラー<br>API_URLが正しいか確認してください</p>';
         }
     }
 
-    // 表示処理
     function render() {
         const container = document.getElementById('content-area');
         container.innerHTML = '';
@@ -175,10 +146,9 @@
         const groups = {};
         
         filteredData.forEach(item => {
-            // 名前か画像があれば表示対象にする
-            if (!item.member && !item.image) return;
-
-            // グループ名が空なら「未分類」にする
+            // ★重要：ここで「画像がないデータ」も許可するようにフィルターを削除しました
+            
+            // グループ名が空なら「未分類」
             const groupKey = item[key] || "未分類";
 
             if (!groups[groupKey]) groups[groupKey] = [];
@@ -191,19 +161,18 @@
             
             let gridHtml = '<div class="grid">';
             groups[groupName].forEach(item => {
-                const safeMember = item.member || "名称不明";
-                const safeCos = item.cosplayer || "";
+                const safeMember = item.member || "名前なし";
+                const safeCos = item.cosplayer || "レイヤー名なし";
                 const safeImg = item.image || "https://placehold.jp/300x300.png?text=No+Image";
                 const safeLink = item.link || "#";
 
-                // 文字のエスケープ（クリック動作エラー防止）
                 const escMember = safeMember.replace(/'/g, "\\'");
                 const escCos = safeCos.replace(/'/g, "\\'");
                 
                 gridHtml += `
                     <div class="card" onclick="openModal('${safeImg}', '${escMember}', '${escCos}', '${safeLink}')">
                         <div class="card-img-box">
-                            <img src="${safeImg}" loading="lazy" alt="cosplay" onerror="this.src='https://placehold.jp/300x300.png?text=Error'">
+                            <img src="${safeImg}" loading="lazy" alt="cosplay" onerror="this.src='https://placehold.jp/300x300.png?text=Image+Error'">
                         </div>
                         <div class="card-info">
                             <span class="tag-member">${safeMember}</span>
@@ -218,50 +187,32 @@
         });
     }
 
-    // 検索・絞り込み
     function handleSearch() {
         const keyword = document.getElementById('searchInput').value.toLowerCase();
         const keywords = keyword.split(/\s+/);
-        
-        // 元データをフィルタリング
         filteredData = allData.filter(item => {
             const text = ((item.member||"") + (item.cosplayer||"")).toLowerCase();
             return keywords.every(k => text.includes(k));
         });
-        
-        // 検索後も現在のソート順を維持する
         applySort(currentSort);
     }
 
-    // ソート機能（ボタン用）
     function sortData(type) {
         currentSort = type;
-        
-        // ボタンの見た目切り替え
         document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
         if(document.getElementById('btn-' + type)) {
             document.getElementById('btn-' + type).classList.add('active');
         }
-
         applySort(type);
     }
 
-    // 実際の並び替えロジック
     function applySort(type) {
-        if (type === 'new') {
-            // ID降順（新しい順）
-            filteredData.sort((a, b) => b.id - a.id);
-        } else if (type === 'original') {
-            // ID昇順（登録順＝スプレッドシート順）
-            filteredData.sort((a, b) => a.id - b.id);
-        } else if (type === 'shuffle') {
-            // ランダム
-            filteredData.sort(() => Math.random() - 0.5);
-        }
+        if (type === 'new') filteredData.sort((a, b) => b.id - a.id);
+        else if (type === 'original') filteredData.sort((a, b) => a.id - b.id);
+        else if (type === 'shuffle') filteredData.sort(() => Math.random() - 0.5);
         render();
     }
 
-    // 表示モード切替
     function switchView(mode) {
         currentMode = mode;
         document.querySelectorAll('.btn-view').forEach(btn => btn.classList.remove('active'));
@@ -269,7 +220,6 @@
         render();
     }
 
-    // モーダル機能
     function openModal(img, member, cosplayer, link) {
         const modal = document.getElementById('modal');
         document.getElementById('modalImg').src = img;
@@ -286,28 +236,18 @@
         }
     }
 
-    // ダークモード
     function toggleTheme() {
         document.body.classList.toggle('dark-mode');
-        const isDark = document.body.classList.contains('dark-mode');
-        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
     }
 
     function checkTheme() {
-        const theme = localStorage.getItem('theme');
-        if (theme === 'dark') document.body.classList.add('dark-mode');
+        if (localStorage.getItem('theme') === 'dark') document.body.classList.add('dark-mode');
     }
 
-    // トップへ戻るボタン
     window.onscroll = function() {
         const btn = document.getElementById('scrollTopBtn');
-        if (btn) {
-            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
-                btn.style.display = "block";
-            } else {
-                btn.style.display = "none";
-            }
-        }
+        if (btn) btn.style.display = (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? "block" : "none";
     };
     function scrollToTop() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
