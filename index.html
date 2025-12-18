@@ -6,7 +6,7 @@
     <title>ぶいすぽっ！コスプレアーカイブ</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* --- 変数定義 (Light/Dark) --- */
+        /* --- デザイン設定 --- */
         :root { 
             --primary: #5c6ac4; --primary-dark: #4653a1;
             --bg: #f4f6f8; --card-bg: #ffffff; --text: #333; --text-sub: #666;
@@ -97,7 +97,7 @@
 
 <script>
     // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-    // ここにURLを貼り付けてください
+    // 【重要】ここにあなたのGASのURLを貼り付けてください
     const API_URL = "https://script.google.com/macros/s/AKfycbxvb3zcpHRMQDJgq0Ngk92cBG3bXWRMSWVBtKg17CB93xSbuTimDj_5p1Lkq4B5wH2q/exec"; 
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
@@ -116,20 +116,17 @@
             const res = await fetch(API_URL);
             const data = await res.json();
             
-            // 【診断用ポップアップ】
-            // これが表示されれば通信は成功しています。0件ならGAS側の問題、件数があればHTML側の問題です。
-            alert("【診断】\nデータ受信件数: " + data.length + "件\n\n(OKを押すと表示処理に進みます)");
-
+            // データにIDを付与して保存
             allData = data.map((item, index) => {
                 if(!item.id) item.id = index;
                 return item;
             });
 
+            // 初期表示
             sortData('new'); 
         } catch (e) {
             console.error(e);
-            alert("通信エラーが発生しました: " + e.message);
-            container.innerHTML = '<p style="text-align:center; color:red;">読み込みエラー<br>API_URLが正しいか確認してください</p>';
+            container.innerHTML = '<p style="text-align:center; color:red;">読み込みエラー<br>URLを確認してください</p>';
         }
     }
 
@@ -146,11 +143,8 @@
         const groups = {};
         
         filteredData.forEach(item => {
-            // ★重要：ここで「画像がないデータ」も許可するようにフィルターを削除しました
-            
-            // グループ名が空なら「未分類」
+            // グループ名が空なら「未分類」にする
             const groupKey = item[key] || "未分類";
-
             if (!groups[groupKey]) groups[groupKey] = [];
             groups[groupKey].push(item);
         });
@@ -166,6 +160,7 @@
                 const safeImg = item.image || "https://placehold.jp/300x300.png?text=No+Image";
                 const safeLink = item.link || "#";
 
+                // 特殊文字の処理
                 const escMember = safeMember.replace(/'/g, "\\'");
                 const escCos = safeCos.replace(/'/g, "\\'");
                 
