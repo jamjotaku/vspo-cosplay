@@ -6,81 +6,313 @@
     <title>ぶいすぽっ！コスプレアーカイブ</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        body { font-family: sans-serif; background: #f4f6f8; color: #333; margin: 0; padding: 20px; }
-        header { text-align: center; margin-bottom: 30px; }
-        h1 { color: #5c6ac4; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
-        .card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .card img { width: 100%; height: 150px; object-fit: cover; background: #eee; }
-        .info { padding: 10px; font-size: 0.9rem; }
-        .debug-box { background: #333; color: #0f0; padding: 15px; margin-bottom: 20px; border-radius: 5px; font-family: monospace; white-space: pre-wrap; display: none; }
+        /* --- 変数定義 (Light/Dark) --- */
+        :root { 
+            --primary: #5c6ac4; --primary-dark: #4653a1;
+            --bg: #f4f6f8; --card-bg: #ffffff; --text: #333; --text-sub: #666;
+            --border: #ddd; --modal-bg: rgba(0,0,0,0.85);
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        /* ダークモード用変数 */
+        body.dark-mode {
+            --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --text-sub: #a0a0a0;
+            --border: #2c3e50; --shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background-color: var(--bg); color: var(--text); margin: 0; padding: 0; transition: background 0.3s, color 0.3s; }
+        
+        /* ヘッダー */
+        header { background: var(--primary); color: #fff; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.2); }
+        h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; }
+        
+        /* ダークモードスイッチ */
+        .theme-switch { position: absolute; top: 20px; right: 20px; background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 1.2rem; transition: 0.3s; }
+        .theme-switch:hover { background: rgba(255,255,255,0.4); }
+
+        /* 検索とツール */
+        .tools-container { max-width: 700px; margin: 15px auto 0; display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; align-items: center; }
+        .search-input { flex: 1; padding: 10px 15px; border-radius: 20px; border: none; outline: none; min-width: 200px; }
+        
+        .tool-btn { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 12px; border-radius: 20px; cursor: pointer; font-size: 0.85rem; transition: 0.2s; white-space: nowrap; }
+        .tool-btn:hover { background: rgba(255,255,255,0.4); }
+        .tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; }
+
+        /* ナビゲーション */
+        nav { display: flex; justify-content: center; gap: 10px; padding: 20px; }
+        .btn-view { background: var(--card-bg); color: var(--primary); border: 1px solid var(--primary); padding: 8px 20px; border-radius: 20px; cursor: pointer; transition: 0.3s; font-weight: bold; }
+        .btn-view.active { background: var(--primary); color: #fff; }
+        .btn-view:hover { opacity: 0.8; }
+
+        /* メイン */
+        main { max-width: 1200px; margin: 0 auto; padding: 0 20px 60px; }
+        .section-title { width: 100%; border-bottom: 2px solid var(--border); margin: 40px 0 20px; padding-bottom: 8px; font-size: 1.2rem; color: var(--primary); font-weight: bold; }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
+        
+        /* カード */
+        .card { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); cursor: pointer; transition: transform 0.2s; }
+        .card:hover { transform: translateY(-5px); }
+        .card-img-box { width: 100%; height: 250px; background: #333; overflow: hidden; position: relative; }
+        .card-img-box img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.5s; }
+        .card:hover .card-img-box img { transform: scale(1.08); }
+        
+        .card-info { padding: 12px; }
+        .tag-member { display: inline-block; background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 10px; font-size: 0.75rem; margin-bottom: 5px; }
+        .cos-name { font-weight: bold; font-size: 1rem; margin-bottom: 5px; color: var(--text); }
+        
+        /* モーダル（拡大表示） */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--modal-bg); z-index: 1000; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+        .modal.open { display: flex; opacity: 1; }
+        .modal-content { max-width: 90%; max-height: 90%; position: relative; text-align: center; }
+        .modal-img { max-width: 100%; max-height: 80vh; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .modal-info { margin-top: 15px; color: #fff; }
+        .modal-link-btn { display: inline-block; background: #1da1f2; color: white; padding: 10px 20px; border-radius: 30px; text-decoration: none; margin-top: 10px; font-weight: bold; transition: 0.3s; }
+        .modal-link-btn:hover { background: #0c85d0; transform: scale(1.05); }
+        .modal-close { position: absolute; top: -40px; right: 0; color: #fff; font-size: 2rem; cursor: pointer; }
+
+        /* トップへ戻るボタン */
+        #scrollTopBtn { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #fff; border: none; padding: 15px; border-radius: 50%; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: none; z-index: 90; }
+        #scrollTopBtn:hover { transform: scale(1.1); }
+
+        /* ローディング */
+        .loading { text-align: center; padding: 50px; color: var(--text-sub); }
+
     </style>
 </head>
 <body>
 
 <header>
-    <h1>👘 表示テストモード</h1>
-    <p>データが来ているか強制的に確認します</p>
+    <h1>👘 VSPO! Cosplay Archive</h1>
+    <button class="theme-switch" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+
+    <div class="tools-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="検索: うるは、○○さん..." oninput="handleSearch()">
+        
+        <button class="tool-btn active" id="btn-new" onclick="sortData('new')">
+            <i class="fas fa-sort-amount-down"></i> 新着順
+        </button>
+        <button class="tool-btn" id="btn-original" onclick="sortData('original')">
+            <i class="fas fa-sort-numeric-down"></i> 登録順
+        </button>
+        <button class="tool-btn" id="btn-shuffle" onclick="sortData('shuffle')">
+            <i class="fas fa-random"></i> シャッフル
+        </button>
+    </div>
 </header>
 
-<div id="debug-area" class="debug-box"></div>
+<nav>
+    <button class="btn-view active" onclick="switchView('member')">メンバー別</button>
+    <button class="btn-view" onclick="switchView('cosplayer')">レイヤー別</button>
+</nav>
 
-<main id="content-area" class="grid"></main>
+<main>
+    <div id="content-area"></div>
+</main>
+
+<button id="scrollTopBtn" onclick="scrollToTop()"><i class="fas fa-arrow-up"></i></button>
+
+<div id="modal" class="modal" onclick="closeModal(event)">
+    <div class="modal-content">
+        <span class="modal-close">&times;</span>
+        <img id="modalImg" class="modal-img" src="" alt="">
+        <div class="modal-info">
+            <h3 id="modalTitle"></h3>
+            <a id="modalLink" href="#" target="_blank" class="modal-link-btn">
+                <i class="fab fa-twitter"></i> 元の投稿を見る
+            </a>
+        </div>
+    </div>
+</div>
 
 <script>
-    // ▼▼▼ ここに「さっきデータが見えたURL」を貼り付けてください ▼▼▼
+    // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+    // 【重要】ここに「さきほど通信成功したURL」を貼り付けてください！
     const API_URL = "https://script.google.com/macros/s/AKfycbxvb3zcpHRMQDJgq0Ngk92cBG3bXWRMSWVBtKg17CB93xSbuTimDj_5p1Lkq4B5wH2q/exec"; 
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
+    let allData = [];
+    let filteredData = [];
+    let currentMode = 'member'; 
+    let currentSort = 'new'; // 現在のソート状態
+
+    // 初期化
     fetchData();
+    checkTheme();
 
+    // データ取得
     async function fetchData() {
         const container = document.getElementById('content-area');
-        const debugBox = document.getElementById('debug-area');
-        
-        container.innerHTML = '読み込み中...';
-        
+        container.innerHTML = '<div class="loading"><i class="fas fa-spinner fa-spin"></i> 読み込み中...</div>';
         try {
             const res = await fetch(API_URL);
             const data = await res.json();
-
-            // 1. まず生データを画面に出す（これでデータが来ているか100%わかる）
-            debugBox.style.display = 'block';
-            debugBox.textContent = "【受信データ確認】\n" + JSON.stringify(data, null, 2);
-
-            // 2. 無理やりカードにする
-            container.innerHTML = ''; // クリア
             
-            if (data.length === 0) {
-                container.innerHTML = '<p style="color:red; font-weight:bold;">データ自体は空っぽで届いています。GAS側を見てください。</p>';
-                return;
-            }
-
-            data.forEach(item => {
-                // 名前などがなくても「不明」として表示させる
-                const member = item.member || "名前なし";
-                const img = item.image || "https://placehold.jp/150x150.png?text=NoImage";
-                
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.innerHTML = `
-                    <img src="${img}" onerror="this.src='https://placehold.jp/150x150.png?text=Error'">
-                    <div class="info">
-                        <strong>${member}</strong><br>
-                        <small>${item.cosplayer || ""}</small>
-                    </div>
-                `;
-                container.appendChild(card);
+            // データを受け取ったら、IDがない場合に備えて付与
+            allData = data.map((item, index) => {
+                if(!item.id) item.id = index;
+                return item;
             });
 
+            // 初期表示
+            sortData('new'); 
         } catch (e) {
-            container.innerHTML = '<p style="color:red">通信エラー: ' + e.message + '</p>';
+            console.error(e);
+            container.innerHTML = '<p style="text-align:center; color:red;">読み込みエラーが発生しました。<br>URL設定を確認してください。</p>';
         }
+    }
+
+    // 表示処理
+    function render() {
+        const container = document.getElementById('content-area');
+        container.innerHTML = '';
+        
+        if(filteredData.length === 0) {
+            container.innerHTML = '<p style="text-align:center; color:#666; margin-top:50px;">データが見つかりません</p>';
+            return;
+        }
+
+        const key = currentMode === 'member' ? 'member' : 'cosplayer';
+        const groups = {};
+        
+        filteredData.forEach(item => {
+            // 名前か画像があれば表示対象にする
+            if (!item.member && !item.image) return;
+
+            // グループ名が空なら「未分類」にする
+            const groupKey = item[key] || "未分類";
+
+            if (!groups[groupKey]) groups[groupKey] = [];
+            groups[groupKey].push(item);
+        });
+
+        Object.keys(groups).forEach(groupName => {
+            const section = document.createElement('div');
+            section.innerHTML = `<div class="section-title">■ ${groupName}</div>`;
+            
+            let gridHtml = '<div class="grid">';
+            groups[groupName].forEach(item => {
+                const safeMember = item.member || "名称不明";
+                const safeCos = item.cosplayer || "";
+                const safeImg = item.image || "https://placehold.jp/300x300.png?text=No+Image";
+                const safeLink = item.link || "#";
+
+                // 文字のエスケープ（クリック動作エラー防止）
+                const escMember = safeMember.replace(/'/g, "\\'");
+                const escCos = safeCos.replace(/'/g, "\\'");
+                
+                gridHtml += `
+                    <div class="card" onclick="openModal('${safeImg}', '${escMember}', '${escCos}', '${safeLink}')">
+                        <div class="card-img-box">
+                            <img src="${safeImg}" loading="lazy" alt="cosplay" onerror="this.src='https://placehold.jp/300x300.png?text=Error'">
+                        </div>
+                        <div class="card-info">
+                            <span class="tag-member">${safeMember}</span>
+                            <div class="cos-name">${safeCos}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            gridHtml += '</div>';
+            section.innerHTML += gridHtml;
+            container.appendChild(section);
+        });
+    }
+
+    // 検索・絞り込み
+    function handleSearch() {
+        const keyword = document.getElementById('searchInput').value.toLowerCase();
+        const keywords = keyword.split(/\s+/);
+        
+        // 元データをフィルタリング
+        filteredData = allData.filter(item => {
+            const text = ((item.member||"") + (item.cosplayer||"")).toLowerCase();
+            return keywords.every(k => text.includes(k));
+        });
+        
+        // 検索後も現在のソート順を維持する
+        applySort(currentSort);
+    }
+
+    // ソート機能（ボタン用）
+    function sortData(type) {
+        currentSort = type;
+        
+        // ボタンの見た目切り替え
+        document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+        if(document.getElementById('btn-' + type)) {
+            document.getElementById('btn-' + type).classList.add('active');
+        }
+
+        applySort(type);
+    }
+
+    // 実際の並び替えロジック
+    function applySort(type) {
+        if (type === 'new') {
+            // ID降順（新しい順）
+            filteredData.sort((a, b) => b.id - a.id);
+        } else if (type === 'original') {
+            // ID昇順（登録順＝スプレッドシート順）
+            filteredData.sort((a, b) => a.id - b.id);
+        } else if (type === 'shuffle') {
+            // ランダム
+            filteredData.sort(() => Math.random() - 0.5);
+        }
+        render();
+    }
+
+    // 表示モード切替
+    function switchView(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.btn-view').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        render();
+    }
+
+    // モーダル機能
+    function openModal(img, member, cosplayer, link) {
+        const modal = document.getElementById('modal');
+        document.getElementById('modalImg').src = img;
+        document.getElementById('modalTitle').innerText = `${member} / ${cosplayer}`;
+        document.getElementById('modalLink').href = link;
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden'; 
+    }
+
+    function closeModal(e) {
+        if (e.target.id === 'modal' || e.target.classList.contains('modal-close')) {
+            document.getElementById('modal').classList.remove('open');
+            document.body.style.overflow = ''; 
+        }
+    }
+
+    // ダークモード
+    function toggleTheme() {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+    }
+
+    function checkTheme() {
+        const theme = localStorage.getItem('theme');
+        if (theme === 'dark') document.body.classList.add('dark-mode');
+    }
+
+    // トップへ戻るボタン
+    window.onscroll = function() {
+        const btn = document.getElementById('scrollTopBtn');
+        if (btn) {
+            if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+                btn.style.display = "block";
+            } else {
+                btn.style.display = "none";
+            }
+        }
+    };
+    function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 </script>
 
 </body>
 </html>
-
-
-
