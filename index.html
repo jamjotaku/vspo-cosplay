@@ -15,7 +15,7 @@
         header { background: var(--primary); color: #fff; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .tools { margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
         input { padding: 10px; border-radius: 20px; border: none; min-width: 250px; }
-        button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+        button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; }
         button.active { background: #fff; color: var(--primary); font-weight: bold; }
         
         nav { display: flex; justify-content: center; gap: 10px; padding: 20px; }
@@ -52,8 +52,16 @@
     <button class="theme-switch" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
     <div class="tools">
         <input type="text" id="searchInput" placeholder="検索: うるは、○○さん..." oninput="handleSearch()">
-        <button onclick="setSort('new')" id="btn-new" class="active">新着順</button>
-        <button onclick="setSort('shuffle')" id="btn-shuffle">シャッフル</button>
+        
+        <button onclick="setSort('new')" id="btn-new" class="active">
+            <i class="fas fa-sort-amount-down"></i> 新着順
+        </button>
+        <button onclick="setSort('original')" id="btn-original">
+            <i class="fas fa-sort-numeric-down"></i> 登録順
+        </button>
+        <button onclick="setSort('shuffle')" id="btn-shuffle">
+            <i class="fas fa-random"></i> シャッフル
+        </button>
     </div>
 </header>
 
@@ -74,14 +82,14 @@
 </div>
 
 <script>
-    // ▼▼▼ここにコピーしたCSVのURLを貼り付けてください！▼▼▼
+    // ▼▼▼ 指定されたCSV URL ▼▼▼
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    let allData = [];
-    let filteredData = [];
+    let allData = [];      // 全データ（元の並び順）
+    let filteredData = []; // 表示用データ
     let currentMode = 'member';
-    let currentSort = 'new';
+    let currentSort = 'new'; // 初期値は新着順
 
     // 起動時にCSVを読み込む
     window.onload = function() {
@@ -89,16 +97,22 @@
             download: true,
             header: true, // 1行目を見出しとして扱う
             complete: function(results) {
-                // 空白行などを除去して整形
-                allData = results.data.filter(item => item.member && item.image);
-                // 逆順（登録が新しい順）にしておく
-                allData.reverse();
+                // 空白行などを除去して整形し、ID（元の順番）を付与
+                allData = results.data
+                    .filter(item => item.member && item.image)
+                    .map((item, index) => {
+                        item._originalIndex = index; // 元の順番を記憶
+                        return item;
+                    });
                 
-                filteredData = allData;
-                render();
+                // 初期表示（検索などのフィルタ用データにコピー）
+                filteredData = [...allData];
+                
+                // 初期ソート適用（新着順）
+                applySort();
             },
             error: function(err) {
-                document.getElementById('app').innerHTML = '<p style="text-align:center; color:red;">読み込み失敗: URLを確認してください</p>';
+                document.getElementById('app').innerHTML = '<p style="text-align:center; color:red;">読み込み失敗: CSVのURL設定を確認してください。</p>';
                 console.error(err);
             }
         });
@@ -110,7 +124,7 @@
 
         // グループ化
         const groups = {};
-        const key = currentMode;
+        const key = currentMode; // 'member' or 'cosplayer'
         
         filteredData.forEach(item => {
             const groupName = item[key] || "未分類";
@@ -118,9 +132,9 @@
             groups[groupName].push(item);
         });
 
-        // 表示
+        // データがない場合
         if(Object.keys(groups).length === 0) {
-            app.innerHTML = '<p style="text-align:center; margin-top:50px;">データが見つかりません</p>';
+            app.innerHTML = '<p style="text-align:center; margin-top:50px; color:#666;">データが見つかりません</p>';
             return;
         }
 
@@ -155,36 +169,47 @@
         });
     }
 
-    // 検索・ソート機能
+    // 検索機能
     function handleSearch() {
         const keyword = document.getElementById('searchInput').value.toLowerCase();
+        
+        // 元データから抽出
         filteredData = allData.filter(item => {
             const text = (item.member + item.cosplayer).toLowerCase();
             return text.includes(keyword);
         });
+        
+        // ソートを再適用
         applySort();
     }
 
-    function setSort(sort) {
-        currentSort = sort;
+    // ソートボタン切り替え
+    function setSort(sortType) {
+        currentSort = sortType;
         document.querySelectorAll('header button').forEach(b => b.classList.remove('active'));
-        document.getElementById('btn-' + sort).classList.add('active');
+        // ボタンがあればアクティブ化（検索窓等は除外）
+        const btn = document.getElementById('btn-' + sortType);
+        if(btn) btn.classList.add('active');
+        
         applySort();
     }
 
+    // ソート実行ロジック
     function applySort() {
         if (currentSort === 'new') {
-            // CSVは上から順に読まれるので、allDataは既にreverse済み。
-            // filteredDataの順番をリセットしたければ再フィルタが必要だが、簡易的にシャッフル以外はそのままでOK
-            // シャッフルから戻すとき用に再取得
-            const keyword = document.getElementById('searchInput').value.toLowerCase();
-            filteredData = allData.filter(item => (item.member + item.cosplayer).toLowerCase().includes(keyword));
+            // 新着順：元のインデックスの降順（大きい順）
+            filteredData.sort((a, b) => b._originalIndex - a._originalIndex);
+        } else if (currentSort === 'original') {
+            // 登録順：元のインデックスの昇順（小さい順）
+            filteredData.sort((a, b) => a._originalIndex - b._originalIndex);
         } else if (currentSort === 'shuffle') {
+            // シャッフル
             filteredData.sort(() => Math.random() - 0.5);
         }
         render();
     }
 
+    // 表示モード切り替え
     function setMode(mode) {
         currentMode = mode;
         document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
