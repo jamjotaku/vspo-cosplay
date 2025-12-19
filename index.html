@@ -8,41 +8,58 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* --- デザイン設定 --- */
-        :root { --primary: #5c6ac4; --bg: #f4f6f8; --card-bg: #fff; --text: #333; }
+        :root { --primary: #5c6ac4; --bg: #f4f6f8; --card-bg: #fff; --text: #333; --heart: #e2264d; }
         body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; }
-        body { font-family: sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; }
         
         header { background: var(--primary); color: #fff; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .tools { margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-        input { padding: 10px; border-radius: 20px; border: none; min-width: 250px; }
-        button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; }
+        input { padding: 10px; border-radius: 20px; border: none; min-width: 250px; outline: none; }
+        button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        button:hover { background: rgba(255,255,255,0.4); }
         button.active { background: #fff; color: var(--primary); font-weight: bold; }
         
-        nav { display: flex; justify-content: center; gap: 10px; padding: 20px; }
-        .view-btn { background: var(--card-bg); color: var(--primary); border: 1px solid var(--primary); padding: 8px 20px; border-radius: 20px; cursor: pointer; }
+        nav { display: flex; justify-content: center; gap: 10px; padding: 20px; flex-wrap: wrap; }
+        .view-btn { background: var(--card-bg); color: var(--primary); border: 1px solid var(--primary); padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
         .view-btn.active { background: var(--primary); color: #fff; }
 
         main { max-width: 1200px; margin: 0 auto; padding: 20px; }
         .section-title { border-bottom: 2px solid #ddd; margin: 40px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
         
-        .card { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); cursor: pointer; transition: transform 0.2s; }
+        .card { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; transition: transform 0.2s; }
         .card:hover { transform: translateY(-5px); }
-        .card-img-box { width: 100%; height: 250px; background: #333; overflow: hidden; }
-        .card img { width: 100%; height: 100%; object-fit: cover; }
-        .info { padding: 12px; }
-        .tag { background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; }
-        .name { font-weight: bold; margin-top: 8px; }
+        
+        .card-img-box { width: 100%; height: 250px; background: #333; overflow: hidden; cursor: pointer; position: relative; }
+        .card img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+        .card:hover img { transform: scale(1.05); }
 
-        /* モーダル */
+        /* お気に入りボタン */
+        .fav-btn {
+            position: absolute; top: 10px; right: 10px;
+            background: rgba(255,255,255,0.9); border-radius: 50%;
+            width: 35px; height: 35px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 1.2rem; color: #ccc;
+            z-index: 10; transition: 0.2s; border: none;
+        }
+        .fav-btn.active { color: var(--heart); }
+        .fav-btn:hover { transform: scale(1.1); }
+
+        .info { padding: 12px; }
+        .tag { background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; display: inline-block; margin-bottom: 5px; }
+        .name { font-weight: bold; font-size: 0.95rem; line-height: 1.4; }
+
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         .modal.open { display: flex; }
-        .modal-content { text-align: center; max-width: 90%; }
+        .modal-content { text-align: center; max-width: 90%; position: relative; }
         .modal img { max-height: 80vh; max-width: 100%; border-radius: 8px; }
         .link-btn { display: inline-block; background: #1da1f2; color: white; padding: 10px 20px; margin-top: 15px; border-radius: 30px; text-decoration: none; font-weight: bold; }
+        .modal-close { position: absolute; top: -40px; right: 0; color: #fff; font-size: 2rem; cursor: pointer; }
+
         .theme-switch { position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
-        
-        .loading { text-align: center; padding: 50px; }
+        .loading { text-align: center; padding: 50px; color: #666; }
+        #scrollTopBtn { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #fff; border: none; padding: 15px; border-radius: 50%; cursor: pointer; display: none; z-index: 90; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
@@ -52,87 +69,69 @@
     <button class="theme-switch" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
     <div class="tools">
         <input type="text" id="searchInput" placeholder="検索: うるは、○○さん..." oninput="handleSearch()">
-        
-        <button onclick="setSort('new')" id="btn-new" class="active">
-            <i class="fas fa-sort-amount-down"></i> 新着順
-        </button>
-        <button onclick="setSort('original')" id="btn-original">
-            <i class="fas fa-sort-numeric-down"></i> 登録順
-        </button>
-        <button onclick="setSort('shuffle')" id="btn-shuffle">
-            <i class="fas fa-random"></i> シャッフル
-        </button>
+        <button onclick="setSort('new')" id="btn-new" class="active"><i class="fas fa-sort-amount-down"></i> 新着順</button>
+        <button onclick="setSort('original')" id="btn-original"><i class="fas fa-sort-numeric-down"></i> 登録順</button>
+        <button onclick="setSort('shuffle')" id="btn-shuffle"><i class="fas fa-random"></i> シャッフル</button>
     </div>
 </header>
 
 <nav>
     <button onclick="setMode('member')" class="view-btn active" id="nav-member">メンバー別</button>
     <button onclick="setMode('cosplayer')" class="view-btn" id="nav-cosplayer">レイヤー別</button>
+    <button onclick="setMode('favorite')" class="view-btn" id="nav-favorite">💖 お気に入り</button>
 </nav>
 
 <main id="app">
     <div class="loading">読み込み中...</div>
 </main>
 
+<button id="scrollTopBtn" onclick="scrollToTop()"><i class="fas fa-arrow-up"></i></button>
+
 <div id="modal" class="modal" onclick="closeModal(event)">
     <div class="modal-content">
+        <span class="modal-close">&times;</span>
         <img id="m-img">
         <div style="margin-top:10px;"><a id="m-link" href="#" target="_blank" class="link-btn">元の投稿を見る</a></div>
     </div>
 </div>
 
 <script>
-    // ▼▼▼ 指定されたCSV URL ▼▼▼
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    let allData = [];      // 全データ（元の並び順）
-    let filteredData = []; // 表示用データ
+    let allData = [];
+    let filteredData = [];
     let currentMode = 'member';
-    let currentSort = 'new'; // 初期値は新着順
+    let currentSort = 'new';
+    let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
 
-    // 起動時にCSVを読み込む
     window.onload = function() {
         Papa.parse(CSV_URL, {
-            download: true,
-            header: true, // 1行目を見出しとして扱う
+            download: true, header: true,
             complete: function(results) {
-                // 空白行などを除去して整形し、ID（元の順番）を付与
                 allData = results.data
                     .filter(item => item.member && item.image)
-                    .map((item, index) => {
-                        item._originalIndex = index; // 元の順番を記憶
-                        return item;
-                    });
-                
-                // 初期表示（検索などのフィルタ用データにコピー）
+                    .map((item, index) => { item._originalIndex = index; return item; });
                 filteredData = [...allData];
-                
-                // 初期ソート適用（新着順）
                 applySort();
             },
-            error: function(err) {
-                document.getElementById('app').innerHTML = '<p style="text-align:center; color:red;">読み込み失敗: CSVのURL設定を確認してください。</p>';
-                console.error(err);
-            }
+            error: function() { document.getElementById('app').innerHTML = '<p style="text-align:center;">読み込み失敗</p>'; }
         });
     };
 
     function render() {
         const app = document.getElementById('app');
         app.innerHTML = '';
+        let displayData = filteredData;
+        if (currentMode === 'favorite') displayData = allData.filter(item => favorites.includes(item.image));
 
-        // グループ化
         const groups = {};
-        const key = currentMode; // 'member' or 'cosplayer'
-        
-        filteredData.forEach(item => {
-            const groupName = item[key] || "未分類";
+        const key = (currentMode === 'favorite') ? 'dummy' : currentMode;
+        displayData.forEach(item => {
+            const groupName = (currentMode === 'favorite') ? "お気に入り一覧" : (item[key] || "未分類");
             if (!groups[groupName]) groups[groupName] = [];
             groups[groupName].push(item);
         });
 
-        // データがない場合
         if(Object.keys(groups).length === 0) {
             app.innerHTML = '<p style="text-align:center; margin-top:50px; color:#666;">データが見つかりません</p>';
             return;
@@ -143,18 +142,17 @@
             section.innerHTML = `<div class="section-title">■ ${name}</div>`;
             const grid = document.createElement('div');
             grid.className = 'grid';
-            
             groups[name].forEach(item => {
+                const isFav = favorites.includes(item.image);
                 const card = document.createElement('div');
                 card.className = 'card';
-                card.onclick = () => openModal(item.image, item.link);
-                
-                // エスケープ処理
                 const safeMember = (item.member || "").replace(/"/g, '&quot;');
                 const safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
-
                 card.innerHTML = `
-                    <div class="card-img-box">
+                    <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav(event, '${item.image}')">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                    <div class="card-img-box" onclick="openModal('${item.image}', '${item.link}')">
                         <img src="${item.image}" loading="lazy" onerror="this.src='https://placehold.jp/300x300.png?text=No+Image'">
                     </div>
                     <div class="info">
@@ -169,47 +167,37 @@
         });
     }
 
-    // 検索機能
+    function toggleFav(e, imgUrl) {
+        e.stopPropagation();
+        if (favorites.includes(imgUrl)) favorites = favorites.filter(url => url !== imgUrl);
+        else favorites.push(imgUrl);
+        localStorage.setItem('vspo_favs', JSON.stringify(favorites));
+        if (e.target.tagName === 'BUTTON') e.target.classList.toggle('active');
+        else e.target.closest('button').classList.toggle('active');
+        if (currentMode === 'favorite') render();
+    }
+
     function handleSearch() {
         const keyword = document.getElementById('searchInput').value.toLowerCase();
-        
-        // 元データから抽出
-        filteredData = allData.filter(item => {
-            const text = (item.member + item.cosplayer).toLowerCase();
-            return text.includes(keyword);
-        });
-        
-        // ソートを再適用
+        filteredData = allData.filter(item => (item.member + item.cosplayer).toLowerCase().includes(keyword));
         applySort();
     }
 
-    // ソートボタン切り替え
     function setSort(sortType) {
         currentSort = sortType;
         document.querySelectorAll('header button').forEach(b => b.classList.remove('active'));
-        // ボタンがあればアクティブ化（検索窓等は除外）
         const btn = document.getElementById('btn-' + sortType);
         if(btn) btn.classList.add('active');
-        
         applySort();
     }
 
-    // ソート実行ロジック
     function applySort() {
-        if (currentSort === 'new') {
-            // 新着順：元のインデックスの降順（大きい順）
-            filteredData.sort((a, b) => b._originalIndex - a._originalIndex);
-        } else if (currentSort === 'original') {
-            // 登録順：元のインデックスの昇順（小さい順）
-            filteredData.sort((a, b) => a._originalIndex - b._originalIndex);
-        } else if (currentSort === 'shuffle') {
-            // シャッフル
-            filteredData.sort(() => Math.random() - 0.5);
-        }
+        if (currentSort === 'new') filteredData.sort((a, b) => b._originalIndex - a._originalIndex);
+        else if (currentSort === 'original') filteredData.sort((a, b) => a._originalIndex - b._originalIndex);
+        else if (currentSort === 'shuffle') filteredData.sort(() => Math.random() - 0.5);
         render();
     }
 
-    // 表示モード切り替え
     function setMode(mode) {
         currentMode = mode;
         document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
@@ -217,18 +205,21 @@
         render();
     }
 
-    // モーダル・テーマ
     function openModal(img, link) {
         document.getElementById('m-img').src = img;
         document.getElementById('m-link').href = link;
         document.getElementById('modal').classList.add('open');
     }
     function closeModal(e) {
-        if(e.target.id === 'modal') document.getElementById('modal').classList.remove('open');
+        if(e.target.id === 'modal' || e.target.classList.contains('modal-close')) document.getElementById('modal').classList.remove('open');
     }
-    function toggleTheme() {
-        document.body.classList.toggle('dark-mode');
-    }
+    function toggleTheme() { document.body.classList.toggle('dark-mode'); }
+    
+    window.onscroll = function() {
+        const btn = document.getElementById('scrollTopBtn');
+        if(btn) btn.style.display = (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? "block" : "none";
+    };
+    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
 </script>
 
 </body>
