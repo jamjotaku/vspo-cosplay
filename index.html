@@ -34,7 +34,6 @@
         .card img { width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
         .card:hover img { transform: scale(1.05); }
 
-        /* お気に入りボタン */
         .fav-btn {
             position: absolute; top: 10px; right: 10px;
             background: rgba(255,255,255,0.9); border-radius: 50%;
@@ -68,7 +67,7 @@
     <h1>👘 VSPO! Cosplay Archive</h1>
     <button class="theme-switch" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
     <div class="tools">
-        <input type="text" id="searchInput" placeholder="検索: うるは、○○さん..." oninput="handleSearch()">
+        <input type="text" id="searchInput" placeholder="検索: うるは、ちのせ、○○さん..." oninput="handleSearch()">
         <button onclick="setSort('new')" id="btn-new" class="active"><i class="fas fa-sort-amount-down"></i> 新着順</button>
         <button onclick="setSort('original')" id="btn-original"><i class="fas fa-sort-numeric-down"></i> 登録順</button>
         <button onclick="setSort('shuffle')" id="btn-shuffle"><i class="fas fa-random"></i> シャッフル</button>
@@ -98,6 +97,34 @@
 <script>
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 
+    // ▼▼▼ ひらがな対応リスト ▼▼▼
+    // ここにある名前はひらがなでも検索できるようになります
+    const memberReadings = {
+        "藍沢エマ": "あいざわえま",
+        "空澄セナ": "あすみせな",
+        "一ノ瀬うるは": "いちのせうるは",
+        "花芽すみれ": "かがすみれ",
+        "花芽なずな": "かがなずな",
+        "小雀とと": "こがらとと",
+        "胡桃のあ": "くるみのあ",
+        "橘ひなの": "たちばなひなの",
+        "英リサ": "はなぶさりさ",
+        "兎咲ミミ": "とさきみみ",
+        "神成きゅぴ": "かみなりきゅぴ",
+        "八雲べに": "やくもべに",
+        "如月れん": "きさらぎれん",
+        "紫宮るな": "しのみやるな",
+        "猫汰つな": "ねこたつな",
+        "白波らむね": "しらなみらむね",
+        "小森めと": "こもりめと",
+        "夢野あかり": "ゆめのあかり",
+        "夜乃くろむ": "やのくろむ",
+        "紡木こかげ": "つむぎこかげ",
+        "千燈ゆうひ": "せんどうゆうひ",
+        "蝶屋はなび": "ちょうやはなび",
+        "甘結もか": "あまゆいもか"
+    };
+
     let allData = [];
     let filteredData = [];
     let currentMode = 'member';
@@ -110,7 +137,13 @@
             complete: function(results) {
                 allData = results.data
                     .filter(item => item.member && item.image)
-                    .map((item, index) => { item._originalIndex = index; return item; });
+                    .map((item, index) => {
+                        item._originalIndex = index;
+                        // ★検索用の文字列を裏で作る（名前 + よみがな + レイヤー名）
+                        const reading = memberReadings[item.member] || "";
+                        item._searchKey = (item.member + reading + item.cosplayer).toLowerCase();
+                        return item;
+                    });
                 filteredData = [...allData];
                 applySort();
             },
@@ -179,7 +212,10 @@
 
     function handleSearch() {
         const keyword = document.getElementById('searchInput').value.toLowerCase();
-        filteredData = allData.filter(item => (item.member + item.cosplayer).toLowerCase().includes(keyword));
+        // ★ _searchKey (漢字+ひらがな+レイヤー名) に対して検索を実行
+        filteredData = allData.filter(item => {
+            return item._searchKey.includes(keyword);
+        });
         applySort();
     }
 
