@@ -4,9 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ぶいすぽっ！コスプレアーカイブ</title>
+
     <meta property="og:title" content="ぶいすぽっ！コスプレアーカイブ" />
     <meta property="og:type" content="website" />
-    <meta property="og:description" content="ぶいすぽっ！メンバーのコスプレ画像を検索・閲覧できる非公式ファンサイトです。ひらがな検索・お気に入り機能対応！" />
+    <meta property="og:description" content="ぶいすぽっ！メンバーのコスプレ画像を検索・閲覧できる非公式ファンサイトです。" />
     
     <meta property="og:url" content="https://jamjotaku.github.io/vspo-cosplay/" />
 
@@ -14,17 +15,15 @@
 
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ぶいすぽっ！コスプレアーカイブ" />
-    <meta name="twitter:description" content="ぶいすぽっ！メンバーのコスプレ画像を検索・閲覧できる非公式ファンサイトです。ひらがな検索・お気に入り機能対応！" />
+    <meta name="twitter:description" content="ぶいすぽっ！メンバーのコスプレ画像を検索・閲覧できる非公式ファンサイトです。" />
     <meta name="twitter:image" content="https://jamjotaku.github.io/vspo-cosplay/ogp.png" />
-    ```
-
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* --- デザイン設定 --- */
-        :root { --primary: #5c6ac4; --bg: #f4f6f8; --card-bg: #fff; --text: #333; --heart: #e2264d; }
-        body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; }
+        :root { --primary: #5c6ac4; --bg: #f4f6f8; --card-bg: #fff; --text: #333; --heart: #e2264d; --footer-bg: #eaeaea; --footer-text: #666; }
+        body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --footer-bg: #111; --footer-text: #888; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; }
         
         header { background: var(--primary); color: #fff; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .tools { margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
@@ -37,7 +36,7 @@
         .view-btn { background: var(--card-bg); color: var(--primary); border: 1px solid var(--primary); padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
         .view-btn.active { background: var(--primary); color: #fff; }
 
-        main { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        main { max-width: 1200px; margin: 0 auto; padding: 20px; flex: 1; width: 100%; box-sizing: border-box; }
         .section-title { border-bottom: 2px solid #ddd; margin: 40px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 20px; }
         
@@ -62,6 +61,15 @@
         .info { padding: 12px; }
         .tag { background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; display: inline-block; margin-bottom: 5px; }
         .name { font-weight: bold; font-size: 0.95rem; line-height: 1.4; }
+
+        /* フッター */
+        footer {
+            background: var(--footer-bg); color: var(--footer-text);
+            text-align: center; padding: 30px 20px; margin-top: auto; font-size: 0.85rem;
+        }
+        footer a { color: var(--primary); text-decoration: none; }
+        footer a:hover { text-decoration: underline; }
+        .footer-links { margin-bottom: 15px; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         .modal.open { display: flex; }
@@ -98,6 +106,18 @@
     <div class="loading">読み込み中...</div>
 </main>
 
+<footer>
+    <div class="footer-links">
+        <a href="#" id="delete-request-link" target="_blank">
+            <i class="far fa-envelope"></i> 削除依頼・お問い合わせ
+        </a>
+    </div>
+    <p>
+        本サイトは非公式ファンサイトです。<br>
+        画像の著作権・肖像権は各権利所有者に帰属します。
+    </p>
+</footer>
+
 <button id="scrollTopBtn" onclick="scrollToTop()"><i class="fas fa-arrow-up"></i></button>
 
 <div id="modal" class="modal" onclick="closeModal(event)">
@@ -109,34 +129,26 @@
 </div>
 
 <script>
+    // CSV URL (ユーザー指定のもの)
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 
-    // ▼▼▼ ひらがな対応リスト ▼▼▼
-    // ここにある名前はひらがなでも検索できるようになります
+    // ▼▼▼ GoogleフォームのURLをここに貼ってください ▼▼▼
+    const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog";
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+    // リンクにURLをセット
+    document.getElementById('delete-request-link').href = FORM_URL;
+
+    // ひらがな対応リスト
     const memberReadings = {
-        "藍沢エマ": "あいざわえま",
-        "空澄セナ": "あすみせな",
-        "一ノ瀬うるは": "いちのせうるは",
-        "花芽すみれ": "かがすみれ",
-        "花芽なずな": "かがなずな",
-        "小雀とと": "こがらとと",
-        "胡桃のあ": "くるみのあ",
-        "橘ひなの": "たちばなひなの",
-        "英リサ": "はなぶさりさ",
-        "兎咲ミミ": "とさきみみ",
-        "神成きゅぴ": "かみなりきゅぴ",
-        "八雲べに": "やくもべに",
-        "如月れん": "きさらぎれん",
-        "紫宮るな": "しのみやるな",
-        "猫汰つな": "ねこたつな",
-        "白波らむね": "しらなみらむね",
-        "小森めと": "こもりめと",
-        "夢野あかり": "ゆめのあかり",
-        "夜乃くろむ": "やのくろむ",
-        "紡木こかげ": "つむぎこかげ",
-        "千燈ゆうひ": "せんどうゆうひ",
-        "蝶屋はなび": "ちょうやはなび",
-        "甘結もか": "あまゆいもか"
+        "藍沢エマ": "あいざわえま", "空澄セナ": "あすみせな", "一ノ瀬うるは": "いちのせうるは",
+        "花芽すみれ": "かがすみれ", "花芽なずな": "かがなずな", "小雀とと": "こがらとと",
+        "胡桃のあ": "くるみのあ", "橘ひなの": "たちばなひなの", "英リサ": "はなぶさりさ",
+        "兎咲ミミ": "とさきみみ", "神成きゅぴ": "かみなりきゅぴ", "八雲べに": "やくもべに",
+        "如月れん": "きさらぎれん", "紫宮るな": "しのみやるな", "猫汰つな": "ねこたつな",
+        "白波らむね": "しらなみらむね", "小森めと": "こもりめと", "夢野あかり": "ゆめのあかり",
+        "夜乃くろむ": "やのくろむ", "紡木こかげ": "つむぎこかげ", "千燈ゆうひ": "せんどうゆうひ",
+        "蝶屋はなび": "ちょうやはなび", "甘結もか": "あまゆいもか"
     };
 
     let allData = [];
@@ -153,7 +165,7 @@
                     .filter(item => item.member && item.image)
                     .map((item, index) => {
                         item._originalIndex = index;
-                        // ★検索用の文字列を裏で作る（名前 + よみがな + レイヤー名）
+                        // ひらがな検索キー作成
                         const reading = memberReadings[item.member] || "";
                         item._searchKey = (item.member + reading + item.cosplayer).toLowerCase();
                         return item;
@@ -226,10 +238,7 @@
 
     function handleSearch() {
         const keyword = document.getElementById('searchInput').value.toLowerCase();
-        // ★ _searchKey (漢字+ひらがな+レイヤー名) に対して検索を実行
-        filteredData = allData.filter(item => {
-            return item._searchKey.includes(keyword);
-        });
+        filteredData = allData.filter(item => item._searchKey.includes(keyword));
         applySort();
     }
 
@@ -274,6 +283,3 @@
 
 </body>
 </html>
-
-
-
