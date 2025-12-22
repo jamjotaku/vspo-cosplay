@@ -10,7 +10,11 @@
     <meta property="og:description" content="ぶいすぽっ！メンバーのコスプレ画像を検索・閲覧できる非公式ファンサイトです。" />
     <meta property="og:url" content="https://jamjotaku.github.io/vspo-cosplay/" />
     <meta property="og:image" content="https://jamjotaku.github.io/vspo-cosplay/ogp.png" />
+    
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="ぶいすぽっ！コスプレアーカイブ" />
+    <meta name="twitter:description" content="ぶいすぽっ！メンバーのコスプレ画像を検索・閲覧できる非公式ファンサイトです。" />
+    <meta name="twitter:image" content="https://jamjotaku.github.io/vspo-cosplay/ogp.png" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
@@ -21,8 +25,8 @@
         
         header { background: var(--primary); color: #fff; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .header-controls { position: absolute; top: 20px; right: 20px; display: flex; gap: 15px; align-items: center; }
-        .icon-btn { background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; text-decoration: none; transition: 0.2s; }
-        .icon-btn:hover { opacity: 0.7; transform: scale(1.1); }
+        .icon-btn { background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; text-decoration: none; transition: 0.2s; opacity: 1 !important; pointer-events: auto !important; }
+        .icon-btn:hover { opacity: 0.7 !important; transform: scale(1.1); }
         
         .tools { margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
         input { padding: 10px; border-radius: 20px; border: none; min-width: 250px; outline: none; }
@@ -110,27 +114,18 @@
 </div>
 
 <script>
-    // CSV URL
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 
-    // ▼▼▼ 【注意】URLは必ずダブルクォーテーション " " で囲ってください！ ▼▼▼
+    // ▼▼▼ ご指定のGoogleフォームURL（設定済み） ▼▼▼
     const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog";
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-    // リンクにURLをセット（安全装置付き）
-    try {
-        if(FORM_URL && FORM_URL !== "https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog") {
-            document.getElementById('contact-link').href = FORM_URL;
-        } else {
-            // URLが未設定の場合はボタンを押せないようにする（誤作動防止）
-            document.getElementById('contact-link').style.opacity = "0.5";
-            document.getElementById('contact-link').style.pointerEvents = "none";
-        }
-    } catch(e) {
-        console.error("URL設定エラー:", e);
+    // リンクを適用
+    const contactLink = document.getElementById('contact-link');
+    if (FORM_URL) {
+        contactLink.href = FORM_URL;
     }
 
-    // ひらがな対応リスト
     const memberReadings = {
         "藍沢エマ": "あいざわえま", "空澄セナ": "あすみせな", "一ノ瀬うるは": "いちのせうるは",
         "花芽すみれ": "かがすみれ", "花芽なずな": "かがなずな", "小雀とと": "こがらとと",
