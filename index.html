@@ -8,11 +8,8 @@
     <meta property="og:title" content="ぶいすぽっ！コスプレアーカイブ" />
     <meta property="og:type" content="website" />
     <meta property="og:description" content="ぶいすぽっ！メンバーのコスプレ画像を検索・閲覧できる非公式ファンサイトです。" />
-    
     <meta property="og:url" content="https://jamjotaku.github.io/vspo-cosplay/" />
-
     <meta property="og:image" content="https://jamjotaku.github.io/vspo-cosplay/ogp.png" />
-
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ぶいすぽっ！コスプレアーカイブ" />
     <meta name="twitter:description" content="ぶいすぽっ！メンバーのコスプレ画像を検索・閲覧できる非公式ファンサイトです。" />
@@ -25,7 +22,15 @@
         body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --footer-bg: #111; --footer-text: #888; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; }
         
+        /* ヘッダー周り */
         header { background: var(--primary); color: #fff; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; }
+
+        /* 右上のアイコン群 */
+        .header-controls { position: absolute; top: 20px; right: 20px; display: flex; gap: 15px; align-items: center; }
+        .icon-btn { background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; text-decoration: none; transition: 0.2s; }
+        .icon-btn:hover { opacity: 0.7; transform: scale(1.1); }
+
         .tools { margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
         input { padding: 10px; border-radius: 20px; border: none; min-width: 250px; outline: none; }
         button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
@@ -67,9 +72,6 @@
             background: var(--footer-bg); color: var(--footer-text);
             text-align: center; padding: 30px 20px; margin-top: auto; font-size: 0.85rem;
         }
-        footer a { color: var(--primary); text-decoration: none; }
-        footer a:hover { text-decoration: underline; }
-        .footer-links { margin-bottom: 15px; }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         .modal.open { display: flex; }
@@ -78,7 +80,6 @@
         .link-btn { display: inline-block; background: #1da1f2; color: white; padding: 10px 20px; margin-top: 15px; border-radius: 30px; text-decoration: none; font-weight: bold; }
         .modal-close { position: absolute; top: -40px; right: 0; color: #fff; font-size: 2rem; cursor: pointer; }
 
-        .theme-switch { position: absolute; top: 20px; right: 20px; background: none; border: none; color: white; font-size: 1.2rem; cursor: pointer; }
         .loading { text-align: center; padding: 50px; color: #666; }
         #scrollTopBtn { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #fff; border: none; padding: 15px; border-radius: 50%; cursor: pointer; display: none; z-index: 90; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
     </style>
@@ -87,7 +88,15 @@
 
 <header>
     <h1>👘 VSPO! Cosplay Archive</h1>
-    <button class="theme-switch" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+    
+    <div class="header-controls">
+        <a id="contact-link" href="#" target="_blank" class="icon-btn" title="削除依頼・お問い合わせ">
+            <i class="far fa-envelope"></i>
+        </a>
+        <button class="icon-btn" onclick="toggleTheme()" title="テーマ切り替え">
+            <i class="fas fa-moon"></i>
+        </button>
+    </div>
     <div class="tools">
         <input type="text" id="searchInput" placeholder="検索: うるは、ちのせ、○○さん..." oninput="handleSearch()">
         <button onclick="setSort('new')" id="btn-new" class="active"><i class="fas fa-sort-amount-down"></i> 新着順</button>
@@ -107,11 +116,6 @@
 </main>
 
 <footer>
-    <div class="footer-links">
-        <a href="#" id="delete-request-link" target="_blank">
-            <i class="far fa-envelope"></i> 削除依頼・お問い合わせ
-        </a>
-    </div>
     <p>
         本サイトは非公式ファンサイトです。<br>
         画像の著作権・肖像権は各権利所有者に帰属します。
@@ -129,7 +133,7 @@
 </div>
 
 <script>
-    // CSV URL (ユーザー指定のもの)
+    // CSV URL
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 
     // ▼▼▼ GoogleフォームのURLをここに貼ってください ▼▼▼
@@ -137,7 +141,7 @@
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     // リンクにURLをセット
-    document.getElementById('delete-request-link').href = FORM_URL;
+    document.getElementById('contact-link').href = FORM_URL;
 
     // ひらがな対応リスト
     const memberReadings = {
@@ -165,7 +169,6 @@
                     .filter(item => item.member && item.image)
                     .map((item, index) => {
                         item._originalIndex = index;
-                        // ひらがな検索キー作成
                         const reading = memberReadings[item.member] || "";
                         item._searchKey = (item.member + reading + item.cosplayer).toLowerCase();
                         return item;
@@ -176,110 +179,3 @@
             error: function() { document.getElementById('app').innerHTML = '<p style="text-align:center;">読み込み失敗</p>'; }
         });
     };
-
-    function render() {
-        const app = document.getElementById('app');
-        app.innerHTML = '';
-        let displayData = filteredData;
-        if (currentMode === 'favorite') displayData = allData.filter(item => favorites.includes(item.image));
-
-        const groups = {};
-        const key = (currentMode === 'favorite') ? 'dummy' : currentMode;
-        displayData.forEach(item => {
-            const groupName = (currentMode === 'favorite') ? "お気に入り一覧" : (item[key] || "未分類");
-            if (!groups[groupName]) groups[groupName] = [];
-            groups[groupName].push(item);
-        });
-
-        if(Object.keys(groups).length === 0) {
-            app.innerHTML = '<p style="text-align:center; margin-top:50px; color:#666;">データが見つかりません</p>';
-            return;
-        }
-
-        Object.keys(groups).forEach(name => {
-            const section = document.createElement('div');
-            section.innerHTML = `<div class="section-title">■ ${name}</div>`;
-            const grid = document.createElement('div');
-            grid.className = 'grid';
-            groups[name].forEach(item => {
-                const isFav = favorites.includes(item.image);
-                const card = document.createElement('div');
-                card.className = 'card';
-                const safeMember = (item.member || "").replace(/"/g, '&quot;');
-                const safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
-                card.innerHTML = `
-                    <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav(event, '${item.image}')">
-                        <i class="fas fa-heart"></i>
-                    </button>
-                    <div class="card-img-box" onclick="openModal('${item.image}', '${item.link}')">
-                        <img src="${item.image}" loading="lazy" onerror="this.src='https://placehold.jp/300x300.png?text=No+Image'">
-                    </div>
-                    <div class="info">
-                        <span class="tag">${safeMember}</span>
-                        <div class="name">${safeCos}</div>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-            section.appendChild(grid);
-            app.appendChild(section);
-        });
-    }
-
-    function toggleFav(e, imgUrl) {
-        e.stopPropagation();
-        if (favorites.includes(imgUrl)) favorites = favorites.filter(url => url !== imgUrl);
-        else favorites.push(imgUrl);
-        localStorage.setItem('vspo_favs', JSON.stringify(favorites));
-        if (e.target.tagName === 'BUTTON') e.target.classList.toggle('active');
-        else e.target.closest('button').classList.toggle('active');
-        if (currentMode === 'favorite') render();
-    }
-
-    function handleSearch() {
-        const keyword = document.getElementById('searchInput').value.toLowerCase();
-        filteredData = allData.filter(item => item._searchKey.includes(keyword));
-        applySort();
-    }
-
-    function setSort(sortType) {
-        currentSort = sortType;
-        document.querySelectorAll('header button').forEach(b => b.classList.remove('active'));
-        const btn = document.getElementById('btn-' + sortType);
-        if(btn) btn.classList.add('active');
-        applySort();
-    }
-
-    function applySort() {
-        if (currentSort === 'new') filteredData.sort((a, b) => b._originalIndex - a._originalIndex);
-        else if (currentSort === 'original') filteredData.sort((a, b) => a._originalIndex - b._originalIndex);
-        else if (currentSort === 'shuffle') filteredData.sort(() => Math.random() - 0.5);
-        render();
-    }
-
-    function setMode(mode) {
-        currentMode = mode;
-        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('nav-' + mode).classList.add('active');
-        render();
-    }
-
-    function openModal(img, link) {
-        document.getElementById('m-img').src = img;
-        document.getElementById('m-link').href = link;
-        document.getElementById('modal').classList.add('open');
-    }
-    function closeModal(e) {
-        if(e.target.id === 'modal' || e.target.classList.contains('modal-close')) document.getElementById('modal').classList.remove('open');
-    }
-    function toggleTheme() { document.body.classList.toggle('dark-mode'); }
-    
-    window.onscroll = function() {
-        const btn = document.getElementById('scrollTopBtn');
-        if(btn) btn.style.display = (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? "block" : "none";
-    };
-    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
-</script>
-
-</body>
-</html>
