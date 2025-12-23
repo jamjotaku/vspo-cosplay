@@ -10,7 +10,6 @@
     <meta property="og:description" content="ぶいすぽっ！メンバーのコスプレ画像を検索・閲覧できる非公式ファンサイトです。" />
     <meta property="og:url" content="https://jamjotaku.github.io/vspo-cosplay/" />
     <meta property="og:image" content="https://jamjotaku.github.io/vspo-cosplay/ogp.png" />
-    
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="ぶいすぽっ！コスプレアーカイブ" />
     <meta name="twitter:description" content="ぶいすぽっ！メンバーのコスプレ画像を検索・閲覧できる非公式ファンサイトです。" />
@@ -56,14 +55,29 @@
         .name { font-weight: bold; font-size: 0.95rem; line-height: 1.4; }
         footer { background: var(--footer-bg); color: var(--footer-text); text-align: center; padding: 30px 20px; margin-top: auto; font-size: 0.85rem; }
 
+        /* モーダル（スライドショー対応） */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 1000; justify-content: center; align-items: center; }
         .modal.open { display: flex; }
-        .modal-content { text-align: center; max-width: 90%; position: relative; }
-        .modal img { max-height: 80vh; max-width: 100%; border-radius: 8px; }
+        .modal-content { text-align: center; max-width: 90%; position: relative; width: 100%; }
+        .modal img { max-height: 80vh; max-width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
         .link-btn { display: inline-block; background: #1da1f2; color: white; padding: 10px 20px; margin-top: 15px; border-radius: 30px; text-decoration: none; font-weight: bold; }
-        .modal-close { position: absolute; top: -40px; right: 0; color: #fff; font-size: 2rem; cursor: pointer; }
+        .modal-close { position: absolute; top: -40px; right: 20px; color: #fff; font-size: 2rem; cursor: pointer; }
+        
+        /* スライドショーボタン */
+        .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: #fff; border: none; padding: 20px; cursor: pointer; font-size: 1.5rem; border-radius: 50%; transition: 0.3s; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
+        .slide-btn:hover { background: rgba(255,255,255,0.2); }
+        .prev-btn { left: 20px; }
+        .next-btn { right: 20px; }
+
         .loading { text-align: center; padding: 50px; color: #666; }
         #scrollTopBtn { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #fff; border: none; padding: 15px; border-radius: 50%; cursor: pointer; display: none; z-index: 90; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+
+        /* スマホ用調整 */
+        @media (max-width: 600px) {
+            .slide-btn { padding: 10px; width: 40px; height: 40px; font-size: 1rem; }
+            .prev-btn { left: 5px; }
+            .next-btn { right: 5px; }
+        }
     </style>
 </head>
 <body>
@@ -106,8 +120,12 @@
 <button id="scrollTopBtn" onclick="scrollToTop()"><i class="fas fa-arrow-up"></i></button>
 
 <div id="modal" class="modal" onclick="closeModal(event)">
-    <div class="modal-content">
-        <span class="modal-close">&times;</span>
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="modal-close" onclick="closeModal(event)">&times;</span>
+        
+        <button class="slide-btn prev-btn" onclick="changeImage(-1)"><i class="fas fa-chevron-left"></i></button>
+        <button class="slide-btn next-btn" onclick="changeImage(1)"><i class="fas fa-chevron-right"></i></button>
+
         <img id="m-img">
         <div style="margin-top:10px;"><a id="m-link" href="#" target="_blank" class="link-btn">元の投稿を見る</a></div>
     </div>
@@ -115,10 +133,7 @@
 
 <script>
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
-
-    // ▼▼▼ ご指定のGoogleフォームURL（設定済み） ▼▼▼
     const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog";
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     // リンクを適用
     const contactLink = document.getElementById('contact-link');
@@ -138,10 +153,11 @@
     };
 
     let allData = [];
-    let filteredData = [];
+    let filteredData = []; // 表示中のデータリスト（スライドショー用）
     let currentMode = 'member';
     let currentSort = 'new';
     let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
+    let currentImageIndex = 0; // スライドショー用の現在地
 
     window.onload = function() {
         Papa.parse(CSV_URL, {
@@ -162,15 +178,32 @@
         });
     };
 
+    // ★★★ スライドショーのコア機能 ★★★
+    // 画面に表示されているデータ群だけを使ってスライドショーリストを作ります
+    // 例：「うるは」で検索中なら、「うるは」の画像だけで次へ/前へ移動します
+    let slideshowList = [];
+
+    function prepareSlideshowList() {
+        // 現在表示されているカードのデータだけを集める
+        if (currentMode === 'favorite') {
+            slideshowList = allData.filter(item => favorites.includes(item.image));
+        } else {
+            slideshowList = filteredData;
+        }
+    }
+
     function render() {
         const app = document.getElementById('app');
         app.innerHTML = '';
-        let displayData = filteredData;
-        if (currentMode === 'favorite') displayData = allData.filter(item => favorites.includes(item.image));
+        
+        // 描画前にスライドショー用のリストを更新
+        prepareSlideshowList();
 
+        // 表示用データ作成（グループ化）
         const groups = {};
         const key = (currentMode === 'favorite') ? 'dummy' : currentMode;
-        displayData.forEach(item => {
+        
+        slideshowList.forEach(item => {
             const groupName = (currentMode === 'favorite') ? "お気に入り一覧" : (item[key] || "未分類");
             if (!groups[groupName]) groups[groupName] = [];
             groups[groupName].push(item);
@@ -192,11 +225,13 @@
                 card.className = 'card';
                 const safeMember = (item.member || "").replace(/"/g, '&quot;');
                 const safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
+                
+                // 画像クリック時に、その画像のURLを渡してモーダルを開く
                 card.innerHTML = `
                     <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav(event, '${item.image}')">
                         <i class="fas fa-heart"></i>
                     </button>
-                    <div class="card-img-box" onclick="openModal('${item.image}', '${item.link}')">
+                    <div class="card-img-box" onclick="openModal('${item.image}')">
                         <img src="${item.image}" loading="lazy" onerror="this.src='https://placehold.jp/300x300.png?text=No+Image'">
                     </div>
                     <div class="info">
@@ -249,14 +284,53 @@
         render();
     }
 
-    function openModal(img, link) {
-        document.getElementById('m-img').src = img;
-        document.getElementById('m-link').href = link;
+    // --- モーダル＆スライドショー制御 ---
+    function openModal(imgUrl) {
+        // クリックされた画像が、現在のリストの何番目かを探す
+        currentImageIndex = slideshowList.findIndex(item => item.image === imgUrl);
+        if(currentImageIndex === -1) currentImageIndex = 0;
+
+        updateModalContent();
         document.getElementById('modal').classList.add('open');
+        document.body.style.overflow = 'hidden'; // 背景スクロール禁止
     }
+
+    function updateModalContent() {
+        const item = slideshowList[currentImageIndex];
+        if(!item) return;
+
+        document.getElementById('m-img').src = item.image;
+        document.getElementById('m-link').href = item.link;
+    }
+
+    function changeImage(direction) {
+        currentImageIndex += direction;
+        
+        // 端まで行ったらループさせる
+        if (currentImageIndex < 0) currentImageIndex = slideshowList.length - 1;
+        if (currentImageIndex >= slideshowList.length) currentImageIndex = 0;
+
+        updateModalContent();
+    }
+
+    // キーボード操作対応
+    document.addEventListener('keydown', function(e) {
+        const modal = document.getElementById('modal');
+        if (!modal.classList.contains('open')) return;
+
+        if (e.key === 'ArrowLeft') changeImage(-1);
+        if (e.key === 'ArrowRight') changeImage(1);
+        if (e.key === 'Escape') closeModal({target: modal});
+    });
+
     function closeModal(e) {
-        if(e.target.id === 'modal' || e.target.classList.contains('modal-close')) document.getElementById('modal').classList.remove('open');
+        // 背景クリック or 閉じるボタン or ESCキー
+        if(e.target.id === 'modal' || e.target.classList.contains('modal-close')) {
+            document.getElementById('modal').classList.remove('open');
+            document.body.style.overflow = '';
+        }
     }
+
     function toggleTheme() { document.body.classList.toggle('dark-mode'); }
     
     window.onscroll = function() {
