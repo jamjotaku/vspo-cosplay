@@ -22,7 +22,7 @@
         body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --footer-bg: #111; --footer-text: #888; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; }
         
-        header { background: var(--primary); color: #fff; padding: 20px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        header { background: var(--primary); color: #fff; padding: 20px 20px 10px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
         .header-controls { position: absolute; top: 20px; right: 20px; display: flex; gap: 15px; align-items: center; }
         .icon-btn { background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; text-decoration: none; transition: 0.2s; opacity: 1 !important; pointer-events: auto !important; }
         .icon-btn:hover { opacity: 0.7 !important; transform: scale(1.1); }
@@ -32,33 +32,47 @@
         button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
         button:hover { background: rgba(255,255,255,0.4); }
         button.active { background: #fff; color: var(--primary); font-weight: bold; }
+
+        /* 横スクロールメンバーバー */
+        .member-scroll-container {
+            overflow-x: auto; white-space: nowrap; padding: 10px 0 5px; margin-top: 10px;
+            -webkit-overflow-scrolling: touch; scrollbar-width: none;
+        }
+        .member-scroll-container::-webkit-scrollbar { display: none; }
+        .member-chip {
+            display: inline-block; background: rgba(255,255,255,0.2); color: #fff;
+            padding: 8px 14px; border-radius: 25px; margin-right: 8px; cursor: pointer;
+            font-size: 1.2rem;
+            line-height: 1;
+            transition: 0.2s; border: 1px solid transparent;
+            min-width: 30px; text-align: center; vertical-align: middle;
+        }
+        .member-chip:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); }
+        .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; border-color: #fff; transform: scale(1.1); }
+        .member-chip.text-chip { font-size: 0.9rem; padding: 10px 16px; }
         
-        nav { display: flex; justify-content: center; gap: 10px; padding: 20px; flex-wrap: wrap; }
+        nav { display: flex; justify-content: center; gap: 10px; padding: 15px; flex-wrap: wrap; background: var(--bg); }
         .view-btn { background: var(--card-bg); color: var(--primary); border: 1px solid var(--primary); padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
         .view-btn.active { background: var(--primary); color: #fff; }
 
-        main { max-width: 1200px; margin: 0 auto; padding: 20px; flex: 1; width: 100%; box-sizing: border-box; }
-        .section-title { border-bottom: 2px solid #ddd; margin: 40px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
+        main { max-width: 1200px; margin: 0 auto; padding: 10px 20px; flex: 1; width: 100%; box-sizing: border-box; }
+        .section-title { border-bottom: 2px solid #ddd; margin: 30px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
         
-        /* ★★★ Pinterest風レイアウト（Masonry） ★★★ */
-        .grid {
-            column-count: 4; /* PCは4列 */
-            column-gap: 15px;
-        }
-        @media (max-width: 900px) { .grid { column-count: 3; } } /* タブレット3列 */
-        @media (max-width: 600px) { .grid { column-count: 2; } } /* スマホ2列 */
+        /* Pinterest風レイアウト */
+        .grid { column-count: 4; column-gap: 15px; }
+        @media (max-width: 900px) { .grid { column-count: 3; } }
+        @media (max-width: 600px) { .grid { column-count: 2; } }
 
         .card {
             background: var(--card-bg); border-radius: 12px; overflow: hidden;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative;
-            margin-bottom: 15px; /* 下の隙間 */
-            break-inside: avoid; /* 途中で切れないようにする */
-            transition: transform 0.2s;
+            margin-bottom: 15px; break-inside: avoid; transition: transform 0.2s;
+            opacity: 0; animation: fadeIn 0.6s ease forwards;
         }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         .card:hover { transform: translateY(-3px); }
-        
         .card-img-box { width: 100%; display: block; overflow: hidden; cursor: pointer; position: relative; }
-        /* 画像の高さを固定せず、自然な比率で表示 */
         .card img { width: 100%; height: auto; display: block; transition: 0.5s; }
         .card:hover img { transform: scale(1.05); }
 
@@ -74,30 +88,27 @@
         .modal.open { display: flex; }
         .modal-content { text-align: center; max-width: 95%; position: relative; width: 100%; max-height: 95vh; display: flex; flex-direction: column; align-items: center; }
         .modal img { max-height: 75vh; max-width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.5); object-fit: contain; }
-        
-        /* シェアボタン群 */
         .share-area { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
         .action-btn { padding: 10px 20px; border-radius: 30px; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 5px; border: none; cursor: pointer; color: white; transition: 0.3s; font-size: 0.9rem; }
-        .btn-twitter { background: #000; } /* Xは黒 */
-        .btn-twitter:hover { background: #333; transform: scale(1.05); }
-        .btn-link { background: #1da1f2; }
-        .btn-link:hover { background: #0c85d0; transform: scale(1.05); }
-        .btn-copy { background: #666; }
-        .btn-copy:hover { background: #444; transform: scale(1.05); }
+        .btn-twitter { background: #000; } .btn-twitter:hover { background: #333; transform: scale(1.05); }
+        .btn-link { background: #1da1f2; } .btn-link:hover { background: #0c85d0; transform: scale(1.05); }
+        .btn-copy { background: #666; } .btn-copy:hover { background: #444; transform: scale(1.05); }
 
         .modal-close { position: absolute; top: -40px; right: 20px; color: #fff; font-size: 2rem; cursor: pointer; }
         .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: #fff; border: none; padding: 20px; cursor: pointer; font-size: 1.5rem; border-radius: 50%; transition: 0.3s; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; z-index: 1001; }
         .slide-btn:hover { background: rgba(255,255,255,0.2); }
-        .prev-btn { left: 20px; }
-        .next-btn { right: 20px; }
-
+        .prev-btn { left: 20px; } .next-btn { right: 20px; }
         .loading { text-align: center; padding: 50px; color: #666; }
         #scrollTopBtn { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #fff; border: none; padding: 15px; border-radius: 50%; cursor: pointer; display: none; z-index: 90; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
+        #toast {
+            visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 16px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.5s, bottom 0.5s;
+        }
+        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
         @media (max-width: 600px) {
             .slide-btn { padding: 10px; width: 40px; height: 40px; font-size: 1rem; }
-            .prev-btn { left: 5px; }
-            .next-btn { right: 5px; }
+            .prev-btn { left: 5px; } .next-btn { right: 5px; }
         }
     </style>
 </head>
@@ -113,12 +124,16 @@
             <i class="fas fa-moon"></i>
         </button>
     </div>
+    
     <div class="tools">
         <input type="text" id="searchInput" placeholder="検索: うるは、ちのせ、○○さん..." oninput="handleSearch()">
         <button onclick="setSort('new')" id="btn-new" class="active"><i class="fas fa-sort-amount-down"></i> 新着順</button>
         <button onclick="setSort('original')" id="btn-original"><i class="fas fa-sort-numeric-down"></i> 登録順</button>
         <button onclick="setSort('shuffle')" id="btn-shuffle"><i class="fas fa-random"></i> シャッフル</button>
     </div>
+
+    <div class="member-scroll-container" id="memberBar">
+        </div>
 </header>
 
 <nav>
@@ -140,15 +155,14 @@
 
 <button id="scrollTopBtn" onclick="scrollToTop()"><i class="fas fa-arrow-up"></i></button>
 
+<div id="toast">メッセージ</div>
+
 <div id="modal" class="modal" onclick="closeModal(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
         <span class="modal-close" onclick="closeModal(event)">&times;</span>
-        
         <button class="slide-btn prev-btn" onclick="changeImage(-1)"><i class="fas fa-chevron-left"></i></button>
         <button class="slide-btn next-btn" onclick="changeImage(1)"><i class="fas fa-chevron-right"></i></button>
-
         <img id="m-img">
-        
         <div class="share-area">
             <button class="action-btn btn-twitter" onclick="shareToX()">
                 <i class="fab fa-x-twitter"></i> ポストする
@@ -166,7 +180,7 @@
 <script>
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 
-    // ▼▼▼ GoogleフォームURL（ここに書き換えてください！） ▼▼▼
+    // ▼▼▼ GoogleフォームURL（入力済み） ▼▼▼
     const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog";
     // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
@@ -184,6 +198,33 @@
         "蝶屋はなび": "ちょうやはなび", "甘結もか": "あまゆいもか"
     };
 
+    // ▼▼▼ 推しマーク設定リスト（完全版） ▼▼▼
+    const memberIcons = {
+        "一ノ瀬うるは": "🌠",
+        "胡桃のあ": "🧸♔",
+        "兎咲ミミ": "🐰🍭",
+        "花芽すみれ": "👾💤",
+        "花芽なずな": "🍣",
+        "小雀とと": "🔫🐥",
+        "空澄セナ": "🗝♠︎",
+        "橘ひなの": "🍫💘",
+        "英リサ": "💐",
+        "如月れん": "⏰",
+        "神成きゅぴ": "🌩",
+        "八雲べに": "💄💚",
+        "藍沢エマ": "🥞💫",
+        "紫宮るな": "☪🐾",
+        "猫汰つな": "🍒✨",
+        "白波らむね": "🐻‍❄️🏖",
+        "小森めと": "🪐",
+        "夢野あかり": "🍼",
+        "夜乃くろむ": "💀⛓",
+        "紡木こかげ": "📘💧",
+        "千燈ゆうひ": "🫠",
+        "蝶屋はなび": "🦋🎆",
+        "甘結もか": "🕹🔖"
+    };
+
     let allData = [];
     let filteredData = []; 
     let currentMode = 'member';
@@ -193,6 +234,8 @@
     let slideshowList = [];
 
     window.onload = function() {
+        generateMemberTags();
+
         Papa.parse(CSV_URL, {
             download: true, header: true,
             complete: function(results) {
@@ -210,6 +253,32 @@
             error: function() { document.getElementById('app').innerHTML = '<p style="text-align:center;">読み込み失敗</p>'; }
         });
     };
+
+    function generateMemberTags() {
+        const container = document.getElementById('memberBar');
+        container.innerHTML = `<span class="member-chip text-chip active" onclick="filterByMember('all', this)" title="全て表示">🏠</span>`;
+        
+        Object.keys(memberReadings).forEach(name => {
+            const label = memberIcons[name] || name;
+            container.innerHTML += `<span class="member-chip" onclick="filterByMember('${name}', this)" title="${name}">${label}</span>`;
+        });
+    }
+
+    function filterByMember(name, element) {
+        document.querySelectorAll('.member-chip').forEach(c => c.classList.remove('active'));
+        element.classList.add('active');
+
+        document.getElementById('searchInput').value = '';
+
+        if(name === 'all') {
+            filteredData = [...allData];
+        } else {
+            filteredData = allData.filter(item => item.member === name);
+        }
+        
+        setMode('member');
+        applySort();
+    }
 
     function prepareSlideshowList() {
         if (currentMode === 'favorite') {
@@ -271,15 +340,25 @@
 
     function toggleFav(e, imgUrl) {
         e.stopPropagation();
-        if (favorites.includes(imgUrl)) favorites = favorites.filter(url => url !== imgUrl);
-        else favorites.push(imgUrl);
+        if (favorites.includes(imgUrl)) {
+            favorites = favorites.filter(url => url !== imgUrl);
+            showToast("お気に入りから削除しました");
+        } else {
+            favorites.push(imgUrl);
+            showToast("お気に入りに追加しました！💖");
+        }
         localStorage.setItem('vspo_favs', JSON.stringify(favorites));
+        
         if (e.target.tagName === 'BUTTON') e.target.classList.toggle('active');
         else e.target.closest('button').classList.toggle('active');
+        
         if (currentMode === 'favorite') render();
     }
 
     function handleSearch() {
+        document.querySelectorAll('.member-chip').forEach(c => c.classList.remove('active'));
+        document.querySelector('.member-chip').classList.add('active'); 
+
         const keyword = document.getElementById('searchInput').value.toLowerCase();
         filteredData = allData.filter(item => item._searchKey.includes(keyword));
         applySort();
@@ -287,7 +366,7 @@
 
     function setSort(sortType) {
         currentSort = sortType;
-        document.querySelectorAll('header button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('header button:not(.icon-btn)').forEach(b => b.classList.remove('active'));
         const btn = document.getElementById('btn-' + sortType);
         if(btn) btn.classList.add('active');
         applySort();
@@ -307,7 +386,6 @@
         render();
     }
 
-    // --- モーダル＆スライドショー ---
     function openModal(imgUrl) {
         currentImageIndex = slideshowList.findIndex(item => item.image === imgUrl);
         if(currentImageIndex === -1) currentImageIndex = 0;
@@ -330,7 +408,6 @@
         updateModalContent();
     }
 
-    // --- シェア機能 ---
     function shareToX() {
         const item = slideshowList[currentImageIndex];
         const text = `${item.member} (${item.cosplayer}さん) のコスプレ！ #ぶいすぽっ`;
@@ -341,8 +418,15 @@
     function copyLink() {
         const item = slideshowList[currentImageIndex];
         navigator.clipboard.writeText(item.link).then(() => {
-            alert("元投稿のURLをコピーしました！");
+            showToast("リンクをコピーしました！📋");
         });
+    }
+
+    function showToast(message) {
+        const toast = document.getElementById("toast");
+        toast.innerText = message;
+        toast.className = "show";
+        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
     }
 
     document.addEventListener('keydown', function(e) {
