@@ -9,7 +9,12 @@
       gtag('config', 'G-QE8MD8LCQ0');
     </script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#5c6ac4">
+
     <title>ぶいすぽっ！コスプレアーカイブ</title>
 
     <meta property="og:title" content="ぶいすぽっ！コスプレアーカイブ" />
@@ -27,18 +32,23 @@
         /* --- デザイン設定 --- */
         :root { --primary: #5c6ac4; --bg: #f4f6f8; --card-bg: #fff; --text: #333; --heart: #e2264d; --footer-bg: #eaeaea; --footer-text: #666; }
         body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --footer-bg: #111; --footer-text: #888; }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; -webkit-tap-highlight-color: transparent; }
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; -webkit-tap-highlight-color: transparent; padding-bottom: env(safe-area-inset-bottom); }
         
-        header { background: var(--primary); color: #fff; padding: 20px 20px 10px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .header-controls { position: absolute; top: 20px; right: 20px; display: flex; gap: 15px; align-items: center; }
+        header { background: var(--primary); color: #fff; padding: 20px 20px 10px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); padding-top: max(20px, env(safe-area-inset-top)); }
+        .header-controls { position: absolute; top: max(20px, env(safe-area-inset-top)); right: 20px; display: flex; gap: 15px; align-items: center; }
         .icon-btn { background: none; border: none; color: #fff; font-size: 1.3rem; cursor: pointer; text-decoration: none; transition: 0.2s; opacity: 1 !important; pointer-events: auto !important; }
         .icon-btn:hover { opacity: 0.7 !important; transform: scale(1.1); }
         
         .title-area h1 { margin: 0; font-size: 1.5rem; }
         .total-count { font-size: 0.8rem; opacity: 0.9; margin-top: 5px; display: block; font-weight: bold; }
 
-        .tools { margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-        input { padding: 10px; border-radius: 20px; border: none; min-width: 250px; outline: none; }
+        .tools { margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; position: relative; }
+        input { padding: 10px 40px 10px 15px; border-radius: 20px; border: none; min-width: 250px; outline: none; transition: 0.3s; }
+        input:focus { box-shadow: 0 0 0 3px rgba(255,255,255,0.3); transform: scale(1.02); }
+        /* PC用ショートカットヒント */
+        .shortcut-hint { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #999; font-size: 0.8rem; background: #eee; padding: 2px 6px; border-radius: 4px; pointer-events: none; display: none; }
+        @media (hover: hover) { .shortcut-hint { display: block; } } /* マウスがあるデバイスのみ表示 */
+
         button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
         button:hover { background: rgba(255,255,255,0.4); }
         button.active { background: #fff; color: var(--primary); font-weight: bold; }
@@ -54,7 +64,7 @@
         .view-btn { background: var(--card-bg); color: var(--primary); border: 1px solid var(--primary); padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
         .view-btn.active { background: var(--primary); color: #fff; }
 
-        main { max-width: 1200px; margin: 0 auto; padding: 10px 20px; flex: 1; width: 100%; box-sizing: border-box; }
+        main { max-width: 1400px; margin: 0 auto; padding: 10px 20px; flex: 1; width: 100%; box-sizing: border-box; } /* max-width拡大 */
         .section-title { border-bottom: 2px solid #ddd; margin: 30px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
         
         .pickup-area { max-width: 800px; margin: 10px auto 30px; background: var(--card-bg); border-radius: 16px; box-shadow: 0 4px 15px rgba(92, 106, 196, 0.2); position: relative; overflow: hidden; border: 2px solid var(--primary); animation: fadeIn 0.8s ease forwards; }
@@ -69,18 +79,34 @@
         .pickup-cos { color: var(--text); }
         @media (max-width: 600px) { .pickup-img-box { height: 300px; } .pickup-name { font-size: 1rem; } }
 
+        .history-section { max-width: 1400px; margin: 0 auto 20px; padding: 0 20px; overflow: hidden; display: none; }
+        .history-title { font-size: 0.9rem; color: var(--text); opacity: 0.7; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
+        .history-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
+        .history-scroll::-webkit-scrollbar { height: 4px; }
+        .history-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
+        .history-item { min-width: 70px; width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); cursor: pointer; flex-shrink: 0; position: relative; }
+        .history-item img { width: 100%; height: 100%; object-fit: cover; }
+        .history-item:hover { transform: scale(1.1); transition: 0.2s; }
+
+        /* ★★★ カラム数設定（PC大画面対応） ★★★ */
         .grid { column-count: 4; column-gap: 15px; }
+        @media (min-width: 1400px) { .grid { column-count: 5; } } /* 5列表示 */
         @media (max-width: 900px) { .grid { column-count: 3; } }
         @media (max-width: 600px) { .grid { column-count: 2; } }
 
         .card { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; margin-bottom: 15px; break-inside: avoid; transition: transform 0.2s; opacity: 0; animation: fadeIn 0.6s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .card:hover { transform: translateY(-3px); }
-        .card-img-box { width: 100%; display: block; overflow: hidden; cursor: pointer; position: relative; min-height: 200px; background: #eee; } /* min-height追加 */
+        .card-img-box { width: 100%; display: block; overflow: hidden; cursor: pointer; position: relative; min-height: 200px; background: #eee; }
         .card img { width: 100%; height: auto; display: block; transition: 0.5s; }
-        .card:hover img { transform: scale(1.05); }
+        
+        /* PCホバー時のエフェクト */
+        @media (hover: hover) {
+            .card:hover img { transform: scale(1.1); } /* 拡大率アップ */
+            .quick-copy-btn { opacity: 0; }
+            .card:hover .quick-copy-btn { opacity: 1; }
+        }
 
-        /* スケルトンローディング */
         .skeleton { animation: skeleton-loading 1s linear infinite alternate; width: 100%; height: 100%; display: block; }
         @keyframes skeleton-loading { 0% { background-color: #e0e0e0; } 100% { background-color: #f5f5f5; } }
         body.dark-mode .skeleton { animation: skeleton-loading-dark 1s linear infinite alternate; }
@@ -89,6 +115,18 @@
         .fav-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; color: #ccc; z-index: 10; transition: 0.2s; border: none; }
         .fav-btn.active { color: var(--heart); }
         .fav-btn:hover { transform: scale(1.1); }
+        
+        /* ★★★ PC用クイックコピーボタン ★★★ */
+        .quick-copy-btn {
+            position: absolute; bottom: 10px; right: 10px;
+            background: rgba(0,0,0,0.7); color: #fff;
+            border-radius: 5px; padding: 5px 10px; font-size: 0.8rem;
+            cursor: pointer; z-index: 10; border: none; opacity: 0; transition: 0.2s;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .quick-copy-btn:hover { background: #000; }
+        @media (hover: none) { .quick-copy-btn { display: none; } } /* スマホでは非表示 */
+
         .new-badge { position: absolute; top: 0; left: 0; background: #ff4757; color: white; font-size: 0.7rem; font-weight: bold; padding: 4px 10px; border-bottom-right-radius: 10px; z-index: 5; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
         .pop-heart { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); font-size: 4rem; color: rgba(255, 255, 255, 0.9); text-shadow: 0 0 10px rgba(226, 38, 77, 0.8); pointer-events: none; z-index: 20; }
         .pop-heart.animate { animation: popHeart 0.6s ease-out; }
@@ -97,19 +135,20 @@
         .info { padding: 12px; }
         .tag { background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; display: inline-block; margin-bottom: 5px; }
         .name { font-weight: bold; font-size: 0.95rem; line-height: 1.4; }
-        footer { background: var(--footer-bg); color: var(--footer-text); text-align: center; padding: 30px 20px; margin-top: auto; font-size: 0.85rem; }
+        footer { background: var(--footer-bg); color: var(--footer-text); text-align: center; padding: 30px 20px; margin-top: auto; font-size: 0.85rem; padding-bottom: max(30px, env(safe-area-inset-bottom)); }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         .modal.open { display: flex; }
         .modal-content { text-align: center; max-width: 95%; position: relative; width: 100%; max-height: 95vh; display: flex; flex-direction: column; align-items: center; }
-        .modal img { max-height: 60vh; max-width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.5); object-fit: contain; } /* 高さ調整 */
+        .modal img { max-height: 60vh; max-width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.5); object-fit: contain; }
+        
         .share-area { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
         .action-btn { padding: 10px 20px; border-radius: 30px; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 5px; border: none; cursor: pointer; color: white; transition: 0.3s; font-size: 0.9rem; }
         .btn-twitter { background: #000; } .btn-twitter:hover { background: #333; transform: scale(1.05); }
         .btn-link { background: #1da1f2; } .btn-link:hover { background: #0c85d0; transform: scale(1.05); }
         .btn-copy { background: #666; } .btn-copy:hover { background: #444; transform: scale(1.05); }
+        .btn-native { background: #34c759; display: none; } .btn-native:hover { background: #28a745; transform: scale(1.05); }
 
-        /* ★★★ 関連画像エリア ★★★ */
         .related-container { margin-top: 20px; width: 100%; text-align: left; }
         .related-title { color: #fff; font-size: 0.9rem; margin-bottom: 10px; padding-left: 10px; border-left: 3px solid var(--primary); }
         .related-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
@@ -149,7 +188,10 @@
     </div>
     
     <div class="tools">
-        <input type="text" id="searchInput" placeholder="検索: うるは、ちのせ、○○さん..." oninput="handleSearch()">
+        <div style="position:relative;">
+            <input type="text" id="searchInput" placeholder="検索 ( '/' で入力)" oninput="handleSearch()">
+            <span class="shortcut-hint">/</span>
+        </div>
         <button onclick="setSort('new')" id="btn-new" class="active"><i class="fas fa-sort-amount-down"></i> 新着順</button>
         <button onclick="setSort('original')" id="btn-original"><i class="fas fa-sort-numeric-down"></i> 登録順</button>
         <button onclick="setSort('shuffle')" id="btn-shuffle"><i class="fas fa-random"></i> シャッフル</button>
@@ -165,8 +207,12 @@
     <button onclick="setMode('favorite')" class="view-btn" id="nav-favorite">💖 お気に入り</button>
 </nav>
 
-<div id="pickup-container">
-    </div>
+<div class="history-section" id="history-section">
+    <div class="history-title"><i class="far fa-clock"></i> 最近チェックした画像</div>
+    <div class="history-scroll" id="history-list"></div>
+</div>
+
+<div id="pickup-container"></div>
 
 <main id="app">
     <div class="grid">
@@ -204,14 +250,17 @@
         </div>
 
         <div class="share-area">
+            <button class="action-btn btn-native" id="btn-native" onclick="nativeShare()">
+                <i class="fas fa-share-alt"></i> シェア
+            </button>
             <button class="action-btn btn-twitter" onclick="shareToX()">
-                <i class="fab fa-x-twitter"></i> ポストする
+                <i class="fab fa-x-twitter"></i> ポスト
             </button>
             <button class="action-btn btn-copy" onclick="copyLink()">
-                <i class="fas fa-link"></i> リンクをコピー
+                <i class="fas fa-link"></i> コピー
             </button>
             <a id="m-link" href="#" target="_blank" class="action-btn btn-link">
-                <i class="fas fa-external-link-alt"></i> 元の投稿を見る
+                <i class="fas fa-external-link-alt"></i> 元投稿
             </a>
         </div>
     </div>
@@ -251,12 +300,26 @@
     let currentMode = 'member';
     let currentSort = 'new';
     let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
+    let history = JSON.parse(localStorage.getItem('vspo_history')) || [];
     let currentImageIndex = 0;
     let slideshowList = [];
     let latestIndexThreshold = 0; 
 
     window.onload = function() {
         generateMemberTags();
+        renderHistory();
+        
+        if (navigator.share) {
+            document.getElementById('btn-native').style.display = 'flex';
+        }
+
+        // ★★★ PC用ショートカットキー（/ で検索） ★★★
+        document.addEventListener('keydown', function(e) {
+            if (e.key === '/' && document.activeElement !== document.getElementById('searchInput')) {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+        });
 
         Papa.parse(CSV_URL, {
             download: true, header: true,
@@ -285,7 +348,6 @@
         if (allData.length === 0) return;
         const randomIndex = Math.floor(Math.random() * allData.length);
         const item = allData[randomIndex];
-        
         const container = document.getElementById('pickup-container');
         const safeMember = (item.member || "").replace(/"/g, '&quot;');
         const safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
@@ -305,6 +367,32 @@
                 </div>
             </div>
         `;
+    }
+
+    function addToHistory(item) {
+        history = history.filter(h => h.image !== item.image);
+        history.unshift(item);
+        if (history.length > 20) history.pop();
+        localStorage.setItem('vspo_history', JSON.stringify(history));
+        renderHistory();
+    }
+
+    function renderHistory() {
+        const section = document.getElementById('history-section');
+        const list = document.getElementById('history-list');
+        if (history.length === 0) {
+            section.style.display = 'none';
+            return;
+        }
+        section.style.display = 'block';
+        list.innerHTML = '';
+        history.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'history-item';
+            div.innerHTML = `<img src="${item.image}">`;
+            div.onclick = () => openModal(item.image);
+            list.appendChild(div);
+        });
     }
 
     function generateMemberTags() {
@@ -345,7 +433,6 @@
 
         const groups = {};
         const key = (currentMode === 'favorite') ? 'dummy' : currentMode;
-        
         slideshowList.forEach(item => {
             const groupName = (currentMode === 'favorite') ? "お気に入り一覧" : (item[key] || "未分類");
             if (!groups[groupName]) groups[groupName] = [];
@@ -366,17 +453,18 @@
                 const isFav = favorites.includes(item.image);
                 const isNew = item._originalIndex >= latestIndexThreshold;
                 const newBadgeHtml = isNew ? `<div class="new-badge">NEW</div>` : '';
-
                 const card = document.createElement('div');
                 card.className = 'card';
                 const safeMember = (item.member || "").replace(/"/g, '&quot;');
                 const safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
                 
+                // ★★★ PC用クイックコピーボタン追加 ★★★
                 card.innerHTML = `
                     ${newBadgeHtml}
                     <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav(event, '${item.image}')">
                         <i class="fas fa-heart"></i>
                     </button>
+                    <button class="quick-copy-btn" onclick="quickCopy(event, '${item.link}')"><i class="fas fa-link"></i> Link</button>
                     <div class="pop-heart"><i class="fas fa-heart"></i></div>
                     <div class="card-img-box" onclick="handleCardClick(event, '${item.image}', '${item.link}', this)">
                         <img src="${item.image}" loading="lazy" onerror="this.src='https://placehold.jp/300x300.png?text=No+Image'">
@@ -390,6 +478,14 @@
             });
             section.appendChild(grid);
             app.appendChild(section);
+        });
+    }
+
+    // ★★★ クイックコピー機能 ★★★
+    function quickCopy(e, link) {
+        e.stopPropagation();
+        navigator.clipboard.writeText(link).then(() => {
+            showToast("リンクをコピーしました！📋");
         });
     }
 
@@ -470,6 +566,9 @@
              if(currentImageIndex === -1) currentImageIndex = 0;
              slideshowList = allData;
         }
+        if(slideshowList[currentImageIndex]) {
+            addToHistory(slideshowList[currentImageIndex]);
+        }
         updateModalContent();
         document.getElementById('modal').classList.add('open');
         document.body.style.overflow = 'hidden';
@@ -480,8 +579,6 @@
         if(!item) return;
         document.getElementById('m-img').src = item.image;
         document.getElementById('m-link').href = item.link;
-        
-        // ★★★ 関連画像の生成 ★★★
         renderRelatedImages(item);
     }
 
@@ -489,19 +586,13 @@
         const area = document.getElementById('related-area');
         const grid = document.getElementById('related-grid');
         grid.innerHTML = '';
-
-        // 同じメンバーで、今の画像とは違うものを抽出
         const related = allData.filter(d => d.member === currentItem.member && d.image !== currentItem.image);
-        
         if (related.length === 0) {
             area.style.display = 'none';
             return;
         }
-
         area.style.display = 'block';
-        // シャッフルして最大4つ表示
         const shuffled = related.sort(() => 0.5 - Math.random()).slice(0, 4);
-        
         shuffled.forEach(d => {
             const div = document.createElement('div');
             div.className = 'related-item';
@@ -515,7 +606,16 @@
         currentImageIndex += direction;
         if (currentImageIndex < 0) currentImageIndex = slideshowList.length - 1;
         if (currentImageIndex >= slideshowList.length) currentImageIndex = 0;
+        if(slideshowList[currentImageIndex]) addToHistory(slideshowList[currentImageIndex]);
         updateModalContent();
+    }
+
+    function nativeShare() {
+        const item = slideshowList[currentImageIndex];
+        const text = `${item.member} (${item.cosplayer}さん) のコスプレ！ #ぶいすぽっ`;
+        if (navigator.share) {
+            navigator.share({ title: 'ぶいすぽっ！コスプレアーカイブ', text: text, url: item.link }).catch(console.error);
+        }
     }
 
     function shareToX() {
