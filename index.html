@@ -29,8 +29,12 @@
         /* --- デザイン設定 --- */
         *, *::before, *::after { box-sizing: border-box; }
 
-        :root { --primary: #5c6ac4; --bg: #f4f6f8; --card-bg: #fff; --text: #333; --heart: #e2264d; --footer-bg: #eaeaea; --footer-text: #666; --highlight: #fff3cd; --highlight-text: #856404; }
-        body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --footer-bg: #111; --footer-text: #888; --highlight: #5c4d00; --highlight-text: #ffeb3b; }
+        :root { 
+            --primary: #5c6ac4; --bg: #f4f6f8; --card-bg: #fff; --text: #333; 
+            --heart: #e2264d; --footer-bg: #eaeaea; --footer-text: #666; 
+            --grid-size: 180px; /* デフォルトグリッドサイズ */
+        }
+        body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --footer-bg: #111; --footer-text: #888; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; -webkit-tap-highlight-color: transparent; padding-bottom: env(safe-area-inset-bottom); }
         
         header { background: var(--primary); color: #fff; padding: 20px 20px 10px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); padding-top: max(20px, env(safe-area-inset-top)); }
@@ -40,15 +44,16 @@
         .title-area h1 { margin: 0; font-size: 1.5rem; }
         .total-count { font-size: 0.8rem; opacity: 0.9; margin-top: 5px; display: block; font-weight: bold; }
 
-        .tools { margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; position: relative; }
-        input { padding: 10px 40px 10px 15px; border-radius: 20px; border: none; min-width: 250px; outline: none; transition: 0.3s; }
-        input:focus { box-shadow: 0 0 0 3px rgba(255,255,255,0.3); transform: scale(1.02); }
-        .shortcut-hint { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #999; font-size: 0.8rem; background: #eee; padding: 2px 6px; border-radius: 4px; pointer-events: none; display: none; }
-        @media (hover: hover) { .shortcut-hint { display: block; } }
-
-        button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
+        .tools { margin-top: 15px; display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+        input { padding: 8px 15px; border-radius: 20px; border: none; min-width: 200px; outline: none; }
+        button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 6px 12px; border-radius: 20px; cursor: pointer; white-space: nowrap; font-size: 0.9rem; transition: 0.2s; }
         button:hover { background: rgba(255,255,255,0.4); }
         button.active { background: #fff; color: var(--primary); font-weight: bold; }
+
+        /* グリッドサイズ切り替えボタン群 */
+        .size-toggles { display: inline-flex; background: rgba(0,0,0,0.2); border-radius: 20px; padding: 2px; margin-left: 10px; vertical-align: middle; }
+        .size-btn { background: transparent; padding: 4px 10px; border-radius: 18px; font-size: 0.8rem; margin: 0; }
+        .size-btn.active { background: #fff; color: var(--primary); }
 
         .stories-container { overflow-x: auto; white-space: nowrap; padding: 15px 10px 5px; margin-top: 5px; -webkit-overflow-scrolling: touch; scrollbar-width: none; display: flex; gap: 15px; }
         .stories-container::-webkit-scrollbar { display: none; }
@@ -56,67 +61,22 @@
         .story-ring { width: 68px; height: 68px; border-radius: 50%; padding: 2px; background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); position: relative; transition: transform 0.2s; }
         .story-ring.seen { background: #ccc; }
         .story-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #fff; object-fit: cover; background: #fff; }
-        body.dark-mode .story-img { border-color: #1a1a2e; }
-        .story-item:hover .story-ring { transform: scale(1.05); }
         .story-name { font-size: 0.75rem; margin-top: 5px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; width: 100%; text-align: center; }
 
-        /* ★★★ ストーリービューワー（PC最適化版） ★★★ */
-        .story-viewer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 3000;
-            display: none; /* JSでflexに変更 */
-            flex-direction: column;
-            justify-content: center; /* PC用：中央寄せ */
-            align-items: center; /* PC用：中央寄せ */
-        }
+        .story-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 3000; display: none; flex-direction: column; justify-content: center; align-items: center; }
         .story-viewer.active { display: flex; animation: fadeIn 0.2s ease; }
-
-        /* スマホ用フレーム（コンテンツ枠） */
-        .story-frame {
-            width: 100%; height: 100%;
-            position: relative;
-            background: #000;
-            display: flex; flex-direction: column;
-        }
-
-        /* PC（幅768px以上）の時はフレームを制限する */
+        .story-frame { width: 100%; height: 100%; position: relative; background: #000; display: flex; flex-direction: column; }
         @media (min-width: 768px) {
-            .story-viewer { background: rgba(0, 0, 0, 0.9); } /* 背景を少し透過 */
-            .story-frame {
-                width: 420px; /* スマホ幅 */
-                height: 85vh; /* 画面の85% */
-                max-height: 900px;
-                border-radius: 15px; /* 角丸 */
-                overflow: hidden;
-                box-shadow: 0 0 50px rgba(0,0,0,0.5); /* 影 */
-            }
-            /* PC用の閉じるボタンは画面右上に配置 */
-            .story-close {
-                position: fixed !important;
-                top: 20px !important;
-                right: 30px !important;
-                width: 50px !important;
-                height: 50px !important;
-                font-size: 2.5rem !important;
-                z-index: 3100 !important;
-            }
+            .story-viewer { background: rgba(0, 0, 0, 0.9); }
+            .story-frame { width: 420px; height: 85vh; max-height: 900px; border-radius: 15px; overflow: hidden; }
+            .story-close { position: fixed !important; top: 20px !important; right: 30px !important; width: 50px !important; height: 50px !important; font-size: 2.5rem !important; z-index: 3100 !important; }
         }
-
         .story-progress-container { display: flex; gap: 4px; padding: 10px 5px; width: 100%; box-sizing: border-box; position: absolute; top: 0; left: 0; z-index: 3010; }
         .story-progress-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
         .story-progress-fill { height: 100%; background: #fff; width: 0%; }
-        
         .story-header { position: absolute; top: 25px; left: 10px; z-index: 3010; display: flex; align-items: center; gap: 10px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
         .story-header-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #fff; }
-        .story-header-name { font-weight: bold; font-size: 0.9rem; }
-        .story-header-time { font-size: 0.8rem; opacity: 0.8; }
-        
-        /* 閉じるボタン（スマホはフレーム内、PCは上書きで外へ） */
-        .story-close {
-            position: absolute; top: 25px; right: 15px; color: #fff; font-size: 1.5rem; cursor: pointer; z-index: 3020;
-            display: flex; align-items: center; justify-content: center;
-        }
-
+        .story-close { position: absolute; top: 25px; right: 15px; color: #fff; font-size: 1.5rem; cursor: pointer; z-index: 3020; display: flex; align-items: center; justify-content: center; }
         .story-image-area { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; background: #111; }
         .story-main-img { width: 100%; height: 100%; object-fit: contain; }
         .story-nav-left, .story-nav-right { position: absolute; top: 0; height: 100%; width: 30%; z-index: 3005; }
@@ -127,139 +87,67 @@
         .view-btn { background: var(--card-bg); color: var(--primary); border: 1px solid var(--primary); padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
         .view-btn.active { background: var(--primary); color: #fff; }
 
-        main { max-width: 1400px; margin: 0 auto; padding: 10px 20px; flex: 1; width: 100%; }
-        .section-title { border-bottom: 2px solid #ddd; margin: 30px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
-        
-        .pickup-area { max-width: 800px; margin: 10px auto 30px; background: var(--card-bg); border-radius: 16px; box-shadow: 0 4px 15px rgba(92, 106, 196, 0.2); position: relative; overflow: hidden; border: 2px solid var(--primary); animation: fadeIn 0.8s ease forwards; }
-        .pickup-label { position: absolute; top: 15px; left: 15px; background: #ff4757; color: #fff; font-weight: bold; padding: 5px 15px; border-radius: 20px; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 0.9rem; }
-        .pickup-content { display: flex; flex-direction: column; cursor: pointer; }
-        .pickup-img-box { width: 100%; height: 350px; overflow: hidden; position: relative; background: #000; display: flex; justify-content: center; align-items: center; }
-        .pickup-bg { position: absolute; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.7); z-index: 1; transform: scale(1.1); }
-        .pickup-main { position: relative; z-index: 2; height: 100%; width: auto; max-width: 100%; object-fit: contain; box-shadow: 0 0 20px rgba(0,0,0,0.5); transition: transform 0.5s; }
-        .pickup-area:hover .pickup-main { transform: scale(1.02); }
-        .pickup-info { padding: 15px; text-align: center; background: var(--card-bg); position: relative; z-index: 2; }
-        .pickup-name { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; color: var(--primary); }
-        .pickup-cos { color: var(--text); }
-        @media (max-width: 600px) { .pickup-img-box { height: 300px; } .pickup-name { font-size: 1rem; } }
-
-        .history-section { max-width: 1400px; margin: 0 auto 20px; padding: 0 20px; overflow: hidden; display: none; }
-        .history-title { font-size: 0.9rem; color: var(--text); opacity: 0.7; margin-bottom: 8px; display: flex; align-items: center; gap: 5px; }
-        .history-scroll { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
-        .history-scroll::-webkit-scrollbar { height: 4px; }
-        .history-scroll::-webkit-scrollbar-thumb { background: #ccc; border-radius: 2px; }
-        .history-item { min-width: 70px; width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 2px solid var(--primary); cursor: pointer; flex-shrink: 0; position: relative; }
-        .history-item img { width: 100%; height: 100%; object-fit: cover; }
-        .history-item:hover { transform: scale(1.1); transition: 0.2s; }
-
         .member-scroll-container { overflow-x: auto; white-space: nowrap; padding: 10px 0 5px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .member-scroll-container::-webkit-scrollbar { display: none; }
         .member-chip { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 8px 14px; border-radius: 25px; margin-right: 8px; cursor: pointer; font-size: 1.2rem; line-height: 1; transition: 0.2s; border: 1px solid transparent; min-width: 30px; text-align: center; vertical-align: middle; }
         .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; border-color: #fff; transform: scale(1.1); }
-        .member-chip.text-chip { font-size: 0.9rem; padding: 10px 16px; }
 
-        /* グリッドレイアウト（安定版） */
+        main { max-width: 1400px; margin: 0 auto; padding: 10px 20px; flex: 1; width: 100%; }
+        .section-title { border-bottom: 2px solid #ddd; margin: 30px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
+
+        /* ★★★ 堅牢なグリッドレイアウト ★★★ */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            /* 変数でサイズを制御 */
+            grid-template-columns: repeat(auto-fill, minmax(var(--grid-size), 1fr));
             gap: 15px;
             width: 100%;
         }
-        @media (max-width: 600px) {
-            .grid {
-                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-                gap: 10px;
-            }
-        }
 
         .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-            position: relative;
-            display: flex; flex-direction: column;
-            width: 100%; margin: 0;
-            transition: transform 0.2s;
-            opacity: 0;
-            animation: fadeIn 0.6s ease forwards;
+            background: var(--card-bg); border-radius: 12px; overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative;
+            display: flex; flex-direction: column; width: 100%; margin: 0;
+            transition: transform 0.2s; opacity: 0; animation: fadeIn 0.6s ease forwards;
         }
-        
+        /* 既読（見たやつ）スタイル */
+        .card.visited { opacity: 0.6; filter: grayscale(30%); }
+        .card.visited:hover { opacity: 1; filter: grayscale(0%); }
+
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .card:hover { transform: translateY(-3px); }
-        
-        .card-img-box {
-            width: 100%;
-            padding-top: 100%; /* 正方形 */
-            position: relative;
-            background: #eee;
-            overflow: hidden;
-        }
-        .card img {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            object-fit: cover;
-            transition: 0.5s;
-        }
-        @media (hover: hover) { .card:hover img { transform: scale(1.1); } .quick-copy-btn { opacity: 0; } .card:hover .quick-copy-btn { opacity: 1; } }
-
-        .skeleton { animation: skeleton-loading 1s linear infinite alternate; width: 100%; height: 100%; display: block; position: absolute; top: 0; left: 0; }
-        @keyframes skeleton-loading { 0% { background-color: #e0e0e0; } 100% { background-color: #f5f5f5; } }
-        body.dark-mode .skeleton { animation: skeleton-loading-dark 1s linear infinite alternate; }
-        @keyframes skeleton-loading-dark { 0% { background-color: #333; } 100% { background-color: #444; } }
+        .card-img-box { width: 100%; padding-top: 100%; position: relative; background: #eee; overflow: hidden; }
+        .card img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
+        @media (hover: hover) { .card:hover img { transform: scale(1.1); } }
 
         .fav-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; color: #ccc; z-index: 10; transition: 0.2s; border: none; }
         .fav-btn.active { color: var(--heart); }
-        .fav-btn:hover { transform: scale(1.1); }
-        .quick-copy-btn { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 5px; padding: 5px 10px; font-size: 0.8rem; cursor: pointer; z-index: 10; border: none; opacity: 0; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
-        .quick-copy-btn:hover { background: #000; }
-        @media (hover: none) { .quick-copy-btn { display: none; } }
-
         .new-badge { position: absolute; top: 0; left: 0; background: #ff4757; color: white; font-size: 0.7rem; font-weight: bold; padding: 4px 10px; border-bottom-right-radius: 10px; z-index: 5; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
-        .pop-heart { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); font-size: 4rem; color: rgba(255, 255, 255, 0.9); text-shadow: 0 0 10px rgba(226, 38, 77, 0.8); pointer-events: none; z-index: 20; }
-        .pop-heart.animate { animation: popHeart 0.6s ease-out; }
-        @keyframes popHeart { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 40% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } }
-
+        
         .info { padding: 12px; }
         .tag { background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; display: inline-block; margin-bottom: 5px; }
         .name { font-weight: bold; font-size: 0.95rem; line-height: 1.4; }
-        .highlight { background-color: var(--highlight); color: var(--highlight-text); font-weight: bold; padding: 0 2px; border-radius: 2px; }
+        
         footer { background: var(--footer-bg); color: var(--footer-text); text-align: center; padding: 30px 20px; margin-top: auto; font-size: 0.85rem; padding-bottom: max(30px, env(safe-area-inset-bottom)); }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         .modal.open { display: flex; }
         .modal-content { text-align: center; max-width: 95%; position: relative; width: 100%; max-height: 95vh; display: flex; flex-direction: column; align-items: center; }
         .modal img { max-height: 60vh; max-width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.5); object-fit: contain; }
-        
         .share-area { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
         .action-btn { padding: 10px 20px; border-radius: 30px; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 5px; border: none; cursor: pointer; color: white; transition: 0.3s; font-size: 0.9rem; }
-        .btn-twitter { background: #000; } .btn-twitter:hover { background: #333; transform: scale(1.05); }
-        .btn-link { background: #1da1f2; } .btn-link:hover { background: #0c85d0; transform: scale(1.05); }
-        .btn-copy { background: #666; } .btn-copy:hover { background: #444; transform: scale(1.05); }
-        .btn-native { background: #34c759; display: none; } .btn-native:hover { background: #28a745; transform: scale(1.05); }
-        .btn-play { background: #ff9f43; } .btn-play:hover { background: #e58e26; transform: scale(1.05); }
-        .btn-qr { background: #fff; color: #333; } .btn-qr:hover { background: #eee; transform: scale(1.05); }
-
-        .qr-modal { position: absolute; bottom: 60px; right: 0; background: #fff; padding: 10px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: none; z-index: 2000; }
-        .qr-modal.show { display: block; animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-        @keyframes popUp { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        .related-container { margin-top: 20px; width: 100%; text-align: left; }
-        .related-title { color: #fff; font-size: 0.9rem; margin-bottom: 10px; padding-left: 10px; border-left: 3px solid var(--primary); }
-        .related-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
-        .related-grid::-webkit-scrollbar { height: 6px; }
-        .related-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
-        .related-item { min-width: 100px; width: 100px; height: 100px; border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; transition: 0.2s; position: relative; }
-        .related-item:hover { border-color: var(--primary); transform: scale(1.05); }
-        .related-item img { width: 100%; height: 100%; object-fit: cover; }
-
+        .btn-twitter { background: #000; } .btn-copy { background: #666; } .btn-play { background: #ff9f43; }
         .modal-close { position: absolute; top: -40px; right: 20px; color: #fff; font-size: 2rem; cursor: pointer; }
         .slide-btn { position: absolute; top: 40%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: #fff; border: none; padding: 20px; cursor: pointer; font-size: 1.5rem; border-radius: 50%; transition: 0.3s; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; z-index: 1001; }
-        .slide-btn:hover { background: rgba(255,255,255,0.2); }
         .prev-btn { left: 20px; } .next-btn { right: 20px; }
         #scrollTopBtn { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #fff; border: none; padding: 15px; border-radius: 50%; cursor: pointer; display: none; z-index: 90; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 16px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.5s, bottom 0.5s; }
         #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+
+        .settings-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--card-bg); padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 4000; display: none; text-align: left; min-width: 300px; color: var(--text); }
+        .settings-modal.show { display: block; animation: popUp 0.3s; }
+        .settings-textarea { width: 100%; height: 100px; margin-top: 10px; padding: 10px; border-radius: 5px; border: 1px solid #ccc; font-family: monospace; font-size: 0.8rem; }
+        @keyframes popUp { from { transform: translate(-50%, -50%) scale(0.9); opacity: 0; } to { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
 
         @media (max-width: 600px) { .slide-btn { padding: 10px; width: 40px; height: 40px; font-size: 1rem; } .prev-btn { left: 5px; } .next-btn { right: 5px; } }
     </style>
@@ -276,26 +164,31 @@
         <a id="contact-link" href="#" target="_blank" class="icon-btn" title="削除依頼・お問い合わせ">
             <i class="far fa-envelope"></i>
         </a>
+        <button class="icon-btn" onclick="openSettings()" title="データ設定">
+            <i class="fas fa-cog"></i>
+        </button>
         <button class="icon-btn" onclick="toggleTheme()" title="テーマ切り替え">
             <i class="fas fa-moon"></i>
         </button>
     </div>
     
-    <div class="stories-container" id="stories-container">
-        </div>
+    <div class="stories-container" id="stories-container"></div>
 
     <div class="tools">
-        <div style="position:relative;">
-            <input type="text" id="searchInput" placeholder="検索 ( '/' で入力)" oninput="handleSearch()">
-            <span class="shortcut-hint">/</span>
+        <input type="text" id="searchInput" placeholder="検索: うるは、ちのせ..." oninput="handleSearch()">
+        
+        <div class="size-toggles">
+            <button class="size-btn" onclick="changeGridSize('small')">小</button>
+            <button class="size-btn active" onclick="changeGridSize('medium')">中</button>
+            <button class="size-btn" onclick="changeGridSize('large')">大</button>
         </div>
+
         <button onclick="setSort('new')" id="btn-new" class="active"><i class="fas fa-sort-amount-down"></i> 新着順</button>
         <button onclick="setSort('original')" id="btn-original"><i class="fas fa-sort-numeric-down"></i> 登録順</button>
         <button onclick="setSort('shuffle')" id="btn-shuffle"><i class="fas fa-random"></i> シャッフル</button>
     </div>
 
-    <div class="member-scroll-container" id="memberBar">
-        </div>
+    <div class="member-scroll-container" id="memberBar"></div>
 </header>
 
 <nav>
@@ -304,20 +197,10 @@
     <button onclick="setMode('favorite')" class="view-btn" id="nav-favorite">💖 お気に入り</button>
 </nav>
 
-<div class="history-section" id="history-section">
-    <div class="history-title"><i class="far fa-clock"></i> 最近チェックした画像</div>
-    <div class="history-scroll" id="history-list"></div>
-</div>
-
 <div id="pickup-container"></div>
 
 <main id="app">
-    <div class="grid" id="main-grid">
-        <div class="card" style="height:250px;"><div class="skeleton"></div></div>
-        <div class="card" style="height:300px;"><div class="skeleton"></div></div>
-        <div class="card" style="height:200px;"><div class="skeleton"></div></div>
-        <div class="card" style="height:280px;"><div class="skeleton"></div></div>
-    </div>
+    <div class="grid" id="main-grid"></div>
 </main>
 
 <footer>
@@ -336,24 +219,9 @@
         <button class="slide-btn prev-btn" onclick="changeImage(-1)"><i class="fas fa-chevron-left"></i></button>
         <button class="slide-btn next-btn" onclick="changeImage(1)"><i class="fas fa-chevron-right"></i></button>
         <img id="m-img">
-        
-        <div class="related-container" id="related-area" style="display:none;">
-            <div class="related-title">関連画像（このメンバーの他の画像）</div>
-            <div class="related-grid" id="related-grid"></div>
-        </div>
-
         <div class="share-area">
             <button class="action-btn btn-play" id="btn-play" onclick="toggleAutoPlay()"><i class="fas fa-play"></i> 自動再生</button>
-            <button class="action-btn btn-native" id="btn-native" onclick="nativeShare()"><i class="fas fa-share-alt"></i> シェア</button>
             <button class="action-btn btn-twitter" onclick="shareToX()"><i class="fab fa-x-twitter"></i> ポスト</button>
-            
-            <div style="position:relative;">
-                <button class="action-btn btn-qr" onclick="toggleQR()"><i class="fas fa-qrcode"></i></button>
-                <div id="qr-box" class="qr-modal">
-                    <img id="qr-img" src="" alt="QR Code" width="150" height="150">
-                </div>
-            </div>
-
             <button class="action-btn btn-copy" onclick="copyLink()"><i class="fas fa-link"></i> コピー</button>
             <a id="m-link" href="#" target="_blank" class="action-btn btn-link"><i class="fas fa-external-link-alt"></i> 元投稿</a>
         </div>
@@ -362,7 +230,6 @@
 
 <div id="story-viewer" class="story-viewer" onclick="closeStory()">
     <div class="story-close" onclick="closeStory()">&times;</div>
-    
     <div class="story-frame" onclick="event.stopPropagation()">
         <div class="story-progress-container" id="story-progress-container"></div>
         <div class="story-header">
@@ -377,6 +244,17 @@
             <div class="story-nav-left" onclick="prevStorySlide(event)"></div>
             <div class="story-nav-right" onclick="nextStorySlide(event)"></div>
         </div>
+    </div>
+</div>
+
+<div id="settings-modal" class="settings-modal">
+    <span class="story-close" style="position:absolute; top:10px; right:15px; color:#333;" onclick="closeSettings()">&times;</span>
+    <h3>💾 データ引き継ぎ・バックアップ</h3>
+    <p>以下のコードをコピーして保存するか、新しい端末で入力して「復元」を押してください。</p>
+    <textarea id="settings-data" class="settings-textarea"></textarea>
+    <div style="margin-top:10px; display:flex; gap:10px;">
+        <button onclick="exportData()" style="background:#5c6ac4; color:#fff;">コード発行</button>
+        <button onclick="importData()" style="background:#e6683c; color:#fff;">復元する</button>
     </div>
 </div>
 
@@ -414,7 +292,7 @@
     let currentMode = 'member';
     let currentSort = 'new';
     let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
-    let history = JSON.parse(localStorage.getItem('vspo_history')) || [];
+    let visited = JSON.parse(localStorage.getItem('vspo_visited')) || []; // 既読リスト
     let currentImageIndex = 0;
     let slideshowList = [];
     let latestIndexThreshold = 0;
@@ -428,19 +306,7 @@
 
     window.onload = function() {
         generateMemberTags();
-        renderHistory();
         
-        if (navigator.share) {
-            document.getElementById('btn-native').style.display = 'flex';
-        }
-
-        document.addEventListener('keydown', function(e) {
-            if (e.key === '/' && document.activeElement !== document.getElementById('searchInput')) {
-                e.preventDefault();
-                document.getElementById('searchInput').focus();
-            }
-        });
-
         Papa.parse(CSV_URL, {
             download: true, header: true,
             complete: function(results) {
@@ -461,9 +327,61 @@
                 displayPickup();
                 applySort();
             },
-            error: function() { document.getElementById('app').innerHTML = '<p style="text-align:center;">読み込み失敗</p>'; }
+            error: function() { document.getElementById('main-grid').innerHTML = '<p style="text-align:center;">読み込み失敗</p>'; }
         });
     };
+
+    // ★★★ グリッドサイズ切り替え ★★★
+    function changeGridSize(size) {
+        const root = document.documentElement;
+        if(size === 'small') root.style.setProperty('--grid-size', '120px');
+        else if(size === 'medium') root.style.setProperty('--grid-size', '180px');
+        else if(size === 'large') root.style.setProperty('--grid-size', '280px');
+        
+        // ボタンのアクティブ切り替え
+        document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+    }
+
+    // ★★★ 既読管理 ★★★
+    function markAsVisited(imgUrl) {
+        if(!visited.includes(imgUrl)) {
+            visited.push(imgUrl);
+            if(visited.length > 500) visited.shift(); // 最大500件
+            localStorage.setItem('vspo_visited', JSON.stringify(visited));
+        }
+        // UI更新
+        document.querySelectorAll('.card').forEach(card => {
+            if(card.querySelector('img').src === imgUrl) {
+                card.classList.add('visited');
+            }
+        });
+    }
+
+    // ★★★ データバックアップ ★★★
+    function openSettings() {
+        document.getElementById('settings-modal').classList.add('show');
+    }
+    function closeSettings() {
+        document.getElementById('settings-modal').classList.remove('show');
+    }
+    function exportData() {
+        const data = { favs: favorites, visited: visited };
+        document.getElementById('settings-data').value = JSON.stringify(data);
+        showToast("コードを発行しました。コピーして保存してください");
+    }
+    function importData() {
+        try {
+            const raw = document.getElementById('settings-data').value;
+            const data = JSON.parse(raw);
+            if(data.favs) { favorites = data.favs; localStorage.setItem('vspo_favs', JSON.stringify(favorites)); }
+            if(data.visited) { visited = data.visited; localStorage.setItem('vspo_visited', JSON.stringify(visited)); }
+            showToast("データを復元しました！リロードします...");
+            setTimeout(() => location.reload(), 1500);
+        } catch(e) {
+            showToast("コードが正しくありません");
+        }
+    }
 
     function seededRandom(seed) {
         var x = Math.sin(seed++) * 10000;
@@ -622,29 +540,6 @@
         `;
     }
 
-    function addToHistory(item) {
-        history = history.filter(h => h.image !== item.image);
-        history.unshift(item);
-        if (history.length > 20) history.pop();
-        localStorage.setItem('vspo_history', JSON.stringify(history));
-        renderHistory();
-    }
-
-    function renderHistory() {
-        const section = document.getElementById('history-section');
-        const list = document.getElementById('history-list');
-        if (history.length === 0) { section.style.display = 'none'; return; }
-        section.style.display = 'block';
-        list.innerHTML = '';
-        history.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'history-item';
-            div.innerHTML = `<img src="${item.image}">`;
-            div.onclick = () => openModal(item.image);
-            list.appendChild(div);
-        });
-    }
-
     function generateMemberTags() {
         const container = document.getElementById('memberBar');
         container.innerHTML = `<span class="member-chip text-chip active" onclick="filterByMember('all', this)" title="全て表示">🏠</span>`;
@@ -670,12 +565,9 @@
     }
 
     function render() {
-        const app = document.getElementById('app');
+        const app = document.getElementById('main-grid');
         app.innerHTML = '';
         prepareSlideshowList();
-
-        const searchInput = document.getElementById('searchInput').value.trim();
-        const highlightRegex = searchInput ? new RegExp(`(${searchInput})`, 'gi') : null;
 
         const groups = {};
         const key = (currentMode === 'favorite') ? 'dummy' : currentMode;
@@ -694,34 +586,27 @@
             const section = document.createElement('div');
             section.innerHTML = `<div class="section-title">■ ${name}</div>`;
             const grid = document.createElement('div');
-            grid.className = 'grid'; // グリッドレイアウト適用
+            grid.className = 'grid';
             groups[name].forEach(item => {
                 const isFav = favorites.includes(item.image);
+                const isVisited = visited.includes(item.image);
                 const isNew = item._originalIndex >= latestIndexThreshold;
                 const newBadgeHtml = isNew ? `<div class="new-badge">NEW</div>` : '';
-                
-                let safeMember = (item.member || "").replace(/"/g, '&quot;');
-                let safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
-                if (highlightRegex) {
-                    safeMember = safeMember.replace(highlightRegex, '<span class="highlight">$1</span>');
-                    safeCos = safeCos.replace(highlightRegex, '<span class="highlight">$1</span>');
-                }
+                const visitedClass = isVisited ? 'visited' : '';
 
                 const card = document.createElement('div');
-                card.className = 'card';
+                card.className = `card ${visitedClass}`;
                 card.innerHTML = `
                     ${newBadgeHtml}
                     <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav(event, '${item.image}')">
                         <i class="fas fa-heart"></i>
                     </button>
-                    <button class="quick-copy-btn" onclick="quickCopy(event, '${item.link}')"><i class="fas fa-link"></i> Link</button>
-                    <div class="pop-heart"><i class="fas fa-heart"></i></div>
-                    <div class="card-img-box" onclick="handleCardClick(event, '${item.image}', '${item.link}', this)">
+                    <div class="card-img-box" onclick="openModal('${item.image}')">
                         <img src="${item.image}" loading="lazy" onerror="this.src='https://placehold.jp/300x300.png?text=No+Image'">
                     </div>
                     <div class="info">
-                        <span class="tag">${safeMember}</span>
-                        <div class="name">${safeCos}</div>
+                        <span class="tag">${(item.member||"").replace(/"/g,'&quot;')}</span>
+                        <div class="name">${(item.cosplayer||"").replace(/"/g,'&quot;')}</div>
                     </div>
                 `;
                 grid.appendChild(card);
@@ -729,28 +614,6 @@
             section.appendChild(grid);
             app.appendChild(section);
         });
-    }
-
-    function quickCopy(e, link) {
-        e.stopPropagation();
-        navigator.clipboard.writeText(link).then(() => { showToast("リンクをコピーしました！📋"); });
-    }
-
-    let lastTapTime = 0;
-    function handleCardClick(e, imgUrl, link, element) {
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTapTime;
-        if (tapLength < 300 && tapLength > 0) {
-            e.preventDefault();
-            const heart = element.parentElement.querySelector('.pop-heart');
-            heart.classList.remove('animate');
-            void heart.offsetWidth;
-            heart.classList.add('animate');
-            if (!favorites.includes(imgUrl)) toggleFav(e, imgUrl);
-        } else {
-            openModal(imgUrl);
-        }
-        lastTapTime = currentTime;
     }
 
     function toggleFav(e, imgUrl) {
@@ -766,8 +629,7 @@
         if (currentMode === 'favorite') render();
         else {
             document.querySelectorAll('.card').forEach(card => {
-                const img = card.querySelector('img');
-                if(img && img.src === imgUrl) {
+                if(card.querySelector('img').src === imgUrl) {
                     const btn = card.querySelector('.fav-btn');
                     if(favorites.includes(imgUrl)) btn.classList.add('active');
                     else btn.classList.remove('active');
@@ -777,8 +639,6 @@
     }
 
     function handleSearch() {
-        document.querySelectorAll('.member-chip').forEach(c => c.classList.remove('active'));
-        document.querySelector('.member-chip').classList.add('active'); 
         const keyword = document.getElementById('searchInput').value.toLowerCase();
         filteredData = allData.filter(item => item._searchKey.includes(keyword));
         applySort();
@@ -814,7 +674,7 @@
              if(currentImageIndex === -1) currentImageIndex = 0;
              slideshowList = allData;
         }
-        if(slideshowList[currentImageIndex]) { addToHistory(slideshowList[currentImageIndex]); }
+        markAsVisited(imgUrl); // 既読にする
         updateModalContent();
         document.getElementById('modal').classList.add('open');
         document.body.style.overflow = 'hidden';
@@ -825,9 +685,6 @@
         if(!item) return;
         document.getElementById('m-img').src = item.image;
         document.getElementById('m-link').href = item.link;
-        renderRelatedImages(item);
-        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(item.link)}`;
-        document.getElementById('qr-img').src = qrUrl;
     }
 
     function toggleAutoPlay() {
@@ -846,40 +703,13 @@
         btn.style.background = '#ff9f43';
     }
 
-    function toggleQR() {
-        const qrBox = document.getElementById('qr-box');
-        qrBox.classList.toggle('show');
-    }
-
-    function renderRelatedImages(currentItem) {
-        const area = document.getElementById('related-area');
-        const grid = document.getElementById('related-grid');
-        grid.innerHTML = '';
-        const related = allData.filter(d => d.member === currentItem.member && d.image !== currentItem.image);
-        if (related.length === 0) { area.style.display = 'none'; return; }
-        area.style.display = 'block';
-        const shuffled = related.sort(() => 0.5 - Math.random()).slice(0, 4);
-        shuffled.forEach(d => {
-            const div = document.createElement('div');
-            div.className = 'related-item';
-            div.innerHTML = `<img src="${d.image}">`;
-            div.onclick = () => { stopAutoPlay(); openModal(d.image); };
-            grid.appendChild(div);
-        });
-    }
-
     function changeImage(direction) {
         currentImageIndex += direction;
         if (currentImageIndex < 0) currentImageIndex = slideshowList.length - 1;
         if (currentImageIndex >= slideshowList.length) currentImageIndex = 0;
-        if(slideshowList[currentImageIndex]) addToHistory(slideshowList[currentImageIndex]);
-        updateModalContent();
-    }
-
-    function nativeShare() {
         const item = slideshowList[currentImageIndex];
-        const text = `${item.member} (${item.cosplayer}さん) のコスプレ！ #ぶいすぽっ`;
-        if (navigator.share) { navigator.share({ title: 'ぶいすぽっ！コスプレアーカイブ', text: text, url: item.link }).catch(console.error); }
+        if(item) markAsVisited(item.image);
+        updateModalContent();
     }
 
     function shareToX() {
@@ -901,20 +731,11 @@
         setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
     }
 
-    document.addEventListener('keydown', function(e) {
-        const modal = document.getElementById('modal');
-        if (!modal.classList.contains('open')) return;
-        if (e.key === 'ArrowLeft') changeImage(-1);
-        if (e.key === 'ArrowRight') changeImage(1);
-        if (e.key === 'Escape') closeModal({target: modal});
-    });
-
     function closeModal(e) {
         if(e.target.id === 'modal' || e.target.classList.contains('modal-close')) {
             stopAutoPlay();
             document.getElementById('modal').classList.remove('open');
             document.body.style.overflow = '';
-            document.getElementById('qr-box').classList.remove('show');
         }
     }
     function toggleTheme() { document.body.classList.toggle('dark-mode'); }
