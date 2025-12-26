@@ -32,7 +32,7 @@
         :root { 
             --primary: #5c6ac4; --bg: #f4f6f8; --card-bg: #fff; --text: #333; 
             --heart: #e2264d; --footer-bg: #eaeaea; --footer-text: #666; 
-            --grid-min-width: 140px; /* カードの最小幅（これを小さくして横並びを保証） */
+            --grid-min-width: 160px; /* カードの基本サイズ */
         }
         body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --footer-bg: #111; --footer-text: #888; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; -webkit-tap-highlight-color: transparent; padding-bottom: env(safe-area-inset-bottom); }
@@ -55,6 +55,7 @@
         .size-btn { background: transparent; padding: 4px 10px; border-radius: 18px; font-size: 0.8rem; margin: 0; }
         .size-btn.active { background: #fff; color: var(--primary); }
 
+        /* ストーリーズ */
         .stories-container { overflow-x: auto; white-space: nowrap; padding: 15px 10px 5px; margin-top: 5px; -webkit-overflow-scrolling: touch; scrollbar-width: none; display: flex; gap: 15px; }
         .stories-container::-webkit-scrollbar { display: none; }
         .story-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; flex-shrink: 0; width: 75px; }
@@ -96,10 +97,10 @@
         main { max-width: 1400px; margin: 0 auto; padding: 10px 20px; flex: 1; width: 100%; }
         .section-title { border-bottom: 2px solid #ddd; margin: 30px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
 
-        /* ★★★ ピックアップエリア（修正版） ★★★ */
-        /* 画像全体が見える＋PCでは高さを抑える設定 */
+        /* ★★★ Pickupエリア（PC最適化版） ★★★ */
         .pickup-area {
-            max-width: 800px; margin: 10px auto 30px;
+            max-width: 700px; /* 横幅も少し抑える */
+            margin: 10px auto 30px;
             background: var(--card-bg); border-radius: 16px;
             box-shadow: 0 4px 15px rgba(92, 106, 196, 0.2);
             position: relative; overflow: hidden;
@@ -111,32 +112,18 @@
         
         .pickup-img-box {
             width: 100%;
-            height: 350px; /* スマホ用高さ */
-            position: relative;
-            background: #000; /* 背景黒 */
-            display: flex; justify-content: center; align-items: center;
-            overflow: hidden;
+            height: 350px; /* スマホデフォルト */
+            position: relative; background: #000;
+            display: flex; justify-content: center; align-items: center; overflow: hidden;
         }
-        /* PC用高さ調整 */
+        /* PC用高さ調整：画面を占領しすぎないように */
         @media (min-width: 768px) {
-            .pickup-img-box { height: 280px; } /* PCでは少し低くして圧迫感を減らす */
+            .pickup-img-box { height: 220px; }
         }
 
-        .pickup-bg {
-            position: absolute; width: 100%; height: 100%;
-            object-fit: cover;
-            filter: blur(20px) brightness(0.6); /* ぼかし背景 */
-            z-index: 1; transform: scale(1.1);
-        }
-        .pickup-main {
-            position: relative; z-index: 2;
-            height: 100%; width: auto; max-width: 100%;
-            object-fit: contain; /* 全体を表示 */
-            transition: transform 0.5s;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
+        .pickup-bg { position: absolute; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.6); z-index: 1; transform: scale(1.1); }
+        .pickup-main { position: relative; z-index: 2; height: 100%; width: auto; max-width: 100%; object-fit: contain; box-shadow: 0 0 20px rgba(0,0,0,0.5); transition: transform 0.5s; }
         .pickup-area:hover .pickup-main { transform: scale(1.02); }
-        
         .pickup-info { padding: 15px; text-align: center; background: var(--card-bg); position: relative; z-index: 2; }
         .pickup-name { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; color: var(--primary); }
         .pickup-cos { color: var(--text); }
@@ -144,12 +131,10 @@
         /* ★★★ グリッドレイアウト（完全修正版） ★★★ */
         .grid {
             display: grid;
-            /* 140pxあれば確実に横に並ぶ */
             grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width), 1fr));
-            gap: 12px;
+            gap: 15px;
             width: 100%;
         }
-
         .card {
             background: var(--card-bg); border-radius: 12px; overflow: hidden;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative;
@@ -158,9 +143,10 @@
         }
         .card.visited { opacity: 0.6; filter: grayscale(30%); }
         .card.visited:hover { opacity: 1; filter: grayscale(0%); }
-
+        
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .card:hover { transform: translateY(-3px); }
+        
         .card-img-box { width: 100%; padding-top: 100%; position: relative; background: #eee; overflow: hidden; }
         .card img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; transition: 0.5s; }
         @media (hover: hover) { .card:hover img { transform: scale(1.1); } }
@@ -169,7 +155,7 @@
         .fav-btn.active { color: var(--heart); }
         .new-badge { position: absolute; top: 0; left: 0; background: #ff4757; color: white; font-size: 0.7rem; font-weight: bold; padding: 4px 10px; border-bottom-right-radius: 10px; z-index: 5; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
         
-        .info { padding: 10px; font-size: 0.9rem; } /* 少し文字サイズ調整 */
+        .info { padding: 10px; font-size: 0.9rem; }
         .tag { background: #e3f2fd; color: #1565c0; padding: 2px 8px; border-radius: 10px; font-size: 0.75rem; display: inline-block; margin-bottom: 3px; }
         .name { font-weight: bold; line-height: 1.3; font-size: 0.9rem; }
         
@@ -337,7 +323,7 @@
     let currentMode = 'member';
     let currentSort = 'new';
     let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
-    let visited = JSON.parse(localStorage.getItem('vspo_visited')) || []; // 既読リスト
+    let visited = JSON.parse(localStorage.getItem('vspo_visited')) || []; 
     let currentImageIndex = 0;
     let slideshowList = [];
     let latestIndexThreshold = 0;
@@ -376,25 +362,22 @@
         });
     };
 
-    // ★★★ グリッドサイズ切り替え ★★★
     function changeGridSize(size) {
         const root = document.documentElement;
         if(size === 'small') root.style.setProperty('--grid-min-width', '100px');
-        else if(size === 'medium') root.style.setProperty('--grid-min-width', '140px');
+        else if(size === 'medium') root.style.setProperty('--grid-min-width', '160px');
         else if(size === 'large') root.style.setProperty('--grid-min-width', '240px');
         
         document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('active'));
         event.target.classList.add('active');
     }
 
-    // ★★★ 既読管理 ★★★
     function markAsVisited(imgUrl) {
         if(!visited.includes(imgUrl)) {
             visited.push(imgUrl);
-            if(visited.length > 500) visited.shift(); // 最大500件
+            if(visited.length > 500) visited.shift();
             localStorage.setItem('vspo_visited', JSON.stringify(visited));
         }
-        // UI更新
         document.querySelectorAll('.card').forEach(card => {
             if(card.querySelector('img').src === imgUrl) {
                 card.classList.add('visited');
@@ -402,17 +385,12 @@
         });
     }
 
-    // ★★★ データバックアップ ★★★
-    function openSettings() {
-        document.getElementById('settings-modal').classList.add('show');
-    }
-    function closeSettings() {
-        document.getElementById('settings-modal').classList.remove('show');
-    }
+    function openSettings() { document.getElementById('settings-modal').classList.add('show'); }
+    function closeSettings() { document.getElementById('settings-modal').classList.remove('show'); }
     function exportData() {
         const data = { favs: favorites, visited: visited };
         document.getElementById('settings-data').value = JSON.stringify(data);
-        showToast("コードを発行しました。コピーして保存してください");
+        showToast("コードを発行しました");
     }
     function importData() {
         try {
@@ -420,22 +398,16 @@
             const data = JSON.parse(raw);
             if(data.favs) { favorites = data.favs; localStorage.setItem('vspo_favs', JSON.stringify(favorites)); }
             if(data.visited) { visited = data.visited; localStorage.setItem('vspo_visited', JSON.stringify(visited)); }
-            showToast("データを復元しました！リロードします...");
+            showToast("復元しました！");
             setTimeout(() => location.reload(), 1500);
-        } catch(e) {
-            showToast("コードが正しくありません");
-        }
+        } catch(e) { showToast("コードが正しくありません"); }
     }
 
-    function seededRandom(seed) {
-        var x = Math.sin(seed++) * 10000;
-        return x - Math.floor(x);
-    }
+    function seededRandom(seed) { var x = Math.sin(seed++) * 10000; return x - Math.floor(x); }
 
     function generateStories() {
         const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         let seed = parseInt(today);
-
         const container = document.getElementById('stories-container');
         container.innerHTML = '';
         storiesData = [];
@@ -443,7 +415,6 @@
         Object.keys(memberReadings).forEach(member => {
             const memberImages = allData.filter(d => d.member === member);
             if(memberImages.length === 0) return;
-
             const dailyImages = [];
             const tempImages = [...memberImages];
             for (let i = tempImages.length - 1; i > 0; i--) {
@@ -452,23 +423,13 @@
             }
             const pickCount = Math.min(5, tempImages.length);
             for(let i=0; i<pickCount; i++) dailyImages.push(tempImages[i]);
-
-            storiesData.push({
-                name: member,
-                icon: dailyImages[0].image,
-                images: dailyImages
-            });
+            storiesData.push({ name: member, icon: dailyImages[0].image, images: dailyImages });
         });
 
         storiesData.forEach((story, index) => {
             const div = document.createElement('div');
             div.className = 'story-item';
-            div.innerHTML = `
-                <div class="story-ring" id="story-ring-${index}">
-                    <img class="story-img" src="${story.icon}">
-                </div>
-                <div class="story-name">${memberIcons[story.name] || story.name}</div>
-            `;
+            div.innerHTML = `<div class="story-ring" id="story-ring-${index}"><img class="story-img" src="${story.icon}"></div><div class="story-name">${memberIcons[story.name] || story.name}</div>`;
             div.onclick = () => openStory(index);
             container.appendChild(div);
         });
@@ -489,7 +450,6 @@
         document.getElementById('story-header-name').innerText = story.name;
         document.getElementById('story-header-img').src = story.icon;
         document.getElementById('story-main-img').src = imgItem.image;
-
         const progressContainer = document.getElementById('story-progress-container');
         progressContainer.innerHTML = '';
         story.images.forEach((_, i) => {
@@ -509,10 +469,7 @@
         clearStoryTimer();
         const fill = document.getElementById('current-progress-fill');
         if(!fill) return;
-        setTimeout(() => {
-            fill.style.transition = `width ${storyDuration}ms linear`;
-            fill.style.width = '100%';
-        }, 10);
+        setTimeout(() => { fill.style.transition = `width ${storyDuration}ms linear`; fill.style.width = '100%'; }, 10);
         storyTimer = setTimeout(() => { nextStorySlide(); }, storyDuration);
     }
 
@@ -526,31 +483,20 @@
         if(e) e.stopPropagation();
         const story = storiesData[currentStoryMemberIndex];
         if (currentStorySlideIndex < story.images.length - 1) {
-            currentStorySlideIndex++;
-            renderStoryView();
-            startStoryTimer();
+            currentStorySlideIndex++; renderStoryView(); startStoryTimer();
         } else {
-            if (currentStoryMemberIndex < storiesData.length - 1) {
-                openStory(currentStoryMemberIndex + 1);
-            } else {
-                closeStory();
-            }
+            if (currentStoryMemberIndex < storiesData.length - 1) openStory(currentStoryMemberIndex + 1);
+            else closeStory();
         }
     }
 
     function prevStorySlide(e) {
         if(e) e.stopPropagation();
         if (currentStorySlideIndex > 0) {
-            currentStorySlideIndex--;
-            renderStoryView();
-            startStoryTimer();
+            currentStorySlideIndex--; renderStoryView(); startStoryTimer();
         } else {
-            if (currentStoryMemberIndex > 0) {
-                openStory(currentStoryMemberIndex - 1);
-            } else {
-                renderStoryView(); 
-                startStoryTimer();
-            }
+            if (currentStoryMemberIndex > 0) openStory(currentStoryMemberIndex - 1);
+            else { renderStoryView(); startStoryTimer(); }
         }
     }
 
@@ -564,9 +510,6 @@
         const randomIndex = Math.floor(Math.random() * allData.length);
         const item = allData[randomIndex];
         const container = document.getElementById('pickup-container');
-        const safeMember = (item.member || "").replace(/"/g, '&quot;');
-        const safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
-        
         container.innerHTML = `
             <div class="pickup-area" onclick="openModal('${item.image}')">
                 <div class="pickup-label">Today's Pickup ✨</div>
@@ -576,8 +519,8 @@
                         <img class="pickup-main" src="${item.image}" onerror="this.src='https://placehold.jp/800x400.png?text=No+Image'">
                     </div>
                     <div class="pickup-info">
-                        <div class="pickup-name">${safeMember}</div>
-                        <div class="pickup-cos">${safeCos}</div>
+                        <div class="pickup-name">${(item.member||"").replace(/"/g,'&quot;')}</div>
+                        <div class="pickup-cos">${(item.cosplayer||"").replace(/"/g,'&quot;')}</div>
                     </div>
                 </div>
             </div>
@@ -613,51 +556,66 @@
         app.innerHTML = '';
         prepareSlideshowList();
 
-        const groups = {};
-        const key = (currentMode === 'favorite') ? 'dummy' : currentMode;
-        slideshowList.forEach(item => {
-            const groupName = (currentMode === 'favorite') ? "お気に入り一覧" : (item[key] || "未分類");
-            if (!groups[groupName]) groups[groupName] = [];
-            groups[groupName].push(item);
-        });
-
-        if(Object.keys(groups).length === 0) {
-            app.innerHTML = '<p style="text-align:center; margin-top:50px; color:#666;">データが見つかりません</p>';
-            return;
-        }
-
-        Object.keys(groups).forEach(name => {
-            const section = document.createElement('div');
-            section.innerHTML = `<div class="section-title">■ ${name}</div>`;
+        // ★★★ 修正点: 新着順 or シャッフル時はグループ分けしない（一覧表示） ★★★
+        if (currentSort === 'new' || currentSort === 'shuffle' || currentMode === 'favorite' || currentMode === 'cosplayer') {
             const grid = document.createElement('div');
             grid.className = 'grid';
-            groups[name].forEach(item => {
-                const isFav = favorites.includes(item.image);
-                const isVisited = visited.includes(item.image);
-                const isNew = item._originalIndex >= latestIndexThreshold;
-                const newBadgeHtml = isNew ? `<div class="new-badge">NEW</div>` : '';
-                const visitedClass = isVisited ? 'visited' : '';
-
-                const card = document.createElement('div');
-                card.className = `card ${visitedClass}`;
-                card.innerHTML = `
-                    ${newBadgeHtml}
-                    <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav(event, '${item.image}')">
-                        <i class="fas fa-heart"></i>
-                    </button>
-                    <div class="card-img-box" onclick="openModal('${item.image}')">
-                        <img src="${item.image}" loading="lazy" onerror="this.src='https://placehold.jp/300x300.png?text=No+Image'">
-                    </div>
-                    <div class="info">
-                        <span class="tag">${(item.member||"").replace(/"/g,'&quot;')}</span>
-                        <div class="name">${(item.cosplayer||"").replace(/"/g,'&quot;')}</div>
-                    </div>
-                `;
-                grid.appendChild(card);
+            
+            slideshowList.forEach(item => {
+                grid.appendChild(createCard(item));
             });
-            section.appendChild(grid);
-            app.appendChild(section);
-        });
+            app.appendChild(grid);
+        } else {
+            // メンバー別（グループ分けあり）
+            const groups = {};
+            slideshowList.forEach(item => {
+                const groupName = item.member || "未分類";
+                if (!groups[groupName]) groups[groupName] = [];
+                groups[groupName].push(item);
+            });
+
+            if(Object.keys(groups).length === 0) {
+                app.innerHTML = '<p style="text-align:center; margin-top:50px; color:#666;">データが見つかりません</p>';
+                return;
+            }
+
+            Object.keys(groups).forEach(name => {
+                const section = document.createElement('div');
+                section.innerHTML = `<div class="section-title">■ ${name}</div>`;
+                const grid = document.createElement('div');
+                grid.className = 'grid';
+                groups[name].forEach(item => {
+                    grid.appendChild(createCard(item));
+                });
+                section.appendChild(grid);
+                app.appendChild(section);
+            });
+        }
+    }
+
+    function createCard(item) {
+        const isFav = favorites.includes(item.image);
+        const isVisited = visited.includes(item.image);
+        const isNew = item._originalIndex >= latestIndexThreshold;
+        const newBadgeHtml = isNew ? `<div class="new-badge">NEW</div>` : '';
+        const visitedClass = isVisited ? 'visited' : '';
+
+        const card = document.createElement('div');
+        card.className = `card ${visitedClass}`;
+        card.innerHTML = `
+            ${newBadgeHtml}
+            <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav(event, '${item.image}')">
+                <i class="fas fa-heart"></i>
+            </button>
+            <div class="card-img-box" onclick="openModal('${item.image}')">
+                <img src="${item.image}" loading="lazy" onerror="this.src='https://placehold.jp/300x300.png?text=No+Image'">
+            </div>
+            <div class="info">
+                <span class="tag">${(item.member||"").replace(/"/g,'&quot;')}</span>
+                <div class="name">${(item.cosplayer||"").replace(/"/g,'&quot;')}</div>
+            </div>
+        `;
+        return card;
     }
 
     function toggleFav(e, imgUrl) {
@@ -670,16 +628,16 @@
             showToast("お気に入りに追加しました！💖");
         }
         localStorage.setItem('vspo_favs', JSON.stringify(favorites));
+        // 再描画せずにクラスだけ切り替え
+        document.querySelectorAll('.card').forEach(card => {
+            if(card.querySelector('img').src === imgUrl) {
+                const btn = card.querySelector('.fav-btn');
+                if(favorites.includes(imgUrl)) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+        });
+        // お気に入りモードの時だけ再描画
         if (currentMode === 'favorite') render();
-        else {
-            document.querySelectorAll('.card').forEach(card => {
-                if(card.querySelector('img').src === imgUrl) {
-                    const btn = card.querySelector('.fav-btn');
-                    if(favorites.includes(imgUrl)) btn.classList.add('active');
-                    else btn.classList.remove('active');
-                }
-            });
-        }
     }
 
     function handleSearch() {
@@ -690,7 +648,7 @@
 
     function setSort(sortType) {
         currentSort = sortType;
-        document.querySelectorAll('header button:not(.icon-btn)').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('header button:not(.icon-btn):not(.size-btn)').forEach(b => b.classList.remove('active'));
         const btn = document.getElementById('btn-' + sortType);
         if(btn) btn.classList.add('active');
         applySort();
@@ -718,7 +676,7 @@
              if(currentImageIndex === -1) currentImageIndex = 0;
              slideshowList = allData;
         }
-        markAsVisited(imgUrl); // 既読にする
+        markAsVisited(imgUrl);
         updateModalContent();
         document.getElementById('modal').classList.add('open');
         document.body.style.overflow = 'hidden';
