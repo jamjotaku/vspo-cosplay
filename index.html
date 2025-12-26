@@ -50,7 +50,6 @@
         button:hover { background: rgba(255,255,255,0.4); }
         button.active { background: #fff; color: var(--primary); font-weight: bold; }
 
-        /* ストーリーズエリア */
         .stories-container { overflow-x: auto; white-space: nowrap; padding: 15px 10px 5px; margin-top: 5px; -webkit-overflow-scrolling: touch; scrollbar-width: none; display: flex; gap: 15px; }
         .stories-container::-webkit-scrollbar { display: none; }
         .story-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; flex-shrink: 0; width: 75px; }
@@ -61,18 +60,64 @@
         .story-item:hover .story-ring { transform: scale(1.05); }
         .story-name { font-size: 0.75rem; margin-top: 5px; text-overflow: ellipsis; overflow: hidden; white-space: nowrap; width: 100%; text-align: center; }
 
-        /* ストーリービューワー */
-        .story-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 3000; display: none; flex-direction: column; }
+        /* ★★★ ストーリービューワー（PC最適化版） ★★★ */
+        .story-viewer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 3000;
+            display: none; /* JSでflexに変更 */
+            flex-direction: column;
+            justify-content: center; /* PC用：中央寄せ */
+            align-items: center; /* PC用：中央寄せ */
+        }
         .story-viewer.active { display: flex; animation: fadeIn 0.2s ease; }
+
+        /* スマホ用フレーム（コンテンツ枠） */
+        .story-frame {
+            width: 100%; height: 100%;
+            position: relative;
+            background: #000;
+            display: flex; flex-direction: column;
+        }
+
+        /* PC（幅768px以上）の時はフレームを制限する */
+        @media (min-width: 768px) {
+            .story-viewer { background: rgba(0, 0, 0, 0.9); } /* 背景を少し透過 */
+            .story-frame {
+                width: 420px; /* スマホ幅 */
+                height: 85vh; /* 画面の85% */
+                max-height: 900px;
+                border-radius: 15px; /* 角丸 */
+                overflow: hidden;
+                box-shadow: 0 0 50px rgba(0,0,0,0.5); /* 影 */
+            }
+            /* PC用の閉じるボタンは画面右上に配置 */
+            .story-close {
+                position: fixed !important;
+                top: 20px !important;
+                right: 30px !important;
+                width: 50px !important;
+                height: 50px !important;
+                font-size: 2.5rem !important;
+                z-index: 3100 !important;
+            }
+        }
+
         .story-progress-container { display: flex; gap: 4px; padding: 10px 5px; width: 100%; box-sizing: border-box; position: absolute; top: 0; left: 0; z-index: 3010; }
         .story-progress-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
         .story-progress-fill { height: 100%; background: #fff; width: 0%; }
+        
         .story-header { position: absolute; top: 25px; left: 10px; z-index: 3010; display: flex; align-items: center; gap: 10px; color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
         .story-header-img { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; border: 1px solid #fff; }
         .story-header-name { font-weight: bold; font-size: 0.9rem; }
         .story-header-time { font-size: 0.8rem; opacity: 0.8; }
-        .story-close { position: absolute; top: 25px; right: 15px; color: #fff; font-size: 1.5rem; cursor: pointer; z-index: 3020; }
-        .story-image-area { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
+        
+        /* 閉じるボタン（スマホはフレーム内、PCは上書きで外へ） */
+        .story-close {
+            position: absolute; top: 25px; right: 15px; color: #fff; font-size: 1.5rem; cursor: pointer; z-index: 3020;
+            display: flex; align-items: center; justify-content: center;
+        }
+
+        .story-image-area { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; background: #111; }
         .story-main-img { width: 100%; height: 100%; object-fit: contain; }
         .story-nav-left, .story-nav-right { position: absolute; top: 0; height: 100%; width: 30%; z-index: 3005; }
         .story-nav-left { left: 0; }
@@ -112,18 +157,16 @@
         .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; border-color: #fff; transform: scale(1.1); }
         .member-chip.text-chip { font-size: 0.9rem; padding: 10px 16px; }
 
-        /* ★★★ グリッドレイアウト（完全修復版） ★★★ */
+        /* グリッドレイアウト（安定版） */
         .grid {
             display: grid;
-            /* PC: 横5列〜, タブレット: 横3列〜, スマホ: 横2列〜 に自動調整 */
             grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
             gap: 15px;
             width: 100%;
         }
-        /* スマホ用調整 */
         @media (max-width: 600px) {
             .grid {
-                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); /* スマホでも横2-3列確保 */
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
                 gap: 10px;
             }
         }
@@ -134,13 +177,8 @@
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             position: relative;
-            /* 完全にグリッドアイテムとして振る舞わせる */
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            height: auto;
-            margin: 0; /* マージンリセット */
-            
+            display: flex; flex-direction: column;
+            width: 100%; margin: 0;
             transition: transform 0.2s;
             opacity: 0;
             animation: fadeIn 0.6s ease forwards;
@@ -151,22 +189,17 @@
         
         .card-img-box {
             width: 100%;
-            /* 正方形にする（1:1） */
-            padding-top: 100%; 
+            padding-top: 100%; /* 正方形 */
             position: relative;
             background: #eee;
             overflow: hidden;
         }
         .card img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover; /* 枠いっぱいに表示 */
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            object-fit: cover;
             transition: 0.5s;
         }
-        
         @media (hover: hover) { .card:hover img { transform: scale(1.1); } .quick-copy-btn { opacity: 0; } .card:hover .quick-copy-btn { opacity: 1; } }
 
         .skeleton { animation: skeleton-loading 1s linear infinite alternate; width: 100%; height: 100%; display: block; position: absolute; top: 0; left: 0; }
@@ -328,19 +361,22 @@
 </div>
 
 <div id="story-viewer" class="story-viewer" onclick="closeStory()">
-    <div class="story-progress-container" id="story-progress-container"></div>
-    <div class="story-header" onclick="event.stopPropagation()">
-        <img id="story-header-img" class="story-header-img">
-        <div>
-            <div id="story-header-name" class="story-header-name"></div>
-            <div class="story-header-time">Today's Selection ✨</div>
+    <div class="story-close" onclick="closeStory()">&times;</div>
+    
+    <div class="story-frame" onclick="event.stopPropagation()">
+        <div class="story-progress-container" id="story-progress-container"></div>
+        <div class="story-header">
+            <img id="story-header-img" class="story-header-img">
+            <div>
+                <div id="story-header-name" class="story-header-name"></div>
+                <div class="story-header-time">Today's Selection ✨</div>
+            </div>
         </div>
-    </div>
-    <div class="story-close">&times;</div>
-    <div class="story-image-area">
-        <img id="story-main-img" class="story-main-img">
-        <div class="story-nav-left" onclick="prevStorySlide(event)"></div>
-        <div class="story-nav-right" onclick="nextStorySlide(event)"></div>
+        <div class="story-image-area">
+            <img id="story-main-img" class="story-main-img">
+            <div class="story-nav-left" onclick="prevStorySlide(event)"></div>
+            <div class="story-nav-right" onclick="nextStorySlide(event)"></div>
+        </div>
     </div>
 </div>
 
@@ -425,7 +461,7 @@
                 displayPickup();
                 applySort();
             },
-            error: function() { document.getElementById('main-grid').innerHTML = '<p style="text-align:center;">読み込み失敗</p>'; }
+            error: function() { document.getElementById('app').innerHTML = '<p style="text-align:center;">読み込み失敗</p>'; }
         });
     };
 
@@ -634,7 +670,7 @@
     }
 
     function render() {
-        const app = document.getElementById('app'); // main-grid ではなく app に変更
+        const app = document.getElementById('app');
         app.innerHTML = '';
         prepareSlideshowList();
 
@@ -658,7 +694,7 @@
             const section = document.createElement('div');
             section.innerHTML = `<div class="section-title">■ ${name}</div>`;
             const grid = document.createElement('div');
-            grid.className = 'grid'; // ★ここが重要
+            grid.className = 'grid'; // グリッドレイアウト適用
             groups[name].forEach(item => {
                 const isFav = favorites.includes(item.image);
                 const isNew = item._originalIndex >= latestIndexThreshold;
