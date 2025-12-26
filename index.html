@@ -9,7 +9,8 @@
       gtag('config', 'G-QE8MD8LCQ0');
     </script>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"> <title>ぶいすぽっ！コスプレアーカイブ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>ぶいすぽっ！コスプレアーカイブ</title>
 
     <meta property="og:title" content="ぶいすぽっ！コスプレアーカイブ" />
     <meta property="og:type" content="website" />
@@ -64,6 +65,7 @@
         main { max-width: 1200px; margin: 0 auto; padding: 10px 20px; flex: 1; width: 100%; box-sizing: border-box; }
         .section-title { border-bottom: 2px solid #ddd; margin: 30px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
         
+        /* ★★★ 今日のピックアップ（全体表示ver） ★★★ */
         .pickup-area {
             max-width: 800px; margin: 10px auto 30px;
             background: var(--card-bg); border-radius: 16px;
@@ -79,13 +81,39 @@
             box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 0.9rem;
         }
         .pickup-content { display: flex; flex-direction: column; cursor: pointer; }
-        .pickup-img-box { width: 100%; height: 350px; overflow: hidden; position: relative; }
-        .pickup-img-box img { width: 100%; height: 100%; object-fit: cover; object-position: top; transition: 0.5s; }
-        .pickup-area:hover .pickup-img-box img { transform: scale(1.03); }
-        .pickup-info { padding: 15px; text-align: center; background: var(--card-bg); }
+        
+        /* ぼかし背景とメイン画像の重ね合わせ */
+        .pickup-img-box {
+            width: 100%; height: 400px; /* 少し縦を広げました */
+            position: relative; overflow: hidden;
+            background: #000; /* 背景黒 */
+            display: flex; justify-content: center; align-items: center;
+        }
+        /* 背景用（拡大・ぼかし） */
+        .pickup-bg {
+            position: absolute; width: 100%; height: 100%; object-fit: cover;
+            filter: blur(20px) brightness(0.7); /* ぼかしと少し暗く */
+            z-index: 1; transform: scale(1.1);
+        }
+        /* メイン画像（全体表示） */
+        .pickup-main {
+            position: relative; z-index: 2;
+            height: 100%; width: auto; max-width: 100%;
+            object-fit: contain; /* 全体を表示 */
+            box-shadow: 0 0 20px rgba(0,0,0,0.5); /* 浮き出るような影 */
+            transition: transform 0.5s;
+        }
+        .pickup-area:hover .pickup-main { transform: scale(1.02); }
+
+        .pickup-info { padding: 15px; text-align: center; background: var(--card-bg); position: relative; z-index: 2; }
         .pickup-name { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; color: var(--primary); }
         .pickup-cos { color: var(--text); }
-        @media (max-width: 600px) { .pickup-img-box { height: 250px; } .pickup-name { font-size: 1rem; } }
+        
+        @media (max-width: 600px) {
+            .pickup-img-box { height: 300px; }
+            .pickup-name { font-size: 1rem; }
+        }
+        /* --------------------------------------- */
 
         .grid { column-count: 4; column-gap: 15px; }
         @media (max-width: 900px) { .grid { column-count: 3; } }
@@ -108,7 +136,6 @@
         .fav-btn.active { color: var(--heart); }
         .fav-btn:hover { transform: scale(1.1); }
         
-        /* NEWバッジ */
         .new-badge {
             position: absolute; top: 0; left: 0;
             background: #ff4757; color: white;
@@ -117,7 +144,6 @@
             z-index: 5; box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
         }
 
-        /* ダブルタップ時のポップハート */
         .pop-heart {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
             font-size: 4rem; color: rgba(255, 255, 255, 0.9); text-shadow: 0 0 10px rgba(226, 38, 77, 0.8);
@@ -168,7 +194,8 @@
 <header>
     <div class="title-area">
         <h1>👘 VSPO! Cosplay Archive</h1>
-        <span id="total-count" class="total-count"></span> </div>
+        <span id="total-count" class="total-count"></span>
+    </div>
 
     <div class="header-controls">
         <a id="contact-link" href="#" target="_blank" class="icon-btn" title="削除依頼・お問い合わせ">
@@ -268,7 +295,7 @@
     let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
     let currentImageIndex = 0;
     let slideshowList = [];
-    let latestIndexThreshold = 0; // NEWバッジ判定用
+    let latestIndexThreshold = 0; 
 
     window.onload = function() {
         generateMemberTags();
@@ -285,10 +312,7 @@
                         return item;
                     });
                 
-                // ★★★ 最新5件のインデックスを特定（CSVの下にあるほど新しいと仮定） ★★★
                 latestIndexThreshold = Math.max(0, allData.length - 5);
-                
-                // ★★★ アーカイブ数表示 ★★★
                 document.getElementById('total-count').innerText = `現在 ${allData.length} 枚 アーカイブ中`;
 
                 filteredData = [...allData];
@@ -299,7 +323,7 @@
         });
     };
 
-    // ★★★ ピックアップ機能 ★★★
+    // ★★★ ピックアップ機能（ぼかし背景・全体表示版） ★★★
     function displayPickup() {
         if (allData.length === 0) return;
         const randomIndex = Math.floor(Math.random() * allData.length);
@@ -314,7 +338,8 @@
                 <div class="pickup-label">Today's Pickup ✨</div>
                 <div class="pickup-content">
                     <div class="pickup-img-box">
-                        <img src="${item.image}" onerror="this.src='https://placehold.jp/800x400.png?text=No+Image'">
+                        <img class="pickup-bg" src="${item.image}">
+                        <img class="pickup-main" src="${item.image}" onerror="this.src='https://placehold.jp/800x400.png?text=No+Image'">
                     </div>
                     <div class="pickup-info">
                         <div class="pickup-name">${safeMember}</div>
@@ -382,7 +407,6 @@
             grid.className = 'grid';
             groups[name].forEach(item => {
                 const isFav = favorites.includes(item.image);
-                // ★★★ NEWバッジ判定（元のCSVでの順番が最新5件ならNEW） ★★★
                 const isNew = item._originalIndex >= latestIndexThreshold;
                 const newBadgeHtml = isNew ? `<div class="new-badge">NEW</div>` : '';
 
@@ -391,7 +415,6 @@
                 const safeMember = (item.member || "").replace(/"/g, '&quot;');
                 const safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
                 
-                // ★★★ ダブルタップイベント追加 ★★★
                 card.innerHTML = `
                     ${newBadgeHtml}
                     <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav(event, '${item.image}')">
@@ -413,28 +436,22 @@
         });
     }
 
-    // ★★★ ダブルタップ判定とクリック処理の統合 ★★★
     let lastTapTime = 0;
     function handleCardClick(e, imgUrl, link, element) {
         const currentTime = new Date().getTime();
         const tapLength = currentTime - lastTapTime;
         
         if (tapLength < 300 && tapLength > 0) {
-            // ダブルタップ成立！
             e.preventDefault();
-            // ハートアニメーション
             const heart = element.parentElement.querySelector('.pop-heart');
             heart.classList.remove('animate');
-            void heart.offsetWidth; // リフロー強制
+            void heart.offsetWidth;
             heart.classList.add('animate');
 
-            // お気に入り登録（まだの場合のみ）
             if (!favorites.includes(imgUrl)) {
                 toggleFav(e, imgUrl);
             }
         } else {
-            // シングルタップ（モーダルを開く）
-            // 少し遅延させて、ダブルタップ待ちをする手もあるが、操作感を優先して即時実行
             openModal(imgUrl);
         }
         lastTapTime = currentTime;
@@ -451,13 +468,9 @@
         }
         localStorage.setItem('vspo_favs', JSON.stringify(favorites));
         
-        // ボタンの見た目更新（クリックした場所に応じて）
-        // 特定のボタンを探して更新するのはコストがかかるので、renderで再描画が確実だが、
-        // ダブルタップ時のパフォーマンスのため、現在地だけ更新して、favoriteモードの時だけ再描画する
         if (currentMode === 'favorite') {
             render();
         } else {
-            // 全カードから該当URLを持つボタンを探してクラスを切り替える（簡易的同期）
             document.querySelectorAll('.card').forEach(card => {
                 const img = card.querySelector('img');
                 if(img && img.src === imgUrl) {
