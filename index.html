@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-QE8MD8LCQ0"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-QE8MD8LCQ0');
+    </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ぶいすぽっ！コスプレアーカイブ</title>
@@ -42,7 +50,9 @@
         .member-chip {
             display: inline-block; background: rgba(255,255,255,0.2); color: #fff;
             padding: 8px 14px; border-radius: 25px; margin-right: 8px; cursor: pointer;
-            font-size: 1.2rem; line-height: 1; transition: 0.2s; border: 1px solid transparent;
+            font-size: 1.2rem;
+            line-height: 1;
+            transition: 0.2s; border: 1px solid transparent;
             min-width: 30px; text-align: center; vertical-align: middle;
         }
         .member-chip:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); }
@@ -62,7 +72,7 @@
             background: var(--card-bg); border-radius: 16px;
             box-shadow: 0 4px 15px rgba(92, 106, 196, 0.2);
             position: relative; overflow: hidden;
-            border: 2px solid var(--primary); /* 特別感を出す枠線 */
+            border: 2px solid var(--primary);
             animation: fadeIn 0.8s ease forwards;
         }
         .pickup-label {
@@ -71,19 +81,11 @@
             padding: 5px 15px; border-radius: 20px; z-index: 10;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 0.9rem;
         }
-        .pickup-content {
-            display: flex; flex-direction: column; cursor: pointer;
-        }
-        .pickup-img-box {
-            width: 100%; height: 350px; overflow: hidden; position: relative;
-        }
-        .pickup-img-box img {
-            width: 100%; height: 100%; object-fit: cover; object-position: top; transition: 0.5s;
-        }
+        .pickup-content { display: flex; flex-direction: column; cursor: pointer; }
+        .pickup-img-box { width: 100%; height: 350px; overflow: hidden; position: relative; }
+        .pickup-img-box img { width: 100%; height: 100%; object-fit: cover; object-position: top; transition: 0.5s; }
         .pickup-area:hover .pickup-img-box img { transform: scale(1.03); }
-        .pickup-info {
-            padding: 15px; text-align: center; background: var(--card-bg);
-        }
+        .pickup-info { padding: 15px; text-align: center; background: var(--card-bg); }
         .pickup-name { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; color: var(--primary); }
         .pickup-cos { color: var(--text); }
         
@@ -91,7 +93,6 @@
             .pickup-img-box { height: 250px; }
             .pickup-name { font-size: 1rem; }
         }
-        /* --------------------------------------- */
 
         .grid { column-count: 4; column-gap: 15px; }
         @media (max-width: 900px) { .grid { column-count: 3; } }
@@ -210,10 +211,7 @@
 
 <script>
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
-
-    // ▼▼▼ GoogleフォームURL（入力済み） ▼▼▼
     const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog";
-    // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
     const contactLink = document.getElementById('contact-link');
     if (FORM_URL) { contactLink.href = FORM_URL; }
@@ -230,7 +228,7 @@
         "蝶屋はなび": "ちょうやはなび", "甘結もか": "あまゆいもか"
     };
 
-    // ▼▼▼ 推しマーク設定（加入順・修正済み） ▼▼▼
+    // ▼▼▼ 推しマーク設定（加入順） ▼▼▼
     const memberIcons = {
         "花芽すみれ": "👾💤", "花芽なずな": "🍣", "小雀とと": "🔫🐥",
         "一ノ瀬うるは": "🌠", "胡桃のあ": "🧸♔", "橘ひなの": "🍫💘",
@@ -266,9 +264,7 @@
                     });
                 filteredData = [...allData];
                 
-                // ★★★ ピックアップを表示 ★★★
                 displayPickup();
-                
                 applySort();
             },
             error: function() { document.getElementById('app').innerHTML = '<p style="text-align:center;">読み込み失敗</p>'; }
@@ -278,8 +274,6 @@
     // ★★★ ピックアップ機能 ★★★
     function displayPickup() {
         if (allData.length === 0) return;
-        
-        // ランダムに1枚選ぶ
         const randomIndex = Math.floor(Math.random() * allData.length);
         const item = allData[randomIndex];
         
@@ -432,11 +426,8 @@
     function openModal(imgUrl) {
         currentImageIndex = slideshowList.findIndex(item => item.image === imgUrl);
         if(currentImageIndex === -1) {
-             // ピックアップから開いた場合、slideshowListにない可能性があるのでallDataから探す
              currentImageIndex = allData.findIndex(item => item.image === imgUrl);
-             // それでもなければ0
              if(currentImageIndex === -1) currentImageIndex = 0;
-             // スライドショーリストを全データに切り替えておく（スライド可能にするため）
              slideshowList = allData;
         }
         updateModalContent();
