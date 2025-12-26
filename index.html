@@ -10,7 +10,6 @@
     </script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#5c6ac4">
@@ -26,12 +25,12 @@
     <meta name="twitter:title" content="ぶいすぽっ！コスプレアーカイブ" />
     <meta name="twitter:description" content="ぶいすぽっ！メンバーのコスプレ画像を検索・閲覧できる非公式ファンサイトです。" />
     <meta name="twitter:image" content="https://jamjotaku.github.io/vspo-cosplay/ogp.png" />
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* --- デザイン設定 --- */
-        :root { --primary: #5c6ac4; --bg: #f4f6f8; --card-bg: #fff; --text: #333; --heart: #e2264d; --footer-bg: #eaeaea; --footer-text: #666; }
-        body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --footer-bg: #111; --footer-text: #888; }
+        :root { --primary: #5c6ac4; --bg: #f4f6f8; --card-bg: #fff; --text: #333; --heart: #e2264d; --footer-bg: #eaeaea; --footer-text: #666; --highlight: #fff3cd; --highlight-text: #856404; }
+        body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --footer-bg: #111; --footer-text: #888; --highlight: #5c4d00; --highlight-text: #ffeb3b; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; -webkit-tap-highlight-color: transparent; padding-bottom: env(safe-area-inset-bottom); }
         
         header { background: var(--primary); color: #fff; padding: 20px 20px 10px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 5px rgba(0,0,0,0.2); padding-top: max(20px, env(safe-area-inset-top)); }
@@ -45,9 +44,8 @@
         .tools { margin-top: 15px; display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; position: relative; }
         input { padding: 10px 40px 10px 15px; border-radius: 20px; border: none; min-width: 250px; outline: none; transition: 0.3s; }
         input:focus { box-shadow: 0 0 0 3px rgba(255,255,255,0.3); transform: scale(1.02); }
-        /* PC用ショートカットヒント */
         .shortcut-hint { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #999; font-size: 0.8rem; background: #eee; padding: 2px 6px; border-radius: 4px; pointer-events: none; display: none; }
-        @media (hover: hover) { .shortcut-hint { display: block; } } /* マウスがあるデバイスのみ表示 */
+        @media (hover: hover) { .shortcut-hint { display: block; } }
 
         button { background: rgba(255,255,255,0.2); border: none; color: #fff; padding: 8px 15px; border-radius: 20px; cursor: pointer; white-space: nowrap; transition: 0.2s; }
         button:hover { background: rgba(255,255,255,0.4); }
@@ -64,7 +62,7 @@
         .view-btn { background: var(--card-bg); color: var(--primary); border: 1px solid var(--primary); padding: 8px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
         .view-btn.active { background: var(--primary); color: #fff; }
 
-        main { max-width: 1400px; margin: 0 auto; padding: 10px 20px; flex: 1; width: 100%; box-sizing: border-box; } /* max-width拡大 */
+        main { max-width: 1400px; margin: 0 auto; padding: 10px 20px; flex: 1; width: 100%; box-sizing: border-box; }
         .section-title { border-bottom: 2px solid #ddd; margin: 30px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
         
         .pickup-area { max-width: 800px; margin: 10px auto 30px; background: var(--card-bg); border-radius: 16px; box-shadow: 0 4px 15px rgba(92, 106, 196, 0.2); position: relative; overflow: hidden; border: 2px solid var(--primary); animation: fadeIn 0.8s ease forwards; }
@@ -88,9 +86,8 @@
         .history-item img { width: 100%; height: 100%; object-fit: cover; }
         .history-item:hover { transform: scale(1.1); transition: 0.2s; }
 
-        /* ★★★ カラム数設定（PC大画面対応） ★★★ */
         .grid { column-count: 4; column-gap: 15px; }
-        @media (min-width: 1400px) { .grid { column-count: 5; } } /* 5列表示 */
+        @media (min-width: 1400px) { .grid { column-count: 5; } }
         @media (max-width: 900px) { .grid { column-count: 3; } }
         @media (max-width: 600px) { .grid { column-count: 2; } }
 
@@ -99,13 +96,7 @@
         .card:hover { transform: translateY(-3px); }
         .card-img-box { width: 100%; display: block; overflow: hidden; cursor: pointer; position: relative; min-height: 200px; background: #eee; }
         .card img { width: 100%; height: auto; display: block; transition: 0.5s; }
-        
-        /* PCホバー時のエフェクト */
-        @media (hover: hover) {
-            .card:hover img { transform: scale(1.1); } /* 拡大率アップ */
-            .quick-copy-btn { opacity: 0; }
-            .card:hover .quick-copy-btn { opacity: 1; }
-        }
+        @media (hover: hover) { .card:hover img { transform: scale(1.1); } .quick-copy-btn { opacity: 0; } .card:hover .quick-copy-btn { opacity: 1; } }
 
         .skeleton { animation: skeleton-loading 1s linear infinite alternate; width: 100%; height: 100%; display: block; }
         @keyframes skeleton-loading { 0% { background-color: #e0e0e0; } 100% { background-color: #f5f5f5; } }
@@ -115,17 +106,9 @@
         .fav-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; color: #ccc; z-index: 10; transition: 0.2s; border: none; }
         .fav-btn.active { color: var(--heart); }
         .fav-btn:hover { transform: scale(1.1); }
-        
-        /* ★★★ PC用クイックコピーボタン ★★★ */
-        .quick-copy-btn {
-            position: absolute; bottom: 10px; right: 10px;
-            background: rgba(0,0,0,0.7); color: #fff;
-            border-radius: 5px; padding: 5px 10px; font-size: 0.8rem;
-            cursor: pointer; z-index: 10; border: none; opacity: 0; transition: 0.2s;
-            display: flex; align-items: center; gap: 5px;
-        }
+        .quick-copy-btn { position: absolute; bottom: 10px; right: 10px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 5px; padding: 5px 10px; font-size: 0.8rem; cursor: pointer; z-index: 10; border: none; opacity: 0; transition: 0.2s; display: flex; align-items: center; gap: 5px; }
         .quick-copy-btn:hover { background: #000; }
-        @media (hover: none) { .quick-copy-btn { display: none; } } /* スマホでは非表示 */
+        @media (hover: none) { .quick-copy-btn { display: none; } }
 
         .new-badge { position: absolute; top: 0; left: 0; background: #ff4757; color: white; font-size: 0.7rem; font-weight: bold; padding: 4px 10px; border-bottom-right-radius: 10px; z-index: 5; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
         .pop-heart { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); font-size: 4rem; color: rgba(255, 255, 255, 0.9); text-shadow: 0 0 10px rgba(226, 38, 77, 0.8); pointer-events: none; z-index: 20; }
@@ -135,6 +118,9 @@
         .info { padding: 12px; }
         .tag { background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; display: inline-block; margin-bottom: 5px; }
         .name { font-weight: bold; font-size: 0.95rem; line-height: 1.4; }
+        /* ハイライト用スタイル */
+        .highlight { background-color: var(--highlight); color: var(--highlight-text); font-weight: bold; padding: 0 2px; border-radius: 2px; }
+
         footer { background: var(--footer-bg); color: var(--footer-text); text-align: center; padding: 30px 20px; margin-top: auto; font-size: 0.85rem; padding-bottom: max(30px, env(safe-area-inset-bottom)); }
 
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
@@ -148,6 +134,13 @@
         .btn-link { background: #1da1f2; } .btn-link:hover { background: #0c85d0; transform: scale(1.05); }
         .btn-copy { background: #666; } .btn-copy:hover { background: #444; transform: scale(1.05); }
         .btn-native { background: #34c759; display: none; } .btn-native:hover { background: #28a745; transform: scale(1.05); }
+        .btn-play { background: #ff9f43; } .btn-play:hover { background: #e58e26; transform: scale(1.05); } /* 再生ボタン */
+        .btn-qr { background: #fff; color: #333; } .btn-qr:hover { background: #eee; transform: scale(1.05); } /* QRボタン */
+
+        /* QRコードモーダル */
+        .qr-modal { position: absolute; bottom: 60px; right: 0; background: #fff; padding: 10px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); display: none; z-index: 2000; }
+        .qr-modal.show { display: block; animation: popUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        @keyframes popUp { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
         .related-container { margin-top: 20px; width: 100%; text-align: left; }
         .related-title { color: #fff; font-size: 0.9rem; margin-bottom: 10px; padding-left: 10px; border-left: 3px solid var(--primary); }
@@ -221,9 +214,6 @@
         <div class="card" style="height:200px;"><div class="skeleton"></div></div>
         <div class="card" style="height:280px;"><div class="skeleton"></div></div>
         <div class="card" style="height:250px;"><div class="skeleton"></div></div>
-        <div class="card" style="height:220px;"><div class="skeleton"></div></div>
-        <div class="card" style="height:300px;"><div class="skeleton"></div></div>
-        <div class="card" style="height:250px;"><div class="skeleton"></div></div>
     </div>
 </main>
 
@@ -250,12 +240,25 @@
         </div>
 
         <div class="share-area">
+            <button class="action-btn btn-play" id="btn-play" onclick="toggleAutoPlay()">
+                <i class="fas fa-play"></i> 自動再生
+            </button>
             <button class="action-btn btn-native" id="btn-native" onclick="nativeShare()">
                 <i class="fas fa-share-alt"></i> シェア
             </button>
             <button class="action-btn btn-twitter" onclick="shareToX()">
                 <i class="fab fa-x-twitter"></i> ポスト
             </button>
+            
+            <div style="position:relative;">
+                <button class="action-btn btn-qr" onclick="toggleQR()">
+                    <i class="fas fa-qrcode"></i>
+                </button>
+                <div id="qr-box" class="qr-modal">
+                    <img id="qr-img" src="" alt="QR Code" width="150" height="150">
+                </div>
+            </div>
+
             <button class="action-btn btn-copy" onclick="copyLink()">
                 <i class="fas fa-link"></i> コピー
             </button>
@@ -303,7 +306,8 @@
     let history = JSON.parse(localStorage.getItem('vspo_history')) || [];
     let currentImageIndex = 0;
     let slideshowList = [];
-    let latestIndexThreshold = 0; 
+    let latestIndexThreshold = 0;
+    let autoPlayInterval = null; // オートプレイ用
 
     window.onload = function() {
         generateMemberTags();
@@ -313,7 +317,6 @@
             document.getElementById('btn-native').style.display = 'flex';
         }
 
-        // ★★★ PC用ショートカットキー（/ で検索） ★★★
         document.addEventListener('keydown', function(e) {
             if (e.key === '/' && document.activeElement !== document.getElementById('searchInput')) {
                 e.preventDefault();
@@ -431,6 +434,10 @@
         app.innerHTML = '';
         prepareSlideshowList();
 
+        // ★★★ 検索ハイライト用キーワード ★★★
+        const searchInput = document.getElementById('searchInput').value.trim();
+        const highlightRegex = searchInput ? new RegExp(`(${searchInput})`, 'gi') : null;
+
         const groups = {};
         const key = (currentMode === 'favorite') ? 'dummy' : currentMode;
         slideshowList.forEach(item => {
@@ -453,213 +460,22 @@
                 const isFav = favorites.includes(item.image);
                 const isNew = item._originalIndex >= latestIndexThreshold;
                 const newBadgeHtml = isNew ? `<div class="new-badge">NEW</div>` : '';
+                
+                let safeMember = (item.member || "").replace(/"/g, '&quot;');
+                let safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
+
+                // ★★★ ハイライト処理 ★★★
+                if (highlightRegex) {
+                    safeMember = safeMember.replace(highlightRegex, '<span class="highlight">$1</span>');
+                    safeCos = safeCos.replace(highlightRegex, '<span class="highlight">$1</span>');
+                }
+
                 const card = document.createElement('div');
                 card.className = 'card';
-                const safeMember = (item.member || "").replace(/"/g, '&quot;');
-                const safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
-                
-                // ★★★ PC用クイックコピーボタン追加 ★★★
                 card.innerHTML = `
                     ${newBadgeHtml}
                     <button class="fav-btn ${isFav ? 'active' : ''}" onclick="toggleFav(event, '${item.image}')">
                         <i class="fas fa-heart"></i>
                     </button>
                     <button class="quick-copy-btn" onclick="quickCopy(event, '${item.link}')"><i class="fas fa-link"></i> Link</button>
-                    <div class="pop-heart"><i class="fas fa-heart"></i></div>
-                    <div class="card-img-box" onclick="handleCardClick(event, '${item.image}', '${item.link}', this)">
-                        <img src="${item.image}" loading="lazy" onerror="this.src='https://placehold.jp/300x300.png?text=No+Image'">
-                    </div>
-                    <div class="info">
-                        <span class="tag">${safeMember}</span>
-                        <div class="name">${safeCos}</div>
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-            section.appendChild(grid);
-            app.appendChild(section);
-        });
-    }
-
-    // ★★★ クイックコピー機能 ★★★
-    function quickCopy(e, link) {
-        e.stopPropagation();
-        navigator.clipboard.writeText(link).then(() => {
-            showToast("リンクをコピーしました！📋");
-        });
-    }
-
-    let lastTapTime = 0;
-    function handleCardClick(e, imgUrl, link, element) {
-        const currentTime = new Date().getTime();
-        const tapLength = currentTime - lastTapTime;
-        if (tapLength < 300 && tapLength > 0) {
-            e.preventDefault();
-            const heart = element.parentElement.querySelector('.pop-heart');
-            heart.classList.remove('animate');
-            void heart.offsetWidth;
-            heart.classList.add('animate');
-            if (!favorites.includes(imgUrl)) toggleFav(e, imgUrl);
-        } else {
-            openModal(imgUrl);
-        }
-        lastTapTime = currentTime;
-    }
-
-    function toggleFav(e, imgUrl) {
-        if(e) e.stopPropagation();
-        if (favorites.includes(imgUrl)) {
-            favorites = favorites.filter(url => url !== imgUrl);
-            showToast("お気に入りから削除しました");
-        } else {
-            favorites.push(imgUrl);
-            showToast("お気に入りに追加しました！💖");
-        }
-        localStorage.setItem('vspo_favs', JSON.stringify(favorites));
-        if (currentMode === 'favorite') render();
-        else {
-            document.querySelectorAll('.card').forEach(card => {
-                const img = card.querySelector('img');
-                if(img && img.src === imgUrl) {
-                    const btn = card.querySelector('.fav-btn');
-                    if(favorites.includes(imgUrl)) btn.classList.add('active');
-                    else btn.classList.remove('active');
-                }
-            });
-        }
-    }
-
-    function handleSearch() {
-        document.querySelectorAll('.member-chip').forEach(c => c.classList.remove('active'));
-        document.querySelector('.member-chip').classList.add('active'); 
-        const keyword = document.getElementById('searchInput').value.toLowerCase();
-        filteredData = allData.filter(item => item._searchKey.includes(keyword));
-        applySort();
-    }
-
-    function setSort(sortType) {
-        currentSort = sortType;
-        document.querySelectorAll('header button:not(.icon-btn)').forEach(b => b.classList.remove('active'));
-        const btn = document.getElementById('btn-' + sortType);
-        if(btn) btn.classList.add('active');
-        applySort();
-    }
-
-    function applySort() {
-        if (currentSort === 'new') filteredData.sort((a, b) => b._originalIndex - a._originalIndex);
-        else if (currentSort === 'original') filteredData.sort((a, b) => a._originalIndex - b._originalIndex);
-        else if (currentSort === 'shuffle') filteredData.sort(() => Math.random() - 0.5);
-        render();
-    }
-
-    function setMode(mode) {
-        currentMode = mode;
-        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('nav-' + mode).classList.add('active');
-        render();
-    }
-
-    function openModal(imgUrl) {
-        currentImageIndex = slideshowList.findIndex(item => item.image === imgUrl);
-        if(currentImageIndex === -1) {
-             currentImageIndex = allData.findIndex(item => item.image === imgUrl);
-             if(currentImageIndex === -1) currentImageIndex = 0;
-             slideshowList = allData;
-        }
-        if(slideshowList[currentImageIndex]) {
-            addToHistory(slideshowList[currentImageIndex]);
-        }
-        updateModalContent();
-        document.getElementById('modal').classList.add('open');
-        document.body.style.overflow = 'hidden';
-    }
-
-    function updateModalContent() {
-        const item = slideshowList[currentImageIndex];
-        if(!item) return;
-        document.getElementById('m-img').src = item.image;
-        document.getElementById('m-link').href = item.link;
-        renderRelatedImages(item);
-    }
-
-    function renderRelatedImages(currentItem) {
-        const area = document.getElementById('related-area');
-        const grid = document.getElementById('related-grid');
-        grid.innerHTML = '';
-        const related = allData.filter(d => d.member === currentItem.member && d.image !== currentItem.image);
-        if (related.length === 0) {
-            area.style.display = 'none';
-            return;
-        }
-        area.style.display = 'block';
-        const shuffled = related.sort(() => 0.5 - Math.random()).slice(0, 4);
-        shuffled.forEach(d => {
-            const div = document.createElement('div');
-            div.className = 'related-item';
-            div.innerHTML = `<img src="${d.image}">`;
-            div.onclick = () => openModal(d.image);
-            grid.appendChild(div);
-        });
-    }
-
-    function changeImage(direction) {
-        currentImageIndex += direction;
-        if (currentImageIndex < 0) currentImageIndex = slideshowList.length - 1;
-        if (currentImageIndex >= slideshowList.length) currentImageIndex = 0;
-        if(slideshowList[currentImageIndex]) addToHistory(slideshowList[currentImageIndex]);
-        updateModalContent();
-    }
-
-    function nativeShare() {
-        const item = slideshowList[currentImageIndex];
-        const text = `${item.member} (${item.cosplayer}さん) のコスプレ！ #ぶいすぽっ`;
-        if (navigator.share) {
-            navigator.share({ title: 'ぶいすぽっ！コスプレアーカイブ', text: text, url: item.link }).catch(console.error);
-        }
-    }
-
-    function shareToX() {
-        const item = slideshowList[currentImageIndex];
-        const text = `${item.member} (${item.cosplayer}さん) のコスプレ！ #ぶいすぽっ`;
-        const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(item.link)}`;
-        window.open(url, '_blank');
-    }
-
-    function copyLink() {
-        const item = slideshowList[currentImageIndex];
-        navigator.clipboard.writeText(item.link).then(() => {
-            showToast("リンクをコピーしました！📋");
-        });
-    }
-
-    function showToast(message) {
-        const toast = document.getElementById("toast");
-        toast.innerText = message;
-        toast.className = "show";
-        setTimeout(() => { toast.className = toast.className.replace("show", ""); }, 3000);
-    }
-
-    document.addEventListener('keydown', function(e) {
-        const modal = document.getElementById('modal');
-        if (!modal.classList.contains('open')) return;
-        if (e.key === 'ArrowLeft') changeImage(-1);
-        if (e.key === 'ArrowRight') changeImage(1);
-        if (e.key === 'Escape') closeModal({target: modal});
-    });
-
-    function closeModal(e) {
-        if(e.target.id === 'modal' || e.target.classList.contains('modal-close')) {
-            document.getElementById('modal').classList.remove('open');
-            document.body.style.overflow = '';
-        }
-    }
-    function toggleTheme() { document.body.classList.toggle('dark-mode'); }
-    window.onscroll = function() {
-        const btn = document.getElementById('scrollTopBtn');
-        if(btn) btn.style.display = (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? "block" : "none";
-    };
-    function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
-</script>
-
-</body>
-</html>
+                    <div class="pop-heart"><i class="fas
