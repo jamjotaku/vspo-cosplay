@@ -27,7 +27,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         /* --- デザイン設定 --- */
-        *, *::before, *::after { box-sizing: border-box; } /* レイアウト崩れ防止の基本設定 */
+        *, *::before, *::after { box-sizing: border-box; }
 
         :root { --primary: #5c6ac4; --bg: #f4f6f8; --card-bg: #fff; --text: #333; --heart: #e2264d; --footer-bg: #eaeaea; --footer-text: #666; --highlight: #fff3cd; --highlight-text: #856404; }
         body.dark-mode { --bg: #1a1a2e; --card-bg: #16213e; --text: #e0e0e0; --footer-bg: #111; --footer-text: #888; --highlight: #5c4d00; --highlight-text: #ffeb3b; }
@@ -110,18 +110,24 @@
         .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; border-color: #fff; transform: scale(1.1); }
         .member-chip.text-chip { font-size: 0.9rem; padding: 10px 16px; }
 
-        /* ★★★ グリッドレイアウト（安定版） ★★★ */
+        /* ★★★ グリッドレイアウト（横並び調整版） ★★★ */
         .grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); /* スマホでも見やすい最小幅 */
+            /* スマホでも横に並びやすいように最小幅を小さく調整 */
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
             gap: 15px;
             width: 100%;
         }
-        /* PCなど画面が広い場合 */
+        /* タブレット・PCなど画面が広い場合 */
         @media (min-width: 600px) {
             .grid {
-                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); /* PC用に少し大きく */
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
                 gap: 20px;
+            }
+        }
+        @media (min-width: 1000px) {
+            .grid {
+                grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             }
         }
 
@@ -131,7 +137,6 @@
             overflow: hidden;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             position: relative;
-            /* Masonry設定を削除し、Gridアイテムとしての設定のみにする */
             width: 100%; 
             display: flex;
             flex-direction: column;
@@ -145,7 +150,8 @@
         
         .card-img-box {
             width: 100%;
-            padding-top: 125%; /* アスペクト比を4:5（縦長）に固定して高さを確保 */
+            /* ★★★ ここを変更：正方形（1:1）にする ★★★ */
+            padding-top: 100%; 
             position: relative;
             background: #eee;
             overflow: hidden;
@@ -156,7 +162,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            object-fit: cover; /* 枠に合わせてトリミング（隙間なし） */
+            object-fit: cover; /* 正方形の枠に合わせてトリミング */
             transition: 0.5s;
         }
         
