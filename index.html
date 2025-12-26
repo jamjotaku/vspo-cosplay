@@ -42,9 +42,7 @@
         .member-chip {
             display: inline-block; background: rgba(255,255,255,0.2); color: #fff;
             padding: 8px 14px; border-radius: 25px; margin-right: 8px; cursor: pointer;
-            font-size: 1.2rem;
-            line-height: 1;
-            transition: 0.2s; border: 1px solid transparent;
+            font-size: 1.2rem; line-height: 1; transition: 0.2s; border: 1px solid transparent;
             min-width: 30px; text-align: center; vertical-align: middle;
         }
         .member-chip:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); }
@@ -58,7 +56,43 @@
         main { max-width: 1200px; margin: 0 auto; padding: 10px 20px; flex: 1; width: 100%; box-sizing: border-box; }
         .section-title { border-bottom: 2px solid #ddd; margin: 30px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
         
-        /* Pinterest風レイアウト */
+        /* ★★★ 今日のピックアップ用スタイル ★★★ */
+        .pickup-area {
+            max-width: 800px; margin: 10px auto 30px;
+            background: var(--card-bg); border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(92, 106, 196, 0.2);
+            position: relative; overflow: hidden;
+            border: 2px solid var(--primary); /* 特別感を出す枠線 */
+            animation: fadeIn 0.8s ease forwards;
+        }
+        .pickup-label {
+            position: absolute; top: 15px; left: 15px;
+            background: #ff4757; color: #fff; font-weight: bold;
+            padding: 5px 15px; border-radius: 20px; z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 0.9rem;
+        }
+        .pickup-content {
+            display: flex; flex-direction: column; cursor: pointer;
+        }
+        .pickup-img-box {
+            width: 100%; height: 350px; overflow: hidden; position: relative;
+        }
+        .pickup-img-box img {
+            width: 100%; height: 100%; object-fit: cover; object-position: top; transition: 0.5s;
+        }
+        .pickup-area:hover .pickup-img-box img { transform: scale(1.03); }
+        .pickup-info {
+            padding: 15px; text-align: center; background: var(--card-bg);
+        }
+        .pickup-name { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; color: var(--primary); }
+        .pickup-cos { color: var(--text); }
+        
+        @media (max-width: 600px) {
+            .pickup-img-box { height: 250px; }
+            .pickup-name { font-size: 1rem; }
+        }
+        /* --------------------------------------- */
+
         .grid { column-count: 4; column-gap: 15px; }
         @media (max-width: 900px) { .grid { column-count: 3; } }
         @media (max-width: 600px) { .grid { column-count: 2; } }
@@ -105,11 +139,6 @@
             visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 16px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.5s, bottom 0.5s;
         }
         #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
-
-        @media (max-width: 600px) {
-            .slide-btn { padding: 10px; width: 40px; height: 40px; font-size: 1rem; }
-            .prev-btn { left: 5px; } .next-btn { right: 5px; }
-        }
     </style>
 </head>
 <body>
@@ -141,6 +170,8 @@
     <button onclick="setMode('cosplayer')" class="view-btn" id="nav-cosplayer">レイヤー別</button>
     <button onclick="setMode('favorite')" class="view-btn" id="nav-favorite">💖 お気に入り</button>
 </nav>
+
+<div id="pickup-container"></div>
 
 <main id="app">
     <div class="loading">読み込み中...</div>
@@ -188,58 +219,27 @@
     if (FORM_URL) { contactLink.href = FORM_URL; }
 
     // ▼▼▼ メンバー定義（加入順） ▼▼▼
-    // ※ボタンの表示順序はここの順番で決まります
     const memberReadings = {
-        "花芽すみれ": "かがすみれ",
-        "花芽なずな": "かがなずな",
-        "小雀とと": "こがらとと",
-        "一ノ瀬うるは": "いちのせうるは",
-        "胡桃のあ": "くるみのあ",
-        　"兎咲ミミ": "とさきみみ",
-        "空澄セナ": "あすみせな",
-        "橘ひなの": "たちばなひなの",
-        "英リサ": "はなぶさりさ",
-        "如月れん": "きさらぎれん",
-        "神成きゅぴ": "かみなりきゅぴ",
-        "八雲べに": "やくもべに",
-        "藍沢エマ": "あいざわえま",
-        "紫宮るな": "しのみやるな",
-        "猫汰つな": "ねこたつな",
-        "白波らむね": "しらなみらむね",
-        "小森めと": "こもりめと",
-        "夢野あかり": "ゆめのあかり",
-        "夜乃くろむ": "やのくろむ",
-        "紡木こかげ": "つむぎこかげ",
-        "千燈ゆうひ": "せんどうゆうひ",
-        "蝶屋はなび": "ちょうやはなび",
-        "甘結もか": "あまゆいもか"
+        "花芽すみれ": "かがすみれ", "花芽なずな": "かがなずな", "小雀とと": "こがらとと",
+        "一ノ瀬うるは": "いちのせうるは", "胡桃のあ": "くるみのあ", "橘ひなの": "たちばなひなの",
+        "如月れん": "きさらぎれん", "英リサ": "はなぶさりさ", "空澄セナ": "あすみせな",
+        "兎咲ミミ": "とさきみみ", "神成きゅぴ": "かみなりきゅぴ", "八雲べに": "やくもべに",
+        "藍沢エマ": "あいざわえま", "紫宮るな": "しのみやるな", "猫汰つな": "ねこたつな",
+        "白波らむね": "しらなみらむね", "小森めと": "こもりめと", "夢野あかり": "ゆめのあかり",
+        "夜乃くろむ": "やのくろむ", "紡木こかげ": "つむぎこかげ", "千燈ゆうひ": "せんどうゆうひ",
+        "蝶屋はなび": "ちょうやはなび", "甘結もか": "あまゆいもか"
     };
 
-    // ▼▼▼ 推しマーク設定（加入順） ▼▼▼
+    // ▼▼▼ 推しマーク設定（加入順・修正済み） ▼▼▼
     const memberIcons = {
-        "花芽すみれ": "👾💤",
-        "花芽なずな": "🍣",
-        "小雀とと": "🔫🐥",
-        "一ノ瀬うるは": "🌠",
-        "胡桃のあ": "🧸♔",
-        "兎咲ミミ": "🐰🍭",
-        "空澄セナ": "🗝♠︎",
-        "橘ひなの": "🍫💘",
-        "英リサ": "💐",
-        "如月れん": "⏰",
-        "神成きゅぴ": "🌩",
-        "八雲べに": "💄💚",
-        "藍沢エマ": "🥞💫",
-        "紫宮るな": "☪🐾",
-        "猫汰つな": "🍒✨",
-        "白波らむね": "🐻‍❄️🏖",
-        "小森めと": "🪐",
-        "夢野あかり": "🍼",
-        "夜乃くろむ": "💀⛓",
-        "紡木こかげ": "📘💧",
-        "千燈ゆうひ": "🫠",
-        "蝶屋はなび": "🦋🎆",
-        "甘結もか": "🕹🔖"
+        "花芽すみれ": "👾💤", "花芽なずな": "🍣", "小雀とと": "🔫🐥",
+        "一ノ瀬うるは": "🌠", "胡桃のあ": "🧸♔", "橘ひなの": "🍫💘",
+        "如月れん": "⏰", "英リサ": "💐", "空澄セナ": "🗝♠︎",
+        "兎咲ミミ": "🐰🍭", "神成きゅぴ": "🌩", "八雲べに": "💄💚",
+        "藍沢エマ": "🥞💫", "紫宮るな": "☪🐾", "猫汰つな": "🍒✨",
+        "白波らむね": "🐻‍❄️🏖", "小森めと": "🪐", "夢野あかり": "🍼",
+        "夜乃くろむ": "💀⛓", "紡木こかげ": "📘💧", "千燈ゆうひ": "🫠",
+        "蝶屋はなび": "🦋🎆", "甘結もか": "🕹🔖"
     };
 
     let allData = [];
@@ -265,16 +265,47 @@
                         return item;
                     });
                 filteredData = [...allData];
+                
+                // ★★★ ピックアップを表示 ★★★
+                displayPickup();
+                
                 applySort();
             },
             error: function() { document.getElementById('app').innerHTML = '<p style="text-align:center;">読み込み失敗</p>'; }
         });
     };
 
+    // ★★★ ピックアップ機能 ★★★
+    function displayPickup() {
+        if (allData.length === 0) return;
+        
+        // ランダムに1枚選ぶ
+        const randomIndex = Math.floor(Math.random() * allData.length);
+        const item = allData[randomIndex];
+        
+        const container = document.getElementById('pickup-container');
+        const safeMember = (item.member || "").replace(/"/g, '&quot;');
+        const safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
+        
+        container.innerHTML = `
+            <div class="pickup-area" onclick="openModal('${item.image}')">
+                <div class="pickup-label">Today's Pickup ✨</div>
+                <div class="pickup-content">
+                    <div class="pickup-img-box">
+                        <img src="${item.image}" onerror="this.src='https://placehold.jp/800x400.png?text=No+Image'">
+                    </div>
+                    <div class="pickup-info">
+                        <div class="pickup-name">${safeMember}</div>
+                        <div class="pickup-cos">${safeCos}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     function generateMemberTags() {
         const container = document.getElementById('memberBar');
         container.innerHTML = `<span class="member-chip text-chip active" onclick="filterByMember('all', this)" title="全て表示">🏠</span>`;
-        
         Object.keys(memberReadings).forEach(name => {
             const label = memberIcons[name] || name;
             container.innerHTML += `<span class="member-chip" onclick="filterByMember('${name}', this)" title="${name}">${label}</span>`;
@@ -284,7 +315,6 @@
     function filterByMember(name, element) {
         document.querySelectorAll('.member-chip').forEach(c => c.classList.remove('active'));
         element.classList.add('active');
-
         document.getElementById('searchInput').value = '';
 
         if(name === 'all') {
@@ -292,7 +322,6 @@
         } else {
             filteredData = allData.filter(item => item.member === name);
         }
-        
         setMode('member');
         applySort();
     }
@@ -365,17 +394,14 @@
             showToast("お気に入りに追加しました！💖");
         }
         localStorage.setItem('vspo_favs', JSON.stringify(favorites));
-        
         if (e.target.tagName === 'BUTTON') e.target.classList.toggle('active');
         else e.target.closest('button').classList.toggle('active');
-        
         if (currentMode === 'favorite') render();
     }
 
     function handleSearch() {
         document.querySelectorAll('.member-chip').forEach(c => c.classList.remove('active'));
         document.querySelector('.member-chip').classList.add('active'); 
-
         const keyword = document.getElementById('searchInput').value.toLowerCase();
         filteredData = allData.filter(item => item._searchKey.includes(keyword));
         applySort();
@@ -405,7 +431,14 @@
 
     function openModal(imgUrl) {
         currentImageIndex = slideshowList.findIndex(item => item.image === imgUrl);
-        if(currentImageIndex === -1) currentImageIndex = 0;
+        if(currentImageIndex === -1) {
+             // ピックアップから開いた場合、slideshowListにない可能性があるのでallDataから探す
+             currentImageIndex = allData.findIndex(item => item.image === imgUrl);
+             // それでもなければ0
+             if(currentImageIndex === -1) currentImageIndex = 0;
+             // スライドショーリストを全データに切り替えておく（スライド可能にするため）
+             slideshowList = allData;
+        }
         updateModalContent();
         document.getElementById('modal').classList.add('open');
         document.body.style.overflow = 'hidden';
