@@ -43,17 +43,9 @@
         button:hover { background: rgba(255,255,255,0.4); }
         button.active { background: #fff; color: var(--primary); font-weight: bold; }
 
-        .member-scroll-container {
-            overflow-x: auto; white-space: nowrap; padding: 10px 0 5px; margin-top: 10px;
-            -webkit-overflow-scrolling: touch; scrollbar-width: none;
-        }
+        .member-scroll-container { overflow-x: auto; white-space: nowrap; padding: 10px 0 5px; margin-top: 10px; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
         .member-scroll-container::-webkit-scrollbar { display: none; }
-        .member-chip {
-            display: inline-block; background: rgba(255,255,255,0.2); color: #fff;
-            padding: 8px 14px; border-radius: 25px; margin-right: 8px; cursor: pointer;
-            font-size: 1.2rem; line-height: 1; transition: 0.2s; border: 1px solid transparent;
-            min-width: 30px; text-align: center; vertical-align: middle;
-        }
+        .member-chip { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 8px 14px; border-radius: 25px; margin-right: 8px; cursor: pointer; font-size: 1.2rem; line-height: 1; transition: 0.2s; border: 1px solid transparent; min-width: 30px; text-align: center; vertical-align: middle; }
         .member-chip:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); }
         .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; border-color: #fff; transform: scale(1.1); }
         .member-chip.text-chip { font-size: 0.9rem; padding: 10px 16px; }
@@ -65,96 +57,42 @@
         main { max-width: 1200px; margin: 0 auto; padding: 10px 20px; flex: 1; width: 100%; box-sizing: border-box; }
         .section-title { border-bottom: 2px solid #ddd; margin: 30px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
         
-        /* ★★★ 今日のピックアップ（全体表示ver） ★★★ */
-        .pickup-area {
-            max-width: 800px; margin: 10px auto 30px;
-            background: var(--card-bg); border-radius: 16px;
-            box-shadow: 0 4px 15px rgba(92, 106, 196, 0.2);
-            position: relative; overflow: hidden;
-            border: 2px solid var(--primary);
-            animation: fadeIn 0.8s ease forwards;
-        }
-        .pickup-label {
-            position: absolute; top: 15px; left: 15px;
-            background: #ff4757; color: #fff; font-weight: bold;
-            padding: 5px 15px; border-radius: 20px; z-index: 10;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 0.9rem;
-        }
+        .pickup-area { max-width: 800px; margin: 10px auto 30px; background: var(--card-bg); border-radius: 16px; box-shadow: 0 4px 15px rgba(92, 106, 196, 0.2); position: relative; overflow: hidden; border: 2px solid var(--primary); animation: fadeIn 0.8s ease forwards; }
+        .pickup-label { position: absolute; top: 15px; left: 15px; background: #ff4757; color: #fff; font-weight: bold; padding: 5px 15px; border-radius: 20px; z-index: 10; box-shadow: 0 2px 5px rgba(0,0,0,0.3); font-size: 0.9rem; }
         .pickup-content { display: flex; flex-direction: column; cursor: pointer; }
-        
-        /* ぼかし背景とメイン画像の重ね合わせ */
-        .pickup-img-box {
-            width: 100%; height: 400px; /* 少し縦を広げました */
-            position: relative; overflow: hidden;
-            background: #000; /* 背景黒 */
-            display: flex; justify-content: center; align-items: center;
-        }
-        /* 背景用（拡大・ぼかし） */
-        .pickup-bg {
-            position: absolute; width: 100%; height: 100%; object-fit: cover;
-            filter: blur(20px) brightness(0.7); /* ぼかしと少し暗く */
-            z-index: 1; transform: scale(1.1);
-        }
-        /* メイン画像（全体表示） */
-        .pickup-main {
-            position: relative; z-index: 2;
-            height: 100%; width: auto; max-width: 100%;
-            object-fit: contain; /* 全体を表示 */
-            box-shadow: 0 0 20px rgba(0,0,0,0.5); /* 浮き出るような影 */
-            transition: transform 0.5s;
-        }
+        .pickup-img-box { width: 100%; height: 350px; overflow: hidden; position: relative; background: #000; display: flex; justify-content: center; align-items: center; }
+        .pickup-bg { position: absolute; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.7); z-index: 1; transform: scale(1.1); }
+        .pickup-main { position: relative; z-index: 2; height: 100%; width: auto; max-width: 100%; object-fit: contain; box-shadow: 0 0 20px rgba(0,0,0,0.5); transition: transform 0.5s; }
         .pickup-area:hover .pickup-main { transform: scale(1.02); }
-
         .pickup-info { padding: 15px; text-align: center; background: var(--card-bg); position: relative; z-index: 2; }
         .pickup-name { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; color: var(--primary); }
         .pickup-cos { color: var(--text); }
-        
-        @media (max-width: 600px) {
-            .pickup-img-box { height: 300px; }
-            .pickup-name { font-size: 1rem; }
-        }
-        /* --------------------------------------- */
+        @media (max-width: 600px) { .pickup-img-box { height: 300px; } .pickup-name { font-size: 1rem; } }
 
         .grid { column-count: 4; column-gap: 15px; }
         @media (max-width: 900px) { .grid { column-count: 3; } }
         @media (max-width: 600px) { .grid { column-count: 2; } }
 
-        .card {
-            background: var(--card-bg); border-radius: 12px; overflow: hidden;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative;
-            margin-bottom: 15px; break-inside: avoid; transition: transform 0.2s;
-            opacity: 0; animation: fadeIn 0.6s ease forwards;
-        }
+        .card { background: var(--card-bg); border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative; margin-bottom: 15px; break-inside: avoid; transition: transform 0.2s; opacity: 0; animation: fadeIn 0.6s ease forwards; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
         .card:hover { transform: translateY(-3px); }
-        .card-img-box { width: 100%; display: block; overflow: hidden; cursor: pointer; position: relative; }
+        .card-img-box { width: 100%; display: block; overflow: hidden; cursor: pointer; position: relative; min-height: 200px; background: #eee; } /* min-height追加 */
         .card img { width: 100%; height: auto; display: block; transition: 0.5s; }
         .card:hover img { transform: scale(1.05); }
+
+        /* スケルトンローディング */
+        .skeleton { animation: skeleton-loading 1s linear infinite alternate; width: 100%; height: 100%; display: block; }
+        @keyframes skeleton-loading { 0% { background-color: #e0e0e0; } 100% { background-color: #f5f5f5; } }
+        body.dark-mode .skeleton { animation: skeleton-loading-dark 1s linear infinite alternate; }
+        @keyframes skeleton-loading-dark { 0% { background-color: #333; } 100% { background-color: #444; } }
 
         .fav-btn { position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9); border-radius: 50%; width: 35px; height: 35px; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 1.2rem; color: #ccc; z-index: 10; transition: 0.2s; border: none; }
         .fav-btn.active { color: var(--heart); }
         .fav-btn:hover { transform: scale(1.1); }
-        
-        .new-badge {
-            position: absolute; top: 0; left: 0;
-            background: #ff4757; color: white;
-            font-size: 0.7rem; font-weight: bold;
-            padding: 4px 10px; border-bottom-right-radius: 10px;
-            z-index: 5; box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-        }
-
-        .pop-heart {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            font-size: 4rem; color: rgba(255, 255, 255, 0.9); text-shadow: 0 0 10px rgba(226, 38, 77, 0.8);
-            pointer-events: none; z-index: 20;
-        }
+        .new-badge { position: absolute; top: 0; left: 0; background: #ff4757; color: white; font-size: 0.7rem; font-weight: bold; padding: 4px 10px; border-bottom-right-radius: 10px; z-index: 5; box-shadow: 2px 2px 5px rgba(0,0,0,0.2); }
+        .pop-heart { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); font-size: 4rem; color: rgba(255, 255, 255, 0.9); text-shadow: 0 0 10px rgba(226, 38, 77, 0.8); pointer-events: none; z-index: 20; }
         .pop-heart.animate { animation: popHeart 0.6s ease-out; }
-        @keyframes popHeart {
-            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-            40% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; }
-        }
+        @keyframes popHeart { 0% { transform: translate(-50%, -50%) scale(0); opacity: 0; } 40% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1.5); opacity: 0; } }
 
         .info { padding: 12px; }
         .tag { background: #e3f2fd; color: #1565c0; padding: 3px 10px; border-radius: 10px; font-size: 0.8rem; display: inline-block; margin-bottom: 5px; }
@@ -164,29 +102,33 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; justify-content: center; align-items: center; }
         .modal.open { display: flex; }
         .modal-content { text-align: center; max-width: 95%; position: relative; width: 100%; max-height: 95vh; display: flex; flex-direction: column; align-items: center; }
-        .modal img { max-height: 75vh; max-width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.5); object-fit: contain; }
+        .modal img { max-height: 60vh; max-width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.5); object-fit: contain; } /* 高さ調整 */
         .share-area { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
         .action-btn { padding: 10px 20px; border-radius: 30px; text-decoration: none; font-weight: bold; display: flex; align-items: center; gap: 5px; border: none; cursor: pointer; color: white; transition: 0.3s; font-size: 0.9rem; }
         .btn-twitter { background: #000; } .btn-twitter:hover { background: #333; transform: scale(1.05); }
         .btn-link { background: #1da1f2; } .btn-link:hover { background: #0c85d0; transform: scale(1.05); }
         .btn-copy { background: #666; } .btn-copy:hover { background: #444; transform: scale(1.05); }
 
+        /* ★★★ 関連画像エリア ★★★ */
+        .related-container { margin-top: 20px; width: 100%; text-align: left; }
+        .related-title { color: #fff; font-size: 0.9rem; margin-bottom: 10px; padding-left: 10px; border-left: 3px solid var(--primary); }
+        .related-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; -webkit-overflow-scrolling: touch; }
+        .related-grid::-webkit-scrollbar { height: 6px; }
+        .related-grid::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
+        .related-item { min-width: 100px; width: 100px; height: 100px; border-radius: 8px; overflow: hidden; cursor: pointer; border: 2px solid transparent; transition: 0.2s; position: relative; }
+        .related-item:hover { border-color: var(--primary); transform: scale(1.05); }
+        .related-item img { width: 100%; height: 100%; object-fit: cover; }
+
         .modal-close { position: absolute; top: -40px; right: 20px; color: #fff; font-size: 2rem; cursor: pointer; }
-        .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: #fff; border: none; padding: 20px; cursor: pointer; font-size: 1.5rem; border-radius: 50%; transition: 0.3s; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; z-index: 1001; }
+        .slide-btn { position: absolute; top: 40%; transform: translateY(-50%); background: rgba(0,0,0,0.5); color: #fff; border: none; padding: 20px; cursor: pointer; font-size: 1.5rem; border-radius: 50%; transition: 0.3s; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; z-index: 1001; }
         .slide-btn:hover { background: rgba(255,255,255,0.2); }
         .prev-btn { left: 20px; } .next-btn { right: 20px; }
-        .loading { text-align: center; padding: 50px; color: #666; }
         #scrollTopBtn { position: fixed; bottom: 20px; right: 20px; background: var(--primary); color: #fff; border: none; padding: 15px; border-radius: 50%; cursor: pointer; display: none; z-index: 90; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-        #toast {
-            visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 16px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.5s, bottom 0.5s;
-        }
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 16px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 1rem; box-shadow: 0 4px 10px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.5s, bottom 0.5s; }
         #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
 
-        @media (max-width: 600px) {
-            .slide-btn { padding: 10px; width: 40px; height: 40px; font-size: 1rem; }
-            .prev-btn { left: 5px; } .next-btn { right: 5px; }
-        }
+        @media (max-width: 600px) { .slide-btn { padding: 10px; width: 40px; height: 40px; font-size: 1rem; } .prev-btn { left: 5px; } .next-btn { right: 5px; } }
     </style>
 </head>
 <body>
@@ -194,7 +136,7 @@
 <header>
     <div class="title-area">
         <h1>👘 VSPO! Cosplay Archive</h1>
-        <span id="total-count" class="total-count"></span>
+        <span id="total-count" class="total-count">Loading...</span>
     </div>
 
     <div class="header-controls">
@@ -223,10 +165,20 @@
     <button onclick="setMode('favorite')" class="view-btn" id="nav-favorite">💖 お気に入り</button>
 </nav>
 
-<div id="pickup-container"></div>
+<div id="pickup-container">
+    </div>
 
 <main id="app">
-    <div class="loading">読み込み中...</div>
+    <div class="grid">
+        <div class="card" style="height:250px;"><div class="skeleton"></div></div>
+        <div class="card" style="height:300px;"><div class="skeleton"></div></div>
+        <div class="card" style="height:200px;"><div class="skeleton"></div></div>
+        <div class="card" style="height:280px;"><div class="skeleton"></div></div>
+        <div class="card" style="height:250px;"><div class="skeleton"></div></div>
+        <div class="card" style="height:220px;"><div class="skeleton"></div></div>
+        <div class="card" style="height:300px;"><div class="skeleton"></div></div>
+        <div class="card" style="height:250px;"><div class="skeleton"></div></div>
+    </div>
 </main>
 
 <footer>
@@ -245,6 +197,12 @@
         <button class="slide-btn prev-btn" onclick="changeImage(-1)"><i class="fas fa-chevron-left"></i></button>
         <button class="slide-btn next-btn" onclick="changeImage(1)"><i class="fas fa-chevron-right"></i></button>
         <img id="m-img">
+        
+        <div class="related-container" id="related-area" style="display:none;">
+            <div class="related-title">関連画像（このメンバーの他の画像）</div>
+            <div class="related-grid" id="related-grid"></div>
+        </div>
+
         <div class="share-area">
             <button class="action-btn btn-twitter" onclick="shareToX()">
                 <i class="fab fa-x-twitter"></i> ポストする
@@ -323,7 +281,6 @@
         });
     };
 
-    // ★★★ ピックアップ機能（ぼかし背景・全体表示版） ★★★
     function displayPickup() {
         if (allData.length === 0) return;
         const randomIndex = Math.floor(Math.random() * allData.length);
@@ -440,17 +397,13 @@
     function handleCardClick(e, imgUrl, link, element) {
         const currentTime = new Date().getTime();
         const tapLength = currentTime - lastTapTime;
-        
         if (tapLength < 300 && tapLength > 0) {
             e.preventDefault();
             const heart = element.parentElement.querySelector('.pop-heart');
             heart.classList.remove('animate');
             void heart.offsetWidth;
             heart.classList.add('animate');
-
-            if (!favorites.includes(imgUrl)) {
-                toggleFav(e, imgUrl);
-            }
+            if (!favorites.includes(imgUrl)) toggleFav(e, imgUrl);
         } else {
             openModal(imgUrl);
         }
@@ -467,10 +420,8 @@
             showToast("お気に入りに追加しました！💖");
         }
         localStorage.setItem('vspo_favs', JSON.stringify(favorites));
-        
-        if (currentMode === 'favorite') {
-            render();
-        } else {
+        if (currentMode === 'favorite') render();
+        else {
             document.querySelectorAll('.card').forEach(card => {
                 const img = card.querySelector('img');
                 if(img && img.src === imgUrl) {
@@ -529,6 +480,35 @@
         if(!item) return;
         document.getElementById('m-img').src = item.image;
         document.getElementById('m-link').href = item.link;
+        
+        // ★★★ 関連画像の生成 ★★★
+        renderRelatedImages(item);
+    }
+
+    function renderRelatedImages(currentItem) {
+        const area = document.getElementById('related-area');
+        const grid = document.getElementById('related-grid');
+        grid.innerHTML = '';
+
+        // 同じメンバーで、今の画像とは違うものを抽出
+        const related = allData.filter(d => d.member === currentItem.member && d.image !== currentItem.image);
+        
+        if (related.length === 0) {
+            area.style.display = 'none';
+            return;
+        }
+
+        area.style.display = 'block';
+        // シャッフルして最大4つ表示
+        const shuffled = related.sort(() => 0.5 - Math.random()).slice(0, 4);
+        
+        shuffled.forEach(d => {
+            const div = document.createElement('div');
+            div.className = 'related-item';
+            div.innerHTML = `<img src="${d.image}">`;
+            div.onclick = () => openModal(d.image);
+            grid.appendChild(div);
+        });
     }
 
     function changeImage(direction) {
