@@ -95,12 +95,12 @@
         .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; border-color: #fff; transform: scale(1.1); }
 
         main { max-width: 1400px; margin: 0 auto; padding: 10px 20px; flex: 1; width: 100%; }
-        .section-title { border-bottom: 2px solid #ddd; margin: 30px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; }
+        /* グループタイトルのスタイル */
+        .section-title { border-bottom: 2px solid #ddd; margin: 40px 0 20px; font-weight: bold; color: var(--primary); font-size: 1.2rem; clear: both; }
 
-        /* ★★★ Pickupエリア（PC最適化版） ★★★ */
+        /* ★★★ Pickupエリア ★★★ */
         .pickup-area {
-            max-width: 700px; /* 横幅も少し抑える */
-            margin: 10px auto 30px;
+            max-width: 700px; margin: 10px auto 30px;
             background: var(--card-bg); border-radius: 16px;
             box-shadow: 0 4px 15px rgba(92, 106, 196, 0.2);
             position: relative; overflow: hidden;
@@ -111,15 +111,11 @@
         .pickup-content { display: flex; flex-direction: column; cursor: pointer; }
         
         .pickup-img-box {
-            width: 100%;
-            height: 350px; /* スマホデフォルト */
+            width: 100%; height: 350px;
             position: relative; background: #000;
             display: flex; justify-content: center; align-items: center; overflow: hidden;
         }
-        /* PC用高さ調整：画面を占領しすぎないように */
-        @media (min-width: 768px) {
-            .pickup-img-box { height: 220px; }
-        }
+        @media (min-width: 768px) { .pickup-img-box { height: 220px; } }
 
         .pickup-bg { position: absolute; width: 100%; height: 100%; object-fit: cover; filter: blur(20px) brightness(0.6); z-index: 1; transform: scale(1.1); }
         .pickup-main { position: relative; z-index: 2; height: 100%; width: auto; max-width: 100%; object-fit: contain; box-shadow: 0 0 20px rgba(0,0,0,0.5); transition: transform 0.5s; }
@@ -128,13 +124,15 @@
         .pickup-name { font-size: 1.2rem; font-weight: bold; margin-bottom: 5px; color: var(--primary); }
         .pickup-cos { color: var(--text); }
 
-        /* ★★★ グリッドレイアウト（完全修正版） ★★★ */
+        /* ★★★ グリッドレイアウト（auto-fillで横並びを保証） ★★★ */
         .grid {
             display: grid;
+            /* 画面幅に合わせて自動で列数を増やす */
             grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-width), 1fr));
             gap: 15px;
             width: 100%;
         }
+
         .card {
             background: var(--card-bg); border-radius: 12px; overflow: hidden;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: relative;
@@ -358,7 +356,7 @@
                 displayPickup();
                 applySort();
             },
-            error: function() { document.getElementById('main-grid').innerHTML = '<p style="text-align:center;">読み込み失敗</p>'; }
+            error: function() { document.getElementById('app').innerHTML = '<p style="text-align:center;">読み込み失敗</p>'; }
         });
     };
 
@@ -367,7 +365,6 @@
         if(size === 'small') root.style.setProperty('--grid-min-width', '100px');
         else if(size === 'medium') root.style.setProperty('--grid-min-width', '160px');
         else if(size === 'large') root.style.setProperty('--grid-min-width', '240px');
-        
         document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('active'));
         event.target.classList.add('active');
     }
@@ -379,9 +376,7 @@
             localStorage.setItem('vspo_visited', JSON.stringify(visited));
         }
         document.querySelectorAll('.card').forEach(card => {
-            if(card.querySelector('img').src === imgUrl) {
-                card.classList.add('visited');
-            }
+            if(card.querySelector('img').src === imgUrl) card.classList.add('visited');
         });
     }
 
@@ -552,45 +547,34 @@
     }
 
     function render() {
-        const app = document.getElementById('main-grid');
+        const app = document.getElementById('app');
         app.innerHTML = '';
         prepareSlideshowList();
 
-        // ★★★ 修正点: 新着順 or シャッフル時はグループ分けしない（一覧表示） ★★★
-        if (currentSort === 'new' || currentSort === 'shuffle' || currentMode === 'favorite' || currentMode === 'cosplayer') {
+        const groups = {};
+        const key = (currentMode === 'favorite') ? 'dummy' : currentMode;
+        slideshowList.forEach(item => {
+            const groupName = (currentMode === 'favorite') ? "お気に入り一覧" : (item[key] || "未分類");
+            if (!groups[groupName]) groups[groupName] = [];
+            groups[groupName].push(item);
+        });
+
+        if(Object.keys(groups).length === 0) {
+            app.innerHTML = '<p style="text-align:center; margin-top:50px; color:#666;">データが見つかりません</p>';
+            return;
+        }
+
+        Object.keys(groups).forEach(name => {
+            const section = document.createElement('div');
+            section.innerHTML = `<div class="section-title">■ ${name}</div>`;
             const grid = document.createElement('div');
-            grid.className = 'grid';
-            
-            slideshowList.forEach(item => {
+            grid.className = 'grid'; // ★ここが重要：セクションごとにグリッドを作る
+            groups[name].forEach(item => {
                 grid.appendChild(createCard(item));
             });
-            app.appendChild(grid);
-        } else {
-            // メンバー別（グループ分けあり）
-            const groups = {};
-            slideshowList.forEach(item => {
-                const groupName = item.member || "未分類";
-                if (!groups[groupName]) groups[groupName] = [];
-                groups[groupName].push(item);
-            });
-
-            if(Object.keys(groups).length === 0) {
-                app.innerHTML = '<p style="text-align:center; margin-top:50px; color:#666;">データが見つかりません</p>';
-                return;
-            }
-
-            Object.keys(groups).forEach(name => {
-                const section = document.createElement('div');
-                section.innerHTML = `<div class="section-title">■ ${name}</div>`;
-                const grid = document.createElement('div');
-                grid.className = 'grid';
-                groups[name].forEach(item => {
-                    grid.appendChild(createCard(item));
-                });
-                section.appendChild(grid);
-                app.appendChild(section);
-            });
-        }
+            section.appendChild(grid);
+            app.appendChild(section);
+        });
     }
 
     function createCard(item) {
@@ -628,16 +612,16 @@
             showToast("お気に入りに追加しました！💖");
         }
         localStorage.setItem('vspo_favs', JSON.stringify(favorites));
-        // 再描画せずにクラスだけ切り替え
-        document.querySelectorAll('.card').forEach(card => {
-            if(card.querySelector('img').src === imgUrl) {
-                const btn = card.querySelector('.fav-btn');
-                if(favorites.includes(imgUrl)) btn.classList.add('active');
-                else btn.classList.remove('active');
-            }
-        });
-        // お気に入りモードの時だけ再描画
         if (currentMode === 'favorite') render();
+        else {
+            document.querySelectorAll('.card').forEach(card => {
+                if(card.querySelector('img').src === imgUrl) {
+                    const btn = card.querySelector('.fav-btn');
+                    if(favorites.includes(imgUrl)) btn.classList.add('active');
+                    else btn.classList.remove('active');
+                }
+            });
+        }
     }
 
     function handleSearch() {
