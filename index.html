@@ -35,19 +35,19 @@
         body.dark-mode { --bg: #111; --text: #eee; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
 
-        /* --- ヘッダー（スマホ重なり修正版） --- */
+        /* --- ヘッダー --- */
         header { background: var(--primary); color: #fff; padding: 15px 15px 10px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 10px rgba(0,0,0,0.3); padding-top: max(15px, env(safe-area-inset-top)); }
         
-        /* タイトルとボタンをフレックスで横並びに管理 */
         .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-        .title-area { flex: 1; min-width: 0; /* 文字が溢れてもレイアウトを崩さない */ }
+        .title-area { flex: 1; min-width: 0; }
         .title-area h1 { margin: 0; font-size: 1.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .total-count { font-size: 0.75rem; opacity: 0.9; display: block; font-weight: bold; }
         
-        .header-controls { display: flex; gap: 15px; flex-shrink: 0; /* ボタンは縮めない */ }
+        .header-controls { display: flex; gap: 15px; flex-shrink: 0; }
         .icon-btn { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; padding: 0; text-decoration: none; opacity: 0.9; }
         .icon-btn:hover { opacity: 1; transform: scale(1.1); }
 
+        /* ストーリーズ */
         .stories-container { overflow-x: auto; white-space: nowrap; padding: 5px 0 10px; display: flex; gap: 12px; scrollbar-width: none; }
         .stories-container::-webkit-scrollbar { display: none; }
         .story-item { width: 68px; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex-shrink: 0; }
@@ -57,6 +57,7 @@
         body.dark-mode .story-img { border-color: #111; }
         .story-name { font-size: 0.7rem; margin-top: 4px; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+        /* ツールバー */
         .tools { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .tools::-webkit-scrollbar { display: none; }
         input { padding: 8px 15px; border-radius: 20px; border: none; min-width: 150px; outline: none; font-size: 0.9rem; }
@@ -68,19 +69,20 @@
         .member-chip { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 20px; margin-right: 6px; cursor: pointer; font-size: 1.1rem; line-height: 1; transition: 0.2s; border: 1px solid transparent; }
         .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; transform: scale(1.1); }
 
+        /* ナビゲーション */
         nav { display: flex; justify-content: center; gap: 10px; padding: 15px; background: var(--bg); position: sticky; top: 125px; z-index: 90; transition: 0.3s; }
         .view-btn { background: rgba(0,0,0,0.05); color: var(--text); border: 1px solid transparent; padding: 6px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
         body.dark-mode .view-btn { background: rgba(255,255,255,0.1); }
         .view-btn.active { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(92, 106, 196, 0.4); }
 
-        /* --- メインコンテンツ（Flow Gallery） --- */
+        /* --- メインコンテンツ --- */
         main { padding: 10px; max-width: 1600px; margin: 0 auto; width: 100%; }
         
         .section-title { font-size: 1.1rem; font-weight: bold; margin: 30px 0 15px; padding-left: 10px; border-left: 4px solid var(--primary); color: var(--text); clear: both; }
 
-        /* ★ Masonry（石垣）レイアウト ★ */
+        /* Masonryレイアウト */
         .masonry-grid {
-            column-count: 2; /* スマホデフォルト */
+            column-count: 2;
             column-gap: 10px;
             width: 100%;
         }
@@ -88,15 +90,15 @@
         @media (min-width: 900px) { .masonry-grid { column-count: 4; column-gap: 20px; } }
         @media (min-width: 1200px) { .masonry-grid { column-count: 5; } }
 
-        /* カード（写真ファーストデザイン） */
+        /* カードデザイン */
         .card {
-            break-inside: avoid; /* 列の中で分割されないようにする */
-            margin-bottom: 10px; /* 下の隙間 */
+            break-inside: avoid;
+            margin-bottom: 10px;
             border-radius: 12px;
             overflow: hidden;
             position: relative;
-            background: #000; /* 画像ロード前は黒 */
-            transform: translateZ(0); /* 描画最適化 */
+            background: #000;
+            transform: translateZ(0);
             box-shadow: 0 4px 10px rgba(0,0,0,0.15);
             animation: fadeIn 0.6s ease forwards; opacity: 0;
         }
@@ -105,25 +107,23 @@
 
         .card img {
             width: 100%;
-            height: auto; /* ★重要：画像の本来の高さを維持する */
+            height: auto;
             display: block;
             transition: transform 0.5s;
         }
         .card:hover img { transform: scale(1.05); }
 
-        /* 情報オーバーレイ（写真の上に文字を乗せる） */
         .card-overlay {
             position: absolute; bottom: 0; left: 0; width: 100%;
             background: var(--overlay-grad);
             padding: 40px 10px 10px;
             color: #fff;
             display: flex; flex-direction: column; justify-content: flex-end;
-            pointer-events: none; /* クリックは下の画像を通過させる */
+            pointer-events: none;
         }
         .card-tag { font-size: 0.7rem; opacity: 0.9; background: var(--primary); padding: 2px 6px; border-radius: 4px; align-self: flex-start; margin-bottom: 4px; }
         .card-name { font-size: 0.85rem; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.8); line-height: 1.3; }
 
-        /* 右上のハート */
         .card-fav {
             position: absolute; top: 8px; right: 8px;
             width: 32px; height: 32px; border-radius: 50%;
@@ -135,25 +135,7 @@
         .card-fav.active { color: var(--heart); background: rgba(255,255,255,0.9); }
         .card-new { position: absolute; top: 8px; left: 8px; background: #ff4757; color: #fff; font-size: 0.65rem; font-weight: bold; padding: 3px 8px; border-radius: 4px; z-index: 5; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 
-        /* Pickup (PC最適化) */
-        .pickup-container { padding: 0 10px; margin-bottom: 20px; }
-        .pickup-card {
-            position: relative; border-radius: 16px; overflow: hidden;
-            height: 200px; /* PCでは控えめな高さ */
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.3); cursor: pointer;
-        }
-        .pickup-bg { position: absolute; width: 100%; height: 100%; object-fit: cover; filter: blur(25px) brightness(0.6); transform: scale(1.1); }
-        .pickup-img { position: relative; height: 100%; width: auto; object-fit: contain; z-index: 2; transition: 0.3s; }
-        .pickup-card:hover .pickup-img { transform: scale(1.03); }
-        .pickup-badge { position: absolute; top: 15px; left: 15px; background: #ff4757; color: #fff; padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 0.8rem; z-index: 5; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
-        .pickup-text { position: absolute; bottom: 15px; right: 20px; text-align: right; color: #fff; z-index: 5; text-shadow: 0 2px 10px rgba(0,0,0,0.8); }
-        .pickup-text h3 { margin: 0; font-size: 1.2rem; }
-        .pickup-text p { margin: 0; font-size: 0.9rem; opacity: 0.9; }
-        /* スマホなら少し高く */
-        @media (max-width: 600px) { .pickup-card { height: 300px; } }
-
-        /* その他（モーダルなど） */
+        /* モーダル */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
         .modal.open { display: flex; }
         .modal img { max-height: 85vh; max-width: 95%; border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.5); object-fit: contain; }
@@ -221,8 +203,6 @@
     <button onclick="setMode('favorite')" class="view-btn" id="nav-favorite">💖 お気に入り</button>
 </nav>
 
-<div class="pickup-container" id="pickup-container"></div>
-
 <main id="app">
     <div style="text-align:center; padding: 50px; color:#999;">
         <i class="fas fa-spinner fa-spin fa-2x"></i>
@@ -241,9 +221,7 @@
     <span class="modal-close">&times;</span>
     <button class="slide-btn prev-btn" onclick="changeImage(-1, event)"><i class="fas fa-chevron-left"></i></button>
     <button class="slide-btn next-btn" onclick="changeImage(1, event)"><i class="fas fa-chevron-right"></i></button>
-    
     <img id="m-img" onclick="event.stopPropagation()">
-    
     <div class="share-area" onclick="event.stopPropagation()">
         <button class="share-btn" onclick="shareX()"><i class="fab fa-x-twitter"></i> ポスト</button>
         <button class="share-btn" onclick="toggleAutoPlay()" id="btn-play"><i class="fas fa-play"></i> 再生</button>
@@ -302,7 +280,6 @@
     let latestIndexThreshold = 0;
     let autoPlayInterval = null;
 
-    // ストーリーズ用
     let storiesData = [];
     let currentStoryMemberIndex = 0;
     let currentStorySlideIndex = 0;
@@ -327,31 +304,25 @@
 
                 filteredData = [...allData];
                 generateStories();
-                displayPickup();
-                applySort(); // 初回描画
+                applySort();
             },
             error: function() { document.getElementById('app').innerHTML = '<p style="text-align:center;">読み込み失敗</p>'; }
         });
     };
 
-    // --- メイン描画システム (Masonry) ---
     function render() {
         const app = document.getElementById('app');
         app.innerHTML = '';
         prepareSlideshowList();
 
-        // 並び替えが「新着」か「シャッフル」、またはモードが「お気に入り」「レイヤー別」ならグループ分けしない
-        // ★ここが横並び維持のキモ
         const noGroup = (currentSort === 'new' || currentSort === 'shuffle' || currentMode === 'favorite' || currentMode === 'cosplayer');
 
         if (noGroup) {
-            // 一括表示（Instagram検索画面のようなスタイル）
             const grid = document.createElement('div');
             grid.className = 'masonry-grid';
             slideshowList.forEach(item => grid.appendChild(createCard(item)));
             app.appendChild(grid);
         } else {
-            // メンバー別（グループ表示）
             const groups = {};
             slideshowList.forEach(item => {
                 const groupName = item.member || "未分類";
@@ -363,7 +334,7 @@
                 const section = document.createElement('div');
                 section.innerHTML = `<div class="section-title">■ ${name}</div>`;
                 const grid = document.createElement('div');
-                grid.className = 'masonry-grid'; // ★ここもMasonryにする
+                grid.className = 'masonry-grid';
                 groups[name].forEach(item => grid.appendChild(createCard(item)));
                 section.appendChild(grid);
                 app.appendChild(section);
@@ -379,13 +350,11 @@
         card.className = 'card';
         card.onclick = () => openModal(item.image);
 
-        // ★写真ファースト: 画像の本来の高さを活かす
         const img = document.createElement('img');
         img.src = item.image;
         img.loading = "lazy";
         img.onerror = function(){ this.src = "https://placehold.jp/300x300.png?text=No+Image"; };
 
-        // ★オーバーレイ: 文字を画像に乗せる
         const overlay = document.createElement('div');
         overlay.className = 'card-overlay';
         
@@ -397,7 +366,6 @@
             <div class="card-name">${safeCos}</div>
         `;
 
-        // NEWバッジ
         if (isNew) {
             const badge = document.createElement('div');
             badge.className = 'new-badge';
@@ -405,7 +373,6 @@
             card.appendChild(badge);
         }
 
-        // ハートボタン
         const favBtn = document.createElement('button');
         favBtn.className = `card-fav ${isFav ? 'active' : ''}`;
         favBtn.innerHTML = '<i class="fas fa-heart"></i>';
@@ -421,7 +388,6 @@
         return card;
     }
 
-    // --- その他ロジック ---
     function prepareSlideshowList() {
         if (currentMode === 'favorite') slideshowList = allData.filter(item => favorites.includes(item.image));
         else slideshowList = filteredData;
@@ -463,7 +429,6 @@
         applySort();
     }
 
-    // --- ストーリーズ ---
     function generateStories() {
         const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         let seed = parseInt(today);
@@ -476,7 +441,6 @@
         Object.keys(memberReadings).forEach(member => {
             const memberImages = allData.filter(d => d.member === member);
             if(memberImages.length === 0) return;
-            // 今日の5枚
             const temp = [...memberImages];
             for (let i = temp.length - 1; i > 0; i--) {
                 const r = Math.floor(seededRandom(seed + i + member.length) * (i + 1));
@@ -508,7 +472,6 @@
         document.getElementById('story-user').innerText = story.name;
         document.getElementById('story-main').src = img.image;
         
-        // バー更新
         const bars = document.getElementById('story-bars');
         bars.innerHTML = '';
         story.images.forEach((_, i) => {
@@ -521,7 +484,6 @@
             bar.appendChild(fill);
             bars.appendChild(bar);
         });
-        
         startStoryTimer();
     }
     function startStoryTimer() {
@@ -555,7 +517,6 @@
         document.getElementById('story-viewer').classList.remove('active');
     }
 
-    // --- モーダルなど ---
     function openModal(url) {
         const idx = slideshowList.findIndex(d => d.image === url);
         if (idx !== -1) currentImageIndex = idx;
@@ -591,26 +552,6 @@
         showToast("リンクコピー完了");
     }
     
-    function displayPickup() {
-        if(allData.length===0) return;
-        const r = Math.floor(Math.random()*allData.length);
-        const item = allData[r];
-        const box = document.getElementById('pickup-container');
-        box.innerHTML = `
-            <div class="pickup-area" onclick="openModal('${item.image}')">
-                <div class="pickup-label">Today's Pickup ✨</div>
-                <div class="pickup-img-box">
-                    <img class="pickup-bg" src="${item.image}">
-                    <img class="pickup-main" src="${item.image}">
-                </div>
-                <div class="pickup-text">
-                    <h3>${item.member}</h3>
-                    <p>${item.cosplayer}</p>
-                </div>
-            </div>
-        `;
-    }
-
     function generateMemberTags() {
         const box = document.getElementById('memberBar');
         box.innerHTML = `<span class="member-chip active" onclick="filterByMember('all', this)">🏠</span>`;
