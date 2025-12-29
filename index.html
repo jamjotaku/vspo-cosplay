@@ -35,7 +35,7 @@
         body.dark-mode { --bg: #111; --text: #eee; }
         body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
 
-        /* ★★★ モーダルが開いている時はボタンを隠す設定 ★★★ */
+        /* モーダル時FAB非表示 */
         body.modal-open .fab { display: none !important; }
 
         /* --- ヘッダー --- */
@@ -148,8 +148,7 @@
         .story-nav { position: absolute; top: 0; bottom: 0; width: 30%; z-index: 5; }
         .nav-left { left: 0; } .nav-right { right: 0; width: 70%; }
 
-        /* FAB & Toast */
-        .fab { position: fixed; bottom: 25px; right: 25px; width: 56px; height: 56px; background: var(--primary); color: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: none; /* 初期は非表示 */ align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 100; border: none; transition: 0.3s; }
+        .fab { position: fixed; bottom: 25px; right: 25px; width: 56px; height: 56px; background: var(--primary); color: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 100; border: none; transition: 0.3s; }
         .fab:hover { transform: scale(1.1); }
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: 0.5s; }
         #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
@@ -432,7 +431,7 @@
         applySort();
     }
 
-    // --- ストーリーズ ---
+    // --- ストーリーズ (バラバラのレイヤーさん優先ロジック) ---
     function generateStories() {
         const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
         let seed = parseInt(today);
@@ -445,12 +444,37 @@
         Object.keys(memberReadings).forEach(member => {
             const memberImages = allData.filter(d => d.member === member);
             if(memberImages.length === 0) return;
+
+            // まず全体をシャッフル
             const temp = [...memberImages];
             for (let i = temp.length - 1; i > 0; i--) {
                 const r = Math.floor(seededRandom(seed + i + member.length) * (i + 1));
                 [temp[i], temp[r]] = [temp[r], temp[i]];
             }
-            storiesData.push({ name: member, icon: temp[0].image, images: temp.slice(0, 5) });
+
+            // 被らないレイヤーさん優先
+            const picks = [];
+            const seenLayer = new Set();
+            const spares = [];
+
+            for (const item of temp) {
+                if (!seenLayer.has(item.cosplayer)) {
+                    picks.push(item);
+                    seenLayer.add(item.cosplayer);
+                } else {
+                    spares.push(item);
+                }
+                if (picks.length >= 5) break;
+            }
+
+            if (picks.length < 5) {
+                const needed = 5 - picks.length;
+                for (let i = 0; i < needed; i++) {
+                    if (spares[i]) picks.push(spares[i]);
+                }
+            }
+
+            storiesData.push({ name: member, icon: picks[0].image, images: picks });
         });
 
         storiesData.forEach((s, idx) => {
@@ -521,14 +545,14 @@
         document.getElementById('story-viewer').classList.remove('active');
     }
 
-    // --- モーダル制御（修正版） ---
+    // --- モーダル制御 ---
     function openModal(url) {
         if(autoPlayInterval) clearInterval(autoPlayInterval);
         const idx = slideshowList.findIndex(d => d.image === url);
         if (idx !== -1) currentImageIndex = idx;
         updateModal();
         document.getElementById('modal').classList.add('open');
-        document.body.classList.add('modal-open'); // ★★★ ボタンを隠すクラス追加 ★★★
+        document.body.classList.add('modal-open');
     }
     function updateModal() {
         const item = slideshowList[currentImageIndex];
@@ -538,7 +562,7 @@
     function closeModal() {
         if(autoPlayInterval) clearInterval(autoPlayInterval);
         document.getElementById('modal').classList.remove('open');
-        document.body.classList.remove('modal-open'); // ★★★ ボタン表示を戻す ★★★
+        document.body.classList.remove('modal-open');
     }
     function changeImage(dir, e) {
         if(e) e.stopPropagation();
@@ -579,13 +603,11 @@
         setTimeout(()=>t.className="", 3000);
     }
     
-    // ★★★ スクロールでボタン表示制御 ★★★
     function scrollToTop() { window.scrollTo({top:0, behavior:'smooth'}); }
     
     window.onscroll = function() {
         const btn = document.getElementById('scrollTopBtn');
         if(btn) {
-            // モーダルが開いていない時だけ表示判定
             if(!document.body.classList.contains('modal-open')) {
                 btn.style.display = (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) ? "flex" : "none";
             }
