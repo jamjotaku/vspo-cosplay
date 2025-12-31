@@ -22,8 +22,10 @@ const tagMapping = {
     "jacket": "ジャケット アウター",
     // 【特徴・アクセサリ】
     "glasses": "眼鏡 メガネ",
-    "animal_ears": "猫耳 ケモミミ",
-    "cat_ears": "猫耳",
+    "animal_ears": "ケモミミ",       // 「猫耳」という言葉を外す（どうしても検索させたければ残す）
+　　"cat_ears": "猫耳",             // 猫耳だけをヒットさせる
+    "rabbit_ears": "バニー うさ耳",   // バニーを分けちゃう
+    "fox_ears": "狐耳",             // 狐（白上フブキさん的な）も分けちゃう
     "headphones": "ヘッドホン",
     "mask": "マスク",
     "twintails": "ツインテール",
