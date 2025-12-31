@@ -110,7 +110,7 @@ window.onload = function() {
                     item._originalIndex = index;
                     
                     // ★進化ポイント：タグ情報の翻訳と結合
-                    let rawTags = item["タグ"] || ""; // E列(ヘッダー名が'タグ'である前提)
+                    let rawTags = item["Tags"] || ""; // E列(ヘッダー名が'タグ'である前提)
                     let tagKeywords = "";
 
                     // 辞書にある英語タグが含まれていたら、日本語キーワードを追加
