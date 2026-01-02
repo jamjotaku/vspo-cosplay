@@ -207,8 +207,14 @@
         .profile-header {
             text-align: center; padding: 20px 15px; margin-bottom: 10px;
             background: linear-gradient(135deg, rgba(92,106,196,0.1) 0%, rgba(255,71,87,0.1) 100%);
-            border-radius: 12px; border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); position: relative;
         }
+        .profile-close {
+            position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.1); color: var(--text);
+            border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 1.2rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: 0.2s;
+        }
+        .profile-close:hover { background: rgba(0,0,0,0.2); }
         .profile-name { font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; }
         .profile-link-btn {
             display: inline-flex; align-items: center; gap: 8px;
@@ -217,7 +223,13 @@
             transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         .profile-link-btn:hover { transform: scale(1.05); }
-        .profile-count { font-size: 0.8rem; opacity: 0.7; margin-top: 8px; }
+        .profile-info { font-size: 0.85rem; opacity: 0.9; margin-top: 15px; }
+        .profile-tags { margin-top: 8px; }
+        .profile-tag-chip {
+            display: inline-block; background: rgba(255,255,255,0.5); color: var(--primary);
+            padding: 3px 10px; border-radius: 15px; font-size: 0.8rem; margin: 2px; font-weight: bold;
+        }
+        .profile-back { margin-top: 15px; font-size: 0.85rem; color: var(--primary); cursor: pointer; text-decoration: underline; background: none; border: none; }
     </style>
 </head>
 <body>
