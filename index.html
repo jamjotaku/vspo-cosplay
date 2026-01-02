@@ -25,6 +25,9 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+
     <style>
         /* --- 基本設定 --- */
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -33,7 +36,15 @@
             --overlay-grad: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
         }
         body.dark-mode { --bg: #111; --text: #eee; }
-        body { font-family: "Helvetica Neue", Arial, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 0; transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; padding-bottom: env(safe-area-inset-bottom); }
+        
+        body { 
+            /* ★変更：フォントを丸ゴシックに */
+            font-family: "M PLUS Rounded 1c", "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg); color: var(--text); margin: 0; padding: 0; 
+            transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; 
+            padding-bottom: env(safe-area-inset-bottom);
+            letter-spacing: 0.03em; /* 文字間を少し広げて読みやすく */
+        }
 
         /* モーダル時FAB非表示 */
         body.modal-open .fab { display: none !important; }
@@ -43,36 +54,55 @@
         
         .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
         .title-area { flex: 1; min-width: 0; }
-        .title-area h1 { margin: 0; font-size: 1.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .title-area h1 { margin: 0; font-size: 1.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
         .total-count { font-size: 0.75rem; opacity: 0.9; display: block; font-weight: bold; }
         
         .header-controls { display: flex; gap: 15px; flex-shrink: 0; }
-        .icon-btn { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; padding: 0; text-decoration: none; opacity: 0.9; }
+        .icon-btn { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; padding: 0; text-decoration: none; opacity: 0.9; transition: transform 0.2s; }
+        .icon-btn:active { transform: scale(0.9); }
         
         /* ストーリーズ */
         .stories-container { overflow-x: auto; white-space: nowrap; padding: 5px 0 10px; display: flex; gap: 12px; scrollbar-width: none; }
         .stories-container::-webkit-scrollbar { display: none; }
-        .story-item { width: 68px; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex-shrink: 0; }
+        .story-item { width: 68px; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex-shrink: 0; transition: transform 0.2s; }
+        .story-item:active { transform: scale(0.95); }
         .story-ring { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); }
         .story-ring.seen { background: #ccc; }
         .story-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
         body.dark-mode .story-img { border-color: #111; }
-        .story-name { font-size: 0.7rem; margin-top: 4px; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .story-name { font-size: 0.7rem; margin-top: 4px; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; }
 
         /* ツールバー */
         .tools { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .tools::-webkit-scrollbar { display: none; }
-        input { padding: 8px 15px; border-radius: 20px; border: none; min-width: 150px; outline: none; font-size: 0.9rem; }
-        button.tool-btn { background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; white-space: nowrap; cursor: pointer; }
+        input { padding: 8px 15px; border-radius: 20px; border: none; min-width: 150px; outline: none; font-size: 0.9rem; font-family: inherit; }
+        
+        /* ★変更：ボタンの押し心地を改善 */
+        button.tool-btn { 
+            background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 6px 14px; 
+            border-radius: 20px; font-size: 0.85rem; white-space: nowrap; cursor: pointer; 
+            font-family: inherit; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        button.tool-btn:active { transform: scale(0.95); }
         button.tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; }
 
         .member-scroll-container { overflow-x: auto; white-space: nowrap; padding: 8px 0 0; scrollbar-width: none; }
         .member-scroll-container::-webkit-scrollbar { display: none; }
-        .member-chip { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 20px; margin-right: 6px; cursor: pointer; font-size: 1.1rem; line-height: 1; transition: 0.2s; border: 1px solid transparent; }
+        .member-chip { 
+            display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; 
+            border-radius: 20px; margin-right: 6px; cursor: pointer; font-size: 1.1rem; line-height: 1; 
+            transition: 0.2s; border: 1px solid transparent; 
+        }
+        .member-chip:active { transform: scale(0.9); }
         .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; transform: scale(1.1); }
 
         nav { display: flex; justify-content: center; gap: 10px; padding: 15px; background: var(--bg); position: sticky; top: 125px; z-index: 90; transition: 0.3s; }
-        .view-btn { background: rgba(0,0,0,0.05); color: var(--text); border: 1px solid transparent; padding: 6px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+        .view-btn { 
+            background: rgba(0,0,0,0.05); color: var(--text); border: 1px solid transparent; 
+            padding: 6px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; 
+            font-size: 0.9rem; font-family: inherit; transition: all 0.2s;
+        }
+        .view-btn:active { transform: scale(0.95); }
         body.dark-mode .view-btn { background: rgba(255,255,255,0.1); }
         .view-btn.active { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(92, 106, 196, 0.4); }
 
@@ -88,12 +118,18 @@
         .card { 
             break-inside: avoid; margin-bottom: 10px; border-radius: 12px; overflow: hidden; 
             position: relative; background: #000; transform: translateZ(0); 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.15); 
+            /* ★変更：影と動きをリッチに */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s;
         }
         @media (min-width: 600px) { .card { margin-bottom: 15px; } }
 
+        /* ★変更：ホバー時に浮き上がる */
+        .card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 10px 20px rgba(92, 106, 196, 0.3); z-index: 5; }
+
         .card img { width: 100%; height: auto; display: block; transition: transform 0.5s; }
-        .card:hover img { transform: scale(1.05); }
+        /* 画像自体のズームは控えめに（カード全体が動くので） */
+        .card:hover img { transform: scale(1.02); }
 
         .card-overlay { 
             position: absolute; bottom: 0; left: 0; width: 100%; 
@@ -102,21 +138,20 @@
         }
         .card-tag { font-size: 0.7rem; opacity: 0.9; background: var(--primary); padding: 2px 6px; border-radius: 4px; align-self: flex-start; margin-bottom: 4px; margin-right: 5px; }
         
-        /* ▼▼▼ 追加：カード上のユニット名チップ ▼▼▼ */
+        /* ユニット名チップ */
         .card-unit {
             font-size: 0.7rem; background: rgba(255, 255, 255, 0.9); color: var(--primary);
             padding: 2px 6px; border-radius: 4px; margin-bottom: 4px; 
             align-self: flex-start; font-weight: bold; cursor: pointer;
-            pointer-events: auto; /* クリック有効化 */
-            margin-right: 5px; display: inline-block;
+            pointer-events: auto; margin-right: 5px; display: inline-block;
+            transition: 0.2s;
         }
-        .card-unit:hover { background: #fff; text-decoration: underline; }
+        .card-unit:hover { background: #fff; transform: scale(1.1); }
 
-        /* ★★★ 名前をクリック可能にするデザイン ★★★ */
+        /* 名前 */
         .card-name {  
             font-size: 0.85rem; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.8); line-height: 1.3;  
-            pointer-events: auto; /* クリック有効化 */
-            cursor: pointer; display: inline-block; margin-top: 2px;
+            pointer-events: auto; cursor: pointer; display: inline-block; margin-top: 2px;
         }
         .card-name:hover { text-decoration: underline; color: #bde0ff; }
 
@@ -128,27 +163,28 @@
             color: rgba(255,255,255,0.7); font-size: 1rem; border: none; cursor: pointer; z-index: 10; 
             transition: 0.2s; 
         }
+        .card-fav:active { transform: scale(0.9); }
         .card-fav.active { color: var(--heart); background: rgba(255,255,255,0.9); }
         .card-new { position: absolute; top: 8px; left: 8px; background: #ff4757; color: #fff; font-size: 0.65rem; font-weight: bold; padding: 3px 8px; border-radius: 4px; z-index: 5; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
 
         /* モーダル */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; }
-        .modal.open { display: flex; }
-        .modal img { max-height: 80vh; max-width: 95%; border-radius: 4px; box-shadow: 0 0 30px rgba(0,0,0,0.5); object-fit: contain; }
-        .modal-close { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 2.5rem; cursor: pointer; z-index: 2010; }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal.open { display: flex; animation: fadeIn 0.2s; }
+        .modal img { max-height: 80vh; max-width: 95%; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.5); object-fit: contain; }
+        .modal-close { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 2.5rem; cursor: pointer; z-index: 2010; opacity: 0.8; }
         .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 20px; cursor: pointer; font-size: 1.5rem; border-radius: 50%; transition: 0.2s; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; }
+        .slide-btn:hover { background: rgba(255,255,255,0.4); }
         .prev-btn { left: 20px; } .next-btn { right: 20px; }
         
-        /* ▼▼▼ 追加：モーダル内のタグエリア ▼▼▼ */
+        /* モーダル内のタグエリア */
         .modal-tags {
-            position: absolute; bottom: 80px; /* シェアボタンの上 */
-            width: 100%; text-align: center; pointer-events: auto;
+            position: absolute; bottom: 80px; width: 100%; text-align: center; pointer-events: auto;
             display: flex; justify-content: center; flex-wrap: wrap; gap: 8px;
             padding: 0 10px; z-index: 2020;
         }
         .modal-tag-chip {
             background: rgba(0, 0, 0, 0.6); color: #fff; border: 1px solid rgba(255, 255, 255, 0.4);
-            padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer;
+            padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; font-family: inherit;
             transition: 0.2s; text-decoration: none; backdrop-filter: blur(4px);
         }
         .modal-tag-chip:hover { background: var(--primary); border-color: var(--primary); transform: scale(1.05); }
@@ -157,14 +193,15 @@
         .share-btn { 
             border: none; padding: 10px 20px; border-radius: 30px;  
             font-size: 0.9rem; font-weight: bold; color: #fff; cursor: pointer;  
-            display: flex; align-items: center; gap: 6px; text-decoration: none; 
+            display: flex; align-items: center; gap: 6px; text-decoration: none; font-family: inherit;
             box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.2s; 
         }
+        .share-btn:active { transform: scale(0.95); }
         .share-btn:hover { transform: scale(1.05); }
         .btn-x { background: #000; }
         .btn-play { background: #ff9f43; }
         .btn-link { background: #1da1f2; }
-        .btn-native { background: #34c759; display: none; } /* デフォルト非表示 */
+        .btn-native { background: #34c759; display: none; }
 
         /* ストーリービューワー */
         .story-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 3000; display: none; justify-content: center; align-items: center; }
@@ -183,11 +220,25 @@
         /* FAB & Toast */
         .fab { position: fixed; bottom: 25px; right: 25px; width: 56px; height: 56px; background: var(--primary); color: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 100; border: none; transition: 0.3s; }
         .fab:hover { transform: scale(1.1); }
-        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: 0.5s; }
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: 0.5s; font-family: inherit; }
         #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
         
-        footer { color: var(--footer-text); text-align: center; padding: 40px 20px; font-size: 0.8rem; margin-top: 20px; border-top: 1px solid #ddd; }
-        #loading-sentinel { text-align:center; padding: 20px; color: #999; width: 100%; }
+        footer { color: var(--footer-text); text-align: center; padding: 40px 20px; font-size: 0.8rem; margin-top: 20px; border-top: 1px solid #ddd; opacity: 0.8; }
+        
+        /* ★変更：おしゃれなローディング */
+        #loading-sentinel {
+            text-align: center; padding: 40px; color: var(--primary); width: 100%;
+            font-weight: bold; font-size: 0.9rem; display: flex; justify-content: center; align-items: center; gap: 10px;
+        }
+        #loading-sentinel::before {
+            content: ""; width: 20px; height: 20px;
+            border: 3px solid rgba(92, 106, 196, 0.3);
+            border-top: 3px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
@@ -226,7 +277,7 @@
 
 <main id="app">
     </main>
-<div id="loading-sentinel"><i class="fas fa-spinner fa-spin"></i> 読み込み中...</div>
+<div id="loading-sentinel">読み込み中...</div>
 
 <footer>
     <p>本サイトは非公式ファンサイトです。<br>画像の著作権・肖像権は各権利所有者に帰属します。</p>
