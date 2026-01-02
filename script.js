@@ -43,6 +43,19 @@ const memberIcons = {
     "蝶屋はなび": "🦋🎆", "甘結もか": "🕹🔖"
 };
 
+// ★修正：ご提供いただいた正確なメンバーカラー定義
+const memberColors = {
+    "花芽すみれ": "#b0c4de", "花芽なずな": "#fabedc", "小雀とと": "#f5eb4a",
+    "一ノ瀬うるは": "#4182fa", "胡桃のあ": "#ffdbfe", "兎咲ミミ": "#c7b2d6",
+    "空澄セナ": "#ffffff", "橘ひなの": "#fa96c8", "英リサ": "#d1de79",
+    "如月れん": "#be2152", "神成きゅぴ": "#ffd23c", "八雲べに": "#85cab3",
+    "藍沢エマ": "#b4f1f9", "紫宮るな": "#d6adff", "猫汰つな": "#ff3652",
+    "白波らむね": "#8eced9", "小森めと": "#fba03f", "夢野あかり": "#ff998d",
+    "夜乃くろむ": "#909ec8", "紡木こかげ": "#5195e1", "千燈ゆうひ": "#ed784a",
+    "蝶屋はなび": "#ea5506", "甘結もか": "#eca0aa"
+};
+const defaultColor = "#5c6ac4";
+
 // ==========================================
 //  状態管理変数
 // ==========================================
@@ -51,7 +64,6 @@ let filteredData = [];
 let currentMode = 'member';
 let currentSort = 'new';
 let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
-// ★追加：履歴データ
 let history = JSON.parse(localStorage.getItem('vspo_history')) || [];
 let currentImageIndex = 0;
 let slideshowList = [];
@@ -72,7 +84,6 @@ let storyTimer = null;
 window.onload = function() {
     const contactLink = document.getElementById('contact-link');
     if (FORM_URL && contactLink) { contactLink.href = FORM_URL; }
-    
     const removeLink = document.getElementById('remove-link');
     if (FORM_URL && removeLink) { removeLink.href = FORM_URL; }
 
@@ -98,27 +109,18 @@ window.onload = function() {
                 .filter(item => item.member && item.image)
                 .map((item, index) => {
                     item._originalIndex = index;
-                    
                     let rawTags = item["Tags"] || item["タグ"] || ""; 
                     let tagKeywords = "";
                     for (const [engTag, japWord] of Object.entries(tagMapping)) {
-                        if (rawTags.includes(engTag)) {
-                            tagKeywords += " " + japWord;
-                        }
+                        if (rawTags.includes(engTag)) { tagKeywords += " " + japWord; }
                     }
-
                     let unitName = item["ユニット"] || item["Unit"] || item["unit"] || "";
                     item._unitName = unitName.trim();
                     item._tagsArray = rawTags.split(',').map(t => t.trim().toLowerCase());
-
                     item._searchKey = (
-                        item.member + 
-                        (memberReadings[item.member] || "") + 
-                        item.cosplayer + 
-                        tagKeywords + 
-                        " " + unitName 
+                        item.member + (memberReadings[item.member] || "") + 
+                        item.cosplayer + tagKeywords + " " + unitName 
                     ).toLowerCase();
-
                     return item;
                 });
             
@@ -153,32 +155,10 @@ function render() {
     if(sentinel) sentinel.style.display = 'block';
 
     if (slideshowList.length === 0) {
-        // 履歴画面で0件の場合はメッセージを変える
-        if (currentMode === 'history') {
-            app.innerHTML = `
-                <div class="empty-guide">
-                    <div style="font-size:3rem; margin-bottom:10px;">🕒</div>
-                    <p>閲覧履歴はありません</p>
-                    <p style="font-size:0.8rem; color:#888;">画像を見るとここに表示されます</p>
-                </div>
-            `;
-        } else {
-            app.innerHTML = `
-                <div class="empty-guide">
-                    <div style="font-size:3rem; margin-bottom:10px;">😢</div>
-                    <p>条件に合う画像が見つかりませんでした...</p>
-                    <p style="margin-top:20px; font-weight:bold;">人気のタグで探してみる？</p>
-                    <div class="guide-tags">
-                        <span class="guide-chip" onclick="filterByText('メイド')">メイド</span>
-                        <span class="guide-chip" onclick="filterByText('制服')">制服</span>
-                        <span class="guide-chip" onclick="filterByText('水着')">水着</span>
-                        <span class="guide-chip" onclick="filterByText('眼鏡')">眼鏡</span>
-                        <span class="guide-chip" onclick="filterByText('猫耳')">猫耳</span>
-                        <span class="guide-chip" onclick="filterByText('バニー')">バニー</span>
-                    </div>
-                </div>
-            `;
-        }
+        let msg = (currentMode === 'history') ? 
+            `<div class="empty-guide"><div style="font-size:3rem; margin-bottom:10px;">🕒</div><p>閲覧履歴はありません</p><p style="font-size:0.8rem; color:#888;">画像を見るとここに表示されます</p></div>` :
+            `<div class="empty-guide"><div style="font-size:3rem; margin-bottom:10px;">😢</div><p>条件に合う画像が見つかりませんでした...</p><p style="margin-top:20px; font-weight:bold;">人気のタグで探してみる？</p><div class="guide-tags"><span class="guide-chip" onclick="filterByText('メイド')">メイド</span><span class="guide-chip" onclick="filterByText('制服')">制服</span><span class="guide-chip" onclick="filterByText('水着')">水着</span><span class="guide-chip" onclick="filterByText('眼鏡')">眼鏡</span><span class="guide-chip" onclick="filterByText('猫耳')">猫耳</span><span class="guide-chip" onclick="filterByText('バニー')">バニー</span></div></div>`;
+        app.innerHTML = msg;
         if(sentinel) sentinel.style.display = 'none';
         return;
     }
@@ -207,35 +187,15 @@ function renderFlatMode(container) {
             const match = firstItem.link.match(/https?:\/\/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/);
             if (match && match[1]) profileUrl = `https://twitter.com/${match[1]}`;
         }
-
         const memberCounts = {};
-        slideshowList.forEach(item => {
-            if (item.member) memberCounts[item.member] = (memberCounts[item.member] || 0) + 1;
-        });
-        const topMembers = Object.entries(memberCounts)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 3) 
-            .map(([name, count]) => `<span class="profile-tag-chip">${memberIcons[name] || ""} ${name}</span>`)
-            .join("");
+        slideshowList.forEach(item => { if (item.member) memberCounts[item.member] = (memberCounts[item.member] || 0) + 1; });
+        const topMembers = Object.entries(memberCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([name, count]) => `<span class="profile-tag-chip">${memberIcons[name] || ""} ${name}</span>`).join("");
 
         const headerDiv = document.createElement('div');
         headerDiv.className = 'profile-header';
-        
-        let html = `
-            <button class="profile-close" onclick="clearSearch()" title="閉じる">&times;</button>
-            <div class="profile-name">${targetName}</div>
-        `;
-        if (profileUrl) {
-            html += `<a href="${profileUrl}" target="_blank" class="profile-link-btn"><i class="fab fa-x-twitter"></i> X (Twitter) を見る</a>`;
-        }
-        html += `
-            <div class="profile-info">
-                <span>投稿数: ${slideshowList.length}枚</span>
-                <div class="profile-tags">💖 よくやるコスプレ:<br>${topMembers}</div>
-            </div>
-            <button class="profile-back" onclick="clearSearch()">← 全員表示に戻る</button>
-        `;
-        
+        let html = `<button class="profile-close" onclick="clearSearch()" title="閉じる">&times;</button><div class="profile-name">${targetName}</div>`;
+        if (profileUrl) { html += `<a href="${profileUrl}" target="_blank" class="profile-link-btn"><i class="fab fa-x-twitter"></i> X (Twitter) を見る</a>`; }
+        html += `<div class="profile-info"><span>投稿数: ${slideshowList.length}枚</span><div class="profile-tags">💖 よくやるコスプレ:<br>${topMembers}</div></div><button class="profile-back" onclick="clearSearch()">← 全員表示に戻る</button>`;
         headerDiv.innerHTML = html;
         container.appendChild(headerDiv);
     }
@@ -259,10 +219,7 @@ function renderFlatMode(container) {
 
 function clearSearch() {
     const searchInput = document.getElementById('searchInput');
-    if(searchInput) {
-        searchInput.value = "";
-        handleSearch(); 
-    }
+    if(searchInput) { searchInput.value = ""; handleSearch(); }
 }
 
 function loadMore() {
@@ -279,7 +236,6 @@ function renderGroupMode(container) {
         if (!groups[groupName]) groups[groupName] = [];
         groups[groupName].push(item);
     });
-
     let fullHtml = '';
     Object.keys(groups).forEach(name => {
         fullHtml += `<div class="section-title">■ ${name}</div><div class="masonry-grid">`;
@@ -294,14 +250,11 @@ function createCardHTML(item) {
     const isNew = item._originalIndex >= latestIndexThreshold;
     const safeMember = (item.member || "").replace(/"/g, '&quot;');
     const safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
-    
     let unitHtml = '';
-    if (item._unitName) {
-        unitHtml = `<span class="card-unit" onclick="event.stopPropagation(); filterByText('${item._unitName}')">${item._unitName}</span>`;
-    }
+    if (item._unitName) { unitHtml = `<span class="card-unit" onclick="event.stopPropagation(); filterByText('${item._unitName}')">${item._unitName}</span>`; }
     
     return `
-    <div class="card" onclick="openModal('${item.image}')">
+    <div class="card" onclick="openModal('${item.image}')" ondblclick="event.stopPropagation(); playHeart(this); toggleFav('${item.image}', this.querySelector('.card-fav'))">
         ${isNew ? '<div class="card-new">NEW</div>' : ''}
         <button class="card-fav ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav('${item.image}', this)">
             <i class="fas fa-heart"></i>
@@ -317,18 +270,19 @@ function createCardHTML(item) {
     </div>`;
 }
 
+function playHeart(cardElement) {
+    const heart = document.createElement('i');
+    heart.className = 'fas fa-heart pop-heart';
+    cardElement.appendChild(heart);
+    setTimeout(() => heart.remove(), 1000); 
+}
+
 // ==========================================
 //  検索・ソート
 // ==========================================
 function filterByText(text) {
     const input = document.getElementById('searchInput');
-    if(input) {
-        input.value = text;
-        handleSearch();
-        showToast(`「${text}」で絞り込みました🔍`);
-        closeModal(); 
-        scrollToTop();
-    }
+    if(input) { input.value = text; handleSearch(); showToast(`「${text}」で絞り込みました🔍`); closeModal(); scrollToTop(); }
 }
 
 function handleSearch() {
@@ -337,6 +291,10 @@ function handleSearch() {
     const rawKey = input.value.toLowerCase();
     const keywords = rawKey.split(/\s+/).filter(k => k.trim() !== "");
     filteredData = allData.filter(d => keywords.every(k => d._searchKey.includes(k)));
+    
+    const exactMember = Object.keys(memberReadings).find(m => m === input.value.trim());
+    setThemeColor(exactMember || null);
+
     applySort();
 }
 
@@ -364,6 +322,7 @@ function setMode(mode) {
     document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
     const navBtn = document.getElementById('nav-' + mode);
     if(navBtn) navBtn.classList.add('active');
+    setThemeColor(null);
     render();
 }
 
@@ -379,10 +338,28 @@ function generateMemberTags() {
 function filterByMember(name, el) {
     document.querySelectorAll('.member-chip').forEach(c=>c.classList.remove('active'));
     if(el) el.classList.add('active');
-    if(name==='all') filteredData = [...allData];
-    else filteredData = allData.filter(d=>d.member===name);
+    if(name==='all') {
+        filteredData = [...allData];
+        setThemeColor(null);
+    } else {
+        filteredData = allData.filter(d=>d.member===name);
+        setThemeColor(name);
+    }
     setMode('member');
     applySort();
+}
+
+function setThemeColor(memberName) {
+    const color = (memberName && memberColors[memberName]) ? memberColors[memberName] : defaultColor;
+    document.documentElement.style.setProperty('--primary', color);
+    const rgb = hexToRgb(color);
+    if (rgb) {
+        document.documentElement.style.setProperty('--glass-bg', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`);
+    }
+}
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
 }
 
 // ==========================================
@@ -392,8 +369,6 @@ function prepareSlideshowList() {
     if (currentMode === 'favorite') {
         slideshowList = allData.filter(item => favorites.includes(item.image));
     } else if (currentMode === 'history') {
-        // 履歴モードの場合、履歴配列(URL文字列)から該当するデータを探す
-        // 重複を除去し、最新のものを上に
         const uniqueHistory = [...new Set(history)].reverse();
         slideshowList = uniqueHistory.map(url => allData.find(d => d.image === url)).filter(d => d);
     } else {
@@ -403,10 +378,7 @@ function prepareSlideshowList() {
 
 function openModal(url) {
     if(autoPlayInterval) clearInterval(autoPlayInterval);
-    
-    // ★追加：履歴に追加
     addToHistory(url);
-
     let idx = slideshowList.findIndex(d => d.image === url);
     if (idx === -1) { slideshowList = allData; idx = allData.findIndex(d => d.image === url); }
     if (idx !== -1) {
@@ -418,12 +390,9 @@ function openModal(url) {
     }
 }
 
-// ★追加：履歴保存関数
 function addToHistory(url) {
-    // 既に履歴にある場合は一度削除（最新にするため）
     history = history.filter(h => h !== url);
     history.push(url);
-    // 最大50件まで保持
     if (history.length > 50) history.shift();
     localStorage.setItem('vspo_history', JSON.stringify(history));
 }
@@ -440,23 +409,17 @@ function updateModal() {
         if (match && match[1]) {
             btnProfile.style.display = 'flex';
             btnProfile.href = `https://twitter.com/${match[1]}`;
-        } else {
-            btnProfile.style.display = 'none';
-        }
-    } else if (btnProfile) {
-        btnProfile.style.display = 'none';
-    }
+        } else { btnProfile.style.display = 'none'; }
+    } else if (btnProfile) { btnProfile.style.display = 'none'; }
 
     const tagsContainer = document.getElementById('m-tags');
     if (tagsContainer) {
         tagsContainer.innerHTML = ''; 
         if (item.member) tagsContainer.innerHTML += `<span class="modal-tag-chip" onclick="filterByText('${item.member}')">${item.member}</span>`;
         if (item._unitName) tagsContainer.innerHTML += `<span class="modal-tag-chip" onclick="filterByText('${item._unitName}')">${item._unitName}</span>`;
-
         let rawTags = item["Tags"] || item["タグ"] || "";
         let tagsArray = rawTags.split(',').map(t => t.trim()).filter(t => t);
         const ignoreList = ["best quality", "high quality", "absurdres", "1girl", "2girls", "multiple_girls", "cosplay", "general"];
-
         tagsArray.forEach(tag => {
             if (ignoreList.includes(tag.toLowerCase())) return;
             let displayText = "";
@@ -481,7 +444,6 @@ function updateModal() {
         });
         candidates.sort((a, b) => b.score - a.score);
         const topPicks = candidates.slice(0, 4);
-
         if (topPicks.length > 0) {
             recLabel.style.display = 'block';
             topPicks.forEach(pick => {
@@ -495,15 +457,10 @@ function updateModal() {
     }
 }
 
-// ★追加：リンクコピー機能
 function copyLink() {
     const item = slideshowList[currentImageIndex];
     if (item && item.link) {
-        navigator.clipboard.writeText(item.link).then(() => {
-            showToast("リンクをコピーしました！📋");
-        }).catch(err => {
-            showToast("コピーできませんでした💦");
-        });
+        navigator.clipboard.writeText(item.link).then(() => { showToast("リンクをコピーしました！📋"); }).catch(err => { showToast("コピーできませんでした💦"); });
     }
 }
 
@@ -512,8 +469,6 @@ function closeModal() {
     const modal = document.getElementById('modal');
     if(modal) modal.classList.remove('open');
     document.body.classList.remove('modal-open');
-    
-    // 履歴画面のときは再描画して最新の履歴を反映
     if(currentMode === 'history') render();
 }
 
@@ -522,11 +477,8 @@ function changeImage(dir, e) {
     currentImageIndex += dir;
     if(currentImageIndex < 0) currentImageIndex = slideshowList.length -1;
     if(currentImageIndex >= slideshowList.length) currentImageIndex = 0;
-    
-    // スライドした時も履歴に追加
     const item = slideshowList[currentImageIndex];
     if(item) addToHistory(item.image);
-    
     updateModal();
 }
 
@@ -535,9 +487,6 @@ function toggleAutoPlay() {
     else { autoPlayInterval = setInterval(() => changeImage(1), 3000); }
 }
 
-// ==========================================
-//  お気に入り・シェア・その他機能
-// ==========================================
 function toggleFav(imgUrl, btn) {
     if (favorites.includes(imgUrl)) favorites = favorites.filter(u => u !== imgUrl);
     else favorites.push(imgUrl);
@@ -582,50 +531,35 @@ window.onscroll = function() {
     }
 };
 
-// ==========================================
-//  ストーリーズ機能
-// ==========================================
 function generateStories() {
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     let seed = parseInt(today);
     const container = document.getElementById('stories-container');
     if(!container) return;
-    
     container.innerHTML = '';
     storiesData = [];
-
     function seededRandom(s) { var x = Math.sin(s++) * 10000; return x - Math.floor(x); }
-
     Object.keys(memberReadings).forEach(member => {
         const memberImages = allData.filter(d => d.member === member);
         if(memberImages.length === 0) return;
-
         const temp = [...memberImages];
         for (let i = temp.length - 1; i > 0; i--) {
             const r = Math.floor(seededRandom(seed + i + member.length) * (i + 1));
             [temp[i], temp[r]] = [temp[r], temp[i]];
         }
-
         const picks = [];
         const seenLayer = new Set();
         const spares = [];
-
         for (const item of temp) {
-            if (!seenLayer.has(item.cosplayer)) {
-                picks.push(item);
-                seenLayer.add(item.cosplayer);
-            } else { spares.push(item); }
+            if (!seenLayer.has(item.cosplayer)) { picks.push(item); seenLayer.add(item.cosplayer); } else { spares.push(item); }
             if (picks.length >= 5) break;
         }
-
         if (picks.length < 5) {
             const needed = 5 - picks.length;
             for (let i = 0; i < needed; i++) { if (spares[i]) picks.push(spares[i]); }
         }
-
         storiesData.push({ name: member, icon: picks[0].image, images: picks });
     });
-
     storiesData.forEach((s, idx) => {
         const el = document.createElement('div');
         el.className = 'story-item';
@@ -648,7 +582,6 @@ function renderStorySlide() {
     document.getElementById('story-icon').src = story.icon;
     document.getElementById('story-user').innerText = story.name;
     document.getElementById('story-main').src = img.image;
-    
     const bars = document.getElementById('story-bars');
     bars.innerHTML = '';
     story.images.forEach((_, i) => {
@@ -666,27 +599,18 @@ function renderStorySlide() {
 function startStoryTimer() {
     if(storyTimer) clearTimeout(storyTimer);
     const fill = document.getElementById('current-fill');
-    if(fill) {
-        setTimeout(() => { fill.style.transition = 'width 4s linear'; fill.style.width = '100%'; }, 10);
-    }
+    if(fill) { setTimeout(() => { fill.style.transition = 'width 4s linear'; fill.style.width = '100%'; }, 10); }
     storyTimer = setTimeout(nextStory, 4000);
 }
 function nextStory() {
     const story = storiesData[currentStoryMemberIndex];
-    if (currentStorySlideIndex < story.images.length - 1) {
-        currentStorySlideIndex++; renderStorySlide();
-    } else {
-        if (currentStoryMemberIndex < storiesData.length - 1) {
-            currentStoryMemberIndex++; currentStorySlideIndex=0; renderStorySlide();
-        } else { closeStory(); }
+    if (currentStorySlideIndex < story.images.length - 1) { currentStorySlideIndex++; renderStorySlide(); } else {
+        if (currentStoryMemberIndex < storiesData.length - 1) { currentStoryMemberIndex++; currentStorySlideIndex=0; renderStorySlide(); } else { closeStory(); }
     }
 }
 function prevStory() {
-    if (currentStorySlideIndex > 0) { currentStorySlideIndex--; renderStorySlide(); }
-    else if (currentStoryMemberIndex > 0) {
-        currentStoryMemberIndex--; 
-        currentStorySlideIndex = storiesData[currentStoryMemberIndex].images.length - 1;
-        renderStorySlide();
+    if (currentStorySlideIndex > 0) { currentStorySlideIndex--; renderStorySlide(); } else if (currentStoryMemberIndex > 0) {
+        currentStoryMemberIndex--; currentStorySlideIndex = storiesData[currentStoryMemberIndex].images.length - 1; renderStorySlide();
     }
 }
 function closeStory() {
@@ -694,39 +618,17 @@ function closeStory() {
     document.getElementById('story-viewer').classList.remove('active');
 }
 
-// ==========================================
-// 🌸 ユニット・ペア検索ボタン機能
-// ==========================================
 const unitList = [
-    { label: "花芽姉妹", keyword: "花芽姉妹" },
-    { label: "あいかが", keyword: "あいかが" },
-    { label: "ととつな", keyword: "ととつな" },
-    { label: "ととリサ", keyword: "ととリサ" },
-    { label: "BIG☆STAR", keyword: "BIG☆STAR" },
-    { label: "のせれん", keyword: "のせれん" },
-    { label: "のせミミ", keyword: "のせミミ" },
-    { label: "のあうひ", keyword: "のあうひ" },
-    { label: "のあらむ", keyword: "のあらむ" },
-    { label: "わざとあざとエキスパート", keyword: "わざとあざとエキスパート歌みた" },
-    { label: "のあセナ", keyword: "のあセナ" },
-    { label: "セナひな", keyword: "セナひな" },
-    { label: "セナうひ", keyword: "セナうひ" },
-    { label: "セナつな", keyword: "セナつな" },
-    { label: "はなばな", keyword: "はなばな" },
-    { label: "花鳥牛月", keyword: "花鳥牛月" },
-    { label: "こかげに咲くはなばな", keyword: "こかげに咲くはなばな" },
-    { label: "すみひな", keyword: "すみひな" },
-    { label: "のせひな", keyword: "のせひな" },
-    { label: "のあひな", keyword: "のあひな" },
-    { label: "べにエマ", keyword: "べにエマ" },
-    { label: "ひなるな", keyword: "ひなるな" },
-    { label: "すみるな", keyword: "すみるな" },
-    { label: "寒色組", keyword: "寒色組" },
-    { label: "ひなつな", keyword: "ひなつな" },
-    { label: "つならむ", keyword: "つならむ" },
-    { label: "バカ信号機", keyword: "バカ信号機" },
-    { label: "くろかげ", keyword: "くろかげ" },
-    { label: "蝶結び", keyword: "蝶結び" },
+    { label: "花芽姉妹", keyword: "花芽姉妹" }, { label: "あいかが", keyword: "あいかが" }, { label: "ととつな", keyword: "ととつな" },
+    { label: "ととリサ", keyword: "ととリサ" }, { label: "BIG☆STAR", keyword: "BIG☆STAR" }, { label: "のせれん", keyword: "のせれん" },
+    { label: "のせミミ", keyword: "のせミミ" }, { label: "のあうひ", keyword: "のあうひ" }, { label: "のあらむ", keyword: "のあらむ" },
+    { label: "わざとあざとエキスパート", keyword: "わざとあざとエキスパート歌みた" }, { label: "のあセナ", keyword: "のあセナ" },
+    { label: "セナひな", keyword: "セナひな" }, { label: "セナうひ", keyword: "セナうひ" }, { label: "セナつな", keyword: "セナつな" },
+    { label: "はなばな", keyword: "はなばな" }, { label: "花鳥牛月", keyword: "花鳥牛月" }, { label: "こかげに咲くはなばな", keyword: "こかげに咲くはなばな" },
+    { label: "すみひな", keyword: "すみひな" }, { label: "のせひな", keyword: "のせひな" }, { label: "のあひな", keyword: "のあひな" },
+    { label: "べにエマ", keyword: "べにエマ" }, { label: "ひなるな", keyword: "ひなるな" }, { label: "すみるな", keyword: "すみるな" },
+    { label: "寒色組", keyword: "寒色組" }, { label: "ひなつな", keyword: "ひなつな" }, { label: "つならむ", keyword: "つならむ" },
+    { label: "バカ信号機", keyword: "バカ信号機" }, { label: "くろかげ", keyword: "くろかげ" }, { label: "蝶結び", keyword: "蝶結び" },
     { label: "集合・コラボ", keyword: "集合" }
 ];
 
@@ -755,32 +657,20 @@ function renderUnitButtons() {
     });
 }
 
-// ==========================================
-// ★変更：レイヤー一覧（50音順リスト）機能
-// ==========================================
 function openCosplayerList() {
     const modal = document.getElementById('list-modal');
     const list = document.getElementById('cosplayer-list');
     if(!modal || !list) return;
-
-    // レイヤーさん名を重複なしで取得
     const cosplayers = [...new Set(allData.map(d => d.cosplayer).filter(n => n))];
-    
-    // 日本語の50音順にソート (localeCompareを使用)
     cosplayers.sort((a, b) => a.localeCompare(b, 'ja'));
-
     list.innerHTML = "";
     cosplayers.forEach(name => {
         const li = document.createElement('li');
         li.className = "list-item";
         li.innerText = name;
-        li.onclick = () => {
-            closeCosplayerList();
-            filterByText(name); // その人名で検索実行
-        };
+        li.onclick = () => { closeCosplayerList(); filterByText(name); };
         list.appendChild(li);
     });
-
     modal.classList.add('open');
     document.body.classList.add('modal-open');
 }
@@ -788,7 +678,5 @@ function openCosplayerList() {
 function closeCosplayerList() {
     const modal = document.getElementById('list-modal');
     if(modal) modal.classList.remove('open');
-    if(!document.getElementById('modal').classList.contains('open')) {
-        document.body.classList.remove('modal-open');
-    }
+    if(!document.getElementById('modal').classList.contains('open')) { document.body.classList.remove('modal-open'); }
 }
