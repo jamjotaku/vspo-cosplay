@@ -34,8 +34,7 @@
             --primary: #5c6ac4; --bg: #f4f6f8; --text: #333; --heart: #ff4757; 
             --overlay-grad: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
             --glass-bg: rgba(92, 106, 196, 0.95);
-            --nav-height-mobile: 70px; /* スマホ用ナビ高さ */
-            --header-offset-pc: 180px; /* PC用スティッキー位置調整 */
+            --nav-height-mobile: 70px;
         }
         body.dark-mode { --bg: #111; --text: #eee; --glass-bg: rgba(20, 20, 30, 0.95); }
         
@@ -43,11 +42,10 @@
             font-family: "M PLUS Rounded 1c", "Helvetica Neue", Arial, sans-serif;
             background: var(--bg); color: var(--text); margin: 0; padding: 0; 
             transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; 
-            padding-bottom: calc(env(safe-area-inset-bottom) + var(--nav-height-mobile)); /* スマホデフォルト */
+            padding-bottom: calc(env(safe-area-inset-bottom) + var(--nav-height-mobile));
             letter-spacing: 0.03em;
         }
 
-        /* PCでのスクロールバー */
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(92, 106, 196, 0.3); border-radius: 5px; }
@@ -70,7 +68,6 @@
         .icon-btn { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; padding: 0; text-decoration: none; opacity: 0.9; transition: transform 0.2s; }
         .icon-btn:active { transform: scale(0.9); }
         
-        /* ストーリーズ */
         .stories-container { overflow-x: auto; white-space: nowrap; padding: 5px 0 10px; display: flex; gap: 12px; scrollbar-width: none; }
         .stories-container::-webkit-scrollbar { display: none; }
         .story-item { width: 68px; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex-shrink: 0; transition: transform 0.2s; }
@@ -81,27 +78,19 @@
         body.dark-mode .story-img { border-color: #111; }
         .story-name { font-size: 0.7rem; margin-top: 4px; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; }
 
-        /* ツールバー */
         .tools { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .tools::-webkit-scrollbar { display: none; }
         input { padding: 8px 15px; border-radius: 20px; border: none; min-width: 150px; outline: none; font-size: 0.9rem; font-family: inherit; background: rgba(255,255,255,0.9); }
-        button.tool-btn { 
-            background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 6px 14px; 
-            border-radius: 20px; font-size: 0.85rem; white-space: nowrap; cursor: pointer; 
-            font-family: inherit; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); backdrop-filter: blur(5px);
-        }
+        button.tool-btn { background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; white-space: nowrap; cursor: pointer; font-family: inherit; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); backdrop-filter: blur(5px); }
         button.tool-btn:active { transform: scale(0.95); }
         button.tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
-        /* ユニット・メンバーバー */
         #unit-buttons-container { padding: 5px 10px; display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
         .member-scroll-container { overflow-x: auto; white-space: nowrap; padding: 8px 0 10px; scrollbar-width: none; }
         .member-chip { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 20px; margin-right: 6px; cursor: pointer; font-size: 1.1rem; line-height: 1; transition: 0.2s; border: 1px solid transparent; }
         .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; transform: scale(1.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
-        /* --- ナビゲーション (レスポンシブ対応) --- */
         nav { 
-            /* スマホ用デフォルト (ボトム固定) */
             position: fixed; bottom: 0; left: 0; width: 100%; 
             background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             z-index: 1000; display: flex; justify-content: space-around; align-items: center;
@@ -120,38 +109,24 @@
         .view-btn.active { background: none; color: #fff; box-shadow: none; }
         .view-btn.active i { color: var(--primary); transform: translateY(-3px) scale(1.1); filter: drop-shadow(0 0 5px rgba(92,106,196,0.6)); }
 
-        /* --- 💻 PC用スタイル (768px以上) --- */
         @media (min-width: 768px) {
-            body { padding-bottom: 0; } /* ボトムナビの余白を消す */
-            
+            body { padding-bottom: 0; }
             nav {
-                /* PCではヘッダーの下に吸着させる */
-                position: sticky; bottom: auto; 
-                /* headerの高さ等が変動する可能性があるが、大体この位置で固定 */
-                top: 0; 
-                margin-top: 0;
+                position: sticky; bottom: auto; top: 0; margin-top: 0;
                 border-top: none; border-bottom: 1px solid rgba(255,255,255,0.1);
                 box-shadow: 0 5px 15px rgba(0,0,0,0.05);
                 justify-content: center; gap: 20px; padding: 10px 0;
             }
-            
-            /* PC版ボタンのデザイン（横並びタブ風） */
             .view-btn {
                 flex: 0 0 auto; flex-direction: row; gap: 8px; padding: 8px 25px;
                 font-size: 0.9rem; border-radius: 25px; color: #ccc;
                 background: rgba(0,0,0,0.2);
             }
             .view-btn i { font-size: 1rem; margin: 0; }
-            
-            .view-btn.active {
-                background: var(--primary); color: #fff;
-                transform: scale(1.05); box-shadow: 0 4px 10px rgba(92,106,196,0.3);
-            }
+            .view-btn.active { background: var(--primary); color: #fff; transform: scale(1.05); box-shadow: 0 4px 10px rgba(92,106,196,0.3); }
             .view-btn.active i { transform: none; filter: none; color: #fff; }
             .view-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
             .view-btn.active:hover { background: var(--primary); }
-
-            /* PCではFABを少し下げる */
             .fab { bottom: 30px; width: 60px; height: 60px; font-size: 1.5rem; }
             #toast { bottom: 30px; }
             #toast.show { bottom: 50px; }
@@ -165,17 +140,11 @@
         @media (min-width: 900px) { .masonry-grid { column-count: 4; column-gap: 20px; } }
         @media (min-width: 1400px) { .masonry-grid { column-count: 5; } }
 
-        .card { 
-            break-inside: avoid; margin-bottom: 10px; border-radius: 12px; overflow: hidden; 
-            position: relative; background: #000; transform: translateZ(0); 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
-            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s;
-        }
+        .card { break-inside: avoid; margin-bottom: 10px; border-radius: 12px; overflow: hidden; position: relative; background: #000; transform: translateZ(0); box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s; }
         @media (min-width: 600px) { .card { margin-bottom: 15px; } }
         .card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 10px 20px rgba(92, 106, 196, 0.3); z-index: 5; }
         .card img { width: 100%; height: auto; display: block; opacity: 0; transition: opacity 0.5s ease-in-out, transform 0.5s; }
         .card:hover img { transform: scale(1.02); }
-
         .card-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: var(--overlay-grad); padding: 40px 10px 10px; color: #fff; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; }
         .card-tag { font-size: 0.7rem; opacity: 0.9; background: var(--primary); padding: 2px 6px; border-radius: 4px; align-self: flex-start; margin-bottom: 4px; margin-right: 5px; }
         .card-unit { font-size: 0.7rem; background: rgba(255, 255, 255, 0.9); color: var(--primary); padding: 2px 6px; border-radius: 4px; margin-bottom: 4px; align-self: flex-start; font-weight: bold; cursor: pointer; pointer-events: auto; margin-right: 5px; display: inline-block; transition: 0.2s; }
@@ -216,6 +185,8 @@
         .btn-play { background: #ff9f43; }
         .btn-link { background: #1da1f2; }
         .btn-native { background: #34c759; display: none; }
+        /* ★追加：コピーボタン */
+        .btn-copy { background: #5865F2; } /* Discordカラー */
         .btn-profile { background: #333; }
         
         .story-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 3000; display: none; justify-content: center; align-items: center; }
@@ -231,7 +202,6 @@
         .story-nav { position: absolute; top: 0; bottom: 0; width: 30%; z-index: 5; }
         .nav-left { left: 0; } .nav-right { right: 0; width: 70%; }
 
-        /* FAB */
         .fab { position: fixed; bottom: 25px; right: 25px; width: 56px; height: 56px; background: var(--primary); color: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 100; border: none; transition: 0.3s; }
         .fab:hover { transform: scale(1.1); }
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 2000; left: 50%; bottom: 100px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: 0.5s; font-family: inherit; }
@@ -311,6 +281,9 @@
     <button onclick="setMode('favorite')" class="view-btn" id="nav-favorite">
         <i class="fas fa-heart"></i> お気に入り
     </button>
+    <button onclick="setMode('history')" class="view-btn" id="nav-history">
+        <i class="fas fa-clock"></i> 履歴
+    </button>
 </nav>
 
 <main id="app">
@@ -338,6 +311,7 @@
 
     <div class="share-area" onclick="event.stopPropagation()">
         <a id="btn-profile" href="#" target="_blank" class="share-btn btn-profile" style="display:none;"><i class="fas fa-user"></i> プロフ</a>
+        <button class="share-btn btn-copy" onclick="copyLink()"><i class="fas fa-link"></i> リンク</button>
         <button class="share-btn btn-native" id="btn-native" onclick="nativeShare()"><i class="fas fa-share-alt"></i> 送る</button>
         <button class="share-btn btn-x" onclick="shareX()"><i class="fab fa-x-twitter"></i> ポスト</button>
         <button class="share-btn btn-play" onclick="toggleAutoPlay()" id="btn-play"><i class="fas fa-play"></i> 再生</button>
