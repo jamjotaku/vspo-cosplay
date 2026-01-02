@@ -12,7 +12,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="theme-color" content="#1a1a2e">
 
     <title>ぶいすぽっ！コスプレアーカイブ</title>
@@ -20,10 +19,7 @@
     <meta property="og:title" content="ぶいすぽっ！コスプレアーカイブ" />
     <meta property="og:type" content="website" />
     <meta property="og:description" content="ぶいすぽっ！メンバーのコスプレ画像を検索・閲覧できる非公式ファンサイトです。" />
-    <meta property="og:url" content="https://jamjotaku.github.io/vspo-cosplay/" />
-    <meta property="og:image" content="https://jamjotaku.github.io/vspo-cosplay/ogp.png" />
-    <meta name="twitter:card" content="summary_large_image" />
-
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
@@ -31,232 +27,151 @@
     <style>
         /* --- 基本設定 --- */
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        :root { 
-            --primary: #5c6ac4; /* デフォルトテーマ色 */
-            --bg: #f4f6f8; --text: #333; --heart: #ff4757; 
-            --overlay-grad: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
-            --glass-bg: rgba(92, 106, 196, 0.95);
-            --nav-height-mobile: 70px;
-        }
-        body.dark-mode { --bg: #111; --text: #eee; --glass-bg: rgba(20, 20, 30, 0.95); }
         
+        /* ▼▼▼ デフォルトの色設定 ▼▼▼ */
+        :root { 
+            --primary: #5c6ac4; /* 基本の色（青紫） */
+            --glass-bg: rgba(92, 106, 196, 0.95);
+            --bg: #f4f6f8; 
+            --text: #333; 
+            --heart: #ff4757; 
+            --nav-height: 70px;
+        }
+
+        /* ▼▼▼ ここが新機能！メンバーごとの「着せ替え設定」 ▼▼▼ */
+        /* これならJSが計算しなくてもCSSが勝手に色を変えてくれます */
+        
+        body.theme-sumire { --primary: #b0c4de; --glass-bg: rgba(176, 196, 222, 0.95); } /* 花芽すみれ */
+        body.theme-nazuna { --primary: #fabedc; --glass-bg: rgba(250, 190, 220, 0.95); } /* 花芽なずな */
+        body.theme-toto   { --primary: #f5eb4a; --glass-bg: rgba(245, 235, 74,  0.95); } /* 小雀とと */
+        body.theme-uruha  { --primary: #4182fa; --glass-bg: rgba(65,  130, 250, 0.95); } /* 一ノ瀬うるは */
+        body.theme-noa    { --primary: #ffdbfe; --glass-bg: rgba(255, 219, 254, 0.95); } /* 胡桃のあ */
+        body.theme-hinano { --primary: #fa96c8; --glass-bg: rgba(250, 150, 200, 0.95); } /* 橘ひなの */
+        body.theme-ren    { --primary: #be2152; --glass-bg: rgba(190, 33,  82,  0.95); } /* 如月れん */
+        body.theme-lisa   { --primary: #d1de79; --glass-bg: rgba(209, 222, 121, 0.95); } /* 英リサ */
+        body.theme-sena   { --primary: #a0a0a0; --glass-bg: rgba(200, 200, 200, 0.95); } /* 空澄セナ(白すぎると見えないのでグレー調整) */
+        body.theme-mimi   { --primary: #c7b2d6; --glass-bg: rgba(199, 178, 214, 0.95); } /* 兎咲ミミ */
+        body.theme-qpi    { --primary: #ffd23c; --glass-bg: rgba(255, 210, 60,  0.95); } /* 神成きゅぴ */
+        body.theme-beni   { --primary: #85cab3; --glass-bg: rgba(133, 202, 179, 0.95); } /* 八雲べに */
+        body.theme-ema    { --primary: #b4f1f9; --glass-bg: rgba(180, 241, 249, 0.95); } /* 藍沢エマ */
+        body.theme-luna   { --primary: #d6adff; --glass-bg: rgba(214, 173, 255, 0.95); } /* 紫宮るな */
+        body.theme-tsuna  { --primary: #ff3652; --glass-bg: rgba(255, 54,  82,  0.95); } /* 猫汰つな */
+        body.theme-ramune { --primary: #8eced9; --glass-bg: rgba(142, 206, 217, 0.95); } /* 白波らむね */
+        body.theme-meto   { --primary: #fba03f; --glass-bg: rgba(251, 160, 63,  0.95); } /* 小森めと */
+        body.theme-akari  { --primary: #ff998d; --glass-bg: rgba(255, 153, 141, 0.95); } /* 夢野あかり */
+        body.theme-kuromu { --primary: #909ec8; --glass-bg: rgba(144, 158, 200, 0.95); } /* 夜乃くろむ */
+        body.theme-kokage { --primary: #5195e1; --glass-bg: rgba(81,  149, 225, 0.95); } /* 紡木こかげ */
+        body.theme-yuhi   { --primary: #ed784a; --glass-bg: rgba(237, 120, 74,  0.95); } /* 千燈ゆうひ */
+        body.theme-hanabi { --primary: #ea5506; --glass-bg: rgba(234, 85,  6,   0.95); } /* 蝶屋はなび */
+        body.theme-moka   { --primary: #eca0aa; --glass-bg: rgba(236, 160, 170, 0.95); } /* 甘結もか */
+
+        /* ダークモード設定 */
+        body.dark-mode { --bg: #111; --text: #eee; }
+        
+        /* 共通スタイル */
         body { 
-            font-family: "M PLUS Rounded 1c", "Helvetica Neue", Arial, sans-serif;
+            font-family: "M PLUS Rounded 1c", sans-serif;
             background: var(--bg); color: var(--text); margin: 0; padding: 0; 
             transition: background-color 0.3s, color 0.3s;
             display: flex; flex-direction: column; min-height: 100vh; 
-            padding-bottom: calc(env(safe-area-inset-bottom) + var(--nav-height-mobile));
-            letter-spacing: 0.03em;
+            padding-bottom: calc(env(safe-area-inset-bottom) + var(--nav-height));
         }
 
-        /* スクロールバー装飾 */
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--primary); opacity: 0.5; border-radius: 5px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
-
-        body.modal-open .fab { display: none !important; }
-
-        /* --- ヘッダー --- */
+        /* ヘッダー */
         header { 
-            background: var(--primary); 
+            background: var(--primary); /* ここが自動で変わる！ */
             color: #fff; padding: 15px 15px 5px; position: sticky; top: 0; z-index: 100; 
             box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding-top: max(15px, env(safe-area-inset-top)); 
             transition: background-color 0.5s ease;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.3); /* 文字が見やすいように影 */
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3); 
         }
         .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
-        .title-area { flex: 1; min-width: 0; }
-        .title-area h1 { margin: 0; font-size: 1.3rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 700; }
-        .total-count { font-size: 0.75rem; opacity: 0.9; display: block; font-weight: bold; }
-        .header-controls { display: flex; gap: 15px; flex-shrink: 0; }
-        .icon-btn { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; padding: 0; text-decoration: none; opacity: 0.9; transition: transform 0.2s; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
-        .icon-btn:active { transform: scale(0.9); }
+        .title-area h1 { margin: 0; font-size: 1.3rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .total-count { font-size: 0.75rem; opacity: 0.9; font-weight: bold; }
+        .icon-btn { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; padding: 0; text-decoration: none; opacity: 0.9; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+
+        /* ナビゲーション */
+        nav { 
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: rgba(255, 255, 255, 0.95); 
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            z-index: 1000; display: flex; justify-content: space-around; align-items: center;
+            padding: 8px 0; padding-bottom: max(8px, env(safe-area-inset-bottom));
+            border-top: 1px solid rgba(0,0,0,0.05); box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+        }
+        body.dark-mode nav { background: rgba(30, 30, 40, 0.95); border-top: 1px solid rgba(255,255,255,0.1); }
         
-        /* ストーリーズ */
-        .stories-container { overflow-x: auto; white-space: nowrap; padding: 5px 0 10px; display: flex; gap: 12px; scrollbar-width: none; }
-        .stories-container::-webkit-scrollbar { display: none; }
-        .story-item { width: 68px; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex-shrink: 0; transition: transform 0.2s; }
-        .story-item:hover { transform: scale(1.05); }
-        .story-ring { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); }
-        .story-ring.seen { background: #ccc; }
-        .story-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
-        body.dark-mode .story-img { border-color: #111; }
-        .story-name { font-size: 0.7rem; margin-top: 4px; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
+        .view-btn { 
+            background: none; border: none; color: #888; padding: 5px; 
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            font-size: 0.65rem; font-weight: bold; flex: 1; cursor: pointer;
+        }
+        .view-btn i { font-size: 1.4rem; transition: 0.2s; }
+        .view-btn.active { color: var(--primary); } /* アイコンも推し色に光る！ */
+        .view-btn.active i { transform: translateY(-3px) scale(1.1); filter: drop-shadow(0 0 5px var(--primary)); }
 
-        /* ツールバー */
+        @media (min-width: 768px) {
+            body { padding-bottom: 0; }
+            nav { position: sticky; top: 0; background: var(--primary); border: none; padding: 10px 0; }
+            .view-btn { flex-direction: row; font-size: 0.9rem; color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.2); padding: 8px 25px; border-radius: 25px; flex: 0 0 auto; }
+            .view-btn i { font-size: 1rem; margin: 0; }
+            .view-btn.active { background: #fff; color: var(--primary); }
+        }
+
+        /* ツールバー & チップ */
         .tools { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
-        .tools::-webkit-scrollbar { display: none; }
-        input { padding: 8px 15px; border-radius: 20px; border: none; min-width: 150px; outline: none; font-size: 0.9rem; font-family: inherit; background: rgba(255,255,255,0.9); }
-        button.tool-btn { background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; white-space: nowrap; cursor: pointer; font-family: inherit; transition: all 0.2s cubic-bezier(0.25, 0.8, 0.25, 1); backdrop-filter: blur(5px); text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-        button.tool-btn:active { transform: scale(0.95); }
-        button.tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.2); text-shadow: none; }
+        input { padding: 8px 15px; border-radius: 20px; border: none; font-size: 0.9rem; background: rgba(255,255,255,0.9); }
+        .tool-btn { background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; text-shadow: 0 1px 2px rgba(0,0,0,0.3); white-space: nowrap;}
+        .tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; text-shadow: none; }
 
-        /* メンバーチップ */
-        #unit-buttons-container { padding: 5px 10px; display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
         .member-scroll-container { overflow-x: auto; white-space: nowrap; padding: 8px 0 10px; scrollbar-width: none; }
         .member-chip { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 20px; margin-right: 6px; cursor: pointer; font-size: 1.1rem; line-height: 1; transition: 0.2s; border: 1px solid transparent; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
         .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; transform: scale(1.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2); text-shadow: none; }
 
-        /* --- ナビゲーション (ハイブリッドUI) --- */
-        nav { 
-            position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: rgba(255, 255, 255, 0.9); 
-            backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
-            z-index: 1000; display: flex; justify-content: space-around; align-items: center;
-            padding: 8px 0; padding-bottom: max(8px, env(safe-area-inset-bottom));
-            border-top: 1px solid rgba(0,0,0,0.05); box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
-            transition: all 0.3s;
-        }
-        body.dark-mode nav { background: rgba(20, 20, 30, 0.95); border-top: 1px solid rgba(255,255,255,0.1); }
-
-        .view-btn { 
-            background: none; border: none; color: #888; padding: 5px; 
-            display: flex; flex-direction: column; align-items: center; gap: 4px;
-            font-size: 0.65rem; font-weight: bold; flex: 1; cursor: pointer; transition: 0.2s;
-            border-radius: 0; box-shadow: none; font-family: inherit;
-        }
-        .view-btn i { font-size: 1.4rem; margin-bottom: 2px; transition: 0.2s; }
-        .view-btn.active { background: none; color: var(--primary); box-shadow: none; }
-        .view-btn.active i { transform: translateY(-3px) scale(1.1); filter: drop-shadow(0 0 5px var(--primary)); }
-
-        /* PC (768px以上) */
-        @media (min-width: 768px) {
-            body { padding-bottom: 0; }
-            nav {
-                position: sticky; bottom: auto; top: 0; margin-top: 0;
-                background: var(--primary); 
-                border-top: none; border-bottom: 1px solid rgba(255,255,255,0.1);
-                box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-                justify-content: center; gap: 20px; padding: 10px 0;
-            }
-            .view-btn {
-                flex: 0 0 auto; flex-direction: row; gap: 8px; padding: 8px 25px;
-                font-size: 0.9rem; border-radius: 25px; color: rgba(255,255,255,0.7);
-                background: rgba(0,0,0,0.2);
-            }
-            .view-btn i { font-size: 1rem; margin: 0; }
-            .view-btn.active { background: #fff; color: var(--primary); transform: scale(1.05); box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-            .view-btn.active i { transform: none; filter: none; color: var(--primary); }
-            .view-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
-            .view-btn.active:hover { background: #fff; }
-            .fab { bottom: 30px; width: 60px; height: 60px; font-size: 1.5rem; }
-            #toast { bottom: 30px; }
-            #toast.show { bottom: 50px; }
-        }
-
-        /* コンテンツエリア */
+        /* コンテンツ */
         main { padding: 10px; max-width: 1600px; margin: 0 auto; width: 100%; min-height: 50vh; }
-        .section-title { font-size: 1.1rem; font-weight: bold; margin: 40px 0 15px; padding-left: 10px; border-left: 4px solid var(--primary); color: var(--text); clear: both; transition: border-color 0.5s; }
-
         .masonry-grid { column-count: 2; column-gap: 10px; width: 100%; }
         @media (min-width: 600px) { .masonry-grid { column-count: 3; column-gap: 15px; } }
         @media (min-width: 900px) { .masonry-grid { column-count: 4; column-gap: 20px; } }
         @media (min-width: 1400px) { .masonry-grid { column-count: 5; } }
 
-        /* カード */
-        .card { break-inside: avoid; margin-bottom: 10px; border-radius: 12px; overflow: hidden; position: relative; background: #000; transform: translateZ(0); box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s; cursor: pointer; }
-        @media (min-width: 600px) { .card { margin-bottom: 15px; } }
-        .card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 10px 20px rgba(0,0,0,0.2); z-index: 5; }
-        .card img { width: 100%; height: auto; display: block; opacity: 0; transition: opacity 0.5s ease-in-out, transform 0.5s; }
-        .card:hover img { transform: scale(1.02); }
-        .card-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: var(--overlay-grad); padding: 40px 10px 10px; color: #fff; display: flex; flex-direction: column; justify-content: flex-end; pointer-events: none; }
-        .card-tag { font-size: 0.7rem; opacity: 0.9; background: var(--primary); padding: 2px 6px; border-radius: 4px; align-self: flex-start; margin-bottom: 4px; margin-right: 5px; transition: background-color 0.5s; }
-        .card-unit { font-size: 0.7rem; background: rgba(255, 255, 255, 0.9); color: var(--primary); padding: 2px 6px; border-radius: 4px; margin-bottom: 4px; align-self: flex-start; font-weight: bold; cursor: pointer; pointer-events: auto; margin-right: 5px; display: inline-block; transition: 0.2s; }
-        .card-unit:hover { background: #fff; transform: scale(1.1); }
-        .card-name { font-size: 0.85rem; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.8); line-height: 1.3; pointer-events: auto; cursor: pointer; display: inline-block; margin-top: 2px; }
-        .card-name:hover { text-decoration: underline; color: #bde0ff; }
-        .card-fav { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.7); font-size: 1rem; border: none; cursor: pointer; z-index: 10; transition: 0.2s; }
-        .card-fav:active { transform: scale(0.9); }
+        .card { break-inside: avoid; margin-bottom: 10px; border-radius: 12px; overflow: hidden; position: relative; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; }
+        .card img { width: 100%; height: auto; display: block; opacity: 0; transition: opacity 0.5s; }
+        .card-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 40px 10px 10px; color: #fff; pointer-events: none; }
+        .card-tag { font-size: 0.7rem; background: var(--primary); padding: 2px 6px; border-radius: 4px; margin-right: 5px; transition: background-color 0.5s; }
+        .card-name { font-size: 0.85rem; font-weight: bold; display: block; margin-top: 4px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
+        
+        .card-fav { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.4); color: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; border: none; font-size: 1rem; cursor: pointer; z-index: 10; backdrop-filter: blur(4px); }
         .card-fav.active { color: var(--heart); background: rgba(255,255,255,0.9); }
-        .card-new { position: absolute; top: 8px; left: 8px; background: #ff4757; color: #fff; font-size: 0.65rem; font-weight: bold; padding: 3px 8px; border-radius: 4px; z-index: 5; box-shadow: 0 2px 5px rgba(0,0,0,0.3); overflow: hidden; }
-        .card-new::after { content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent); animation: shine 2s infinite; }
-        @keyframes shine { 0% { left: -100%; } 20% { left: 100%; } 100% { left: 100%; } }
 
-        /* ダブルタップのハート */
-        .pop-heart {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
-            color: var(--heart); font-size: 4rem; pointer-events: none; z-index: 20;
-            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
-            animation: popHeart 0.6s ease-out forwards;
-        }
-        @keyframes popHeart {
-            0% { transform: translate(-50%, -50%) scale(0); opacity: 0; }
-            50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
-        }
+        /* ハート演出 */
+        .pop-heart { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); color: var(--heart); font-size: 4rem; z-index: 20; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); animation: popHeart 0.6s ease-out forwards; }
+        @keyframes popHeart { 50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
 
         /* モーダル */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
         .modal.open { display: flex; animation: fadeIn 0.2s; }
         .modal img { max-height: 80vh; max-width: 95%; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.5); object-fit: contain; }
-        .modal-close { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 2.5rem; cursor: pointer; z-index: 2010; opacity: 0.8; }
-        .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 20px; cursor: pointer; font-size: 1.5rem; border-radius: 50%; transition: 0.2s; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
-        .slide-btn:hover { background: rgba(255,255,255,0.4); transform: translateY(-50%) scale(1.1); }
+        .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 20px; border-radius: 50%; width: 60px; height: 60px; cursor: pointer; font-size: 1.5rem; }
         .prev-btn { left: 20px; } .next-btn { right: 20px; }
+        .modal-close { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 2.5rem; cursor: pointer; }
         
-        .recommend-area { position: absolute; bottom: 85px; width: 100%; text-align: center; display: flex; justify-content: center; gap: 10px; padding: 0 10px; z-index: 2015; pointer-events: none; }
-        .recommend-card { width: 70px; height: 70px; border-radius: 8px; overflow: hidden; border: 2px solid rgba(255,255,255,0.5); cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.5); transition: 0.2s; position: relative; background: #000; pointer-events: auto; }
-        .recommend-card:hover { transform: scale(1.1); border-color: var(--primary); z-index: 2020; }
-        .recommend-card img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
-        .recommend-card:hover img { opacity: 1; }
-        .recommend-label { position: absolute; bottom: 165px; width: 100%; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.75rem; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none; }
-
-        .modal-tags { position: absolute; bottom: 180px; width: 100%; text-align: center; pointer-events: auto; display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; padding: 0 10px; z-index: 2020; }
-        .modal-tag-chip { background: rgba(0, 0, 0, 0.6); color: #fff; border: 1px solid rgba(255, 255, 255, 0.4); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; font-family: inherit; transition: 0.2s; text-decoration: none; backdrop-filter: blur(4px); }
-        .modal-tag-chip:hover { background: var(--primary); border-color: var(--primary); transform: scale(1.05); }
-
         .share-area { position: absolute; bottom: 30px; display: flex; gap: 10px; justify-content: center; width: 100%; flex-wrap: wrap; }
-        .share-btn { border: none; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: bold; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 6px; text-decoration: none; font-family: inherit; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.2s; }
-        .share-btn:active { transform: scale(0.95); }
-        .share-btn:hover { transform: scale(1.05); }
-        .btn-x { background: #000; }
-        .btn-play { background: #ff9f43; }
-        .btn-link { background: #1da1f2; }
-        .btn-native { background: #34c759; display: none; }
-        .btn-copy { background: #5865F2; }
-        .btn-profile { background: #333; }
-        
-        /* レイヤー専用ページヘッダー */
-        .profile-header { text-align: center; padding: 20px 15px; margin-bottom: 10px; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%); border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); position: relative; border-left: 5px solid var(--primary); transition: border-color 0.5s; }
-        .profile-close { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.1); color: var(--text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .profile-close:hover { background: rgba(0,0,0,0.2); }
+        .share-btn { border: none; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: bold; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .btn-x { background: #000; } .btn-link { background: #1da1f2; } .btn-copy { background: #5865F2; } .btn-profile { background: #333; }
+
+        /* プロフヘッダー */
+        .profile-header { text-align: center; padding: 20px 15px; margin-bottom: 10px; background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.2)); border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); border-left: 5px solid var(--primary); transition: border-color 0.5s; }
         .profile-name { font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; }
-        .profile-link-btn { display: inline-flex; align-items: center; gap: 8px; background: #000; color: #fff; padding: 8px 20px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .profile-link-btn:hover { transform: scale(1.05); }
-        .profile-info { font-size: 0.85rem; opacity: 0.9; margin-top: 15px; }
-        .profile-tags { margin-top: 8px; }
-        .profile-tag-chip { display: inline-block; background: rgba(255,255,255,0.5); color: var(--primary); padding: 3px 10px; border-radius: 15px; font-size: 0.8rem; margin: 2px; font-weight: bold; }
-        .profile-back { margin-top: 15px; font-size: 0.85rem; color: var(--primary); cursor: pointer; text-decoration: underline; background: none; border: none; }
-
-        /* その他 */
-        .fab { position: fixed; bottom: 25px; right: 25px; width: 56px; height: 56px; background: var(--primary); color: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 100; border: none; transition: 0.3s; }
-        .fab:hover { transform: scale(1.1); }
-        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 2000; left: 50%; bottom: 100px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: 0.5s; font-family: inherit; }
-        #toast.show { visibility: visible; opacity: 1; bottom: 120px; }
-        footer { color: var(--footer-text); text-align: center; padding: 40px 20px; font-size: 0.8rem; margin-top: 20px; border-top: 1px solid #ddd; opacity: 0.8; }
-        .footer-link { color: var(--text); text-decoration: none; border-bottom: 1px dashed var(--text); transition: 0.2s; }
-        .footer-link:hover { color: var(--primary); border-color: var(--primary); }
         
-        #loading-sentinel { text-align: center; padding: 40px; color: var(--primary); width: 100%; font-weight: bold; font-size: 0.9rem; display: flex; justify-content: center; align-items: center; gap: 10px; }
-        #loading-sentinel::before { content: ""; width: 20px; height: 20px; border: 3px solid rgba(92, 106, 196, 0.3); border-top: 3px solid var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* 共通パーツ */
+        .fab { position: fixed; bottom: 90px; right: 20px; width: 50px; height: 50px; background: var(--primary); color: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; font-size: 1.3rem; cursor: pointer; z-index: 900; border: none; transition: 0.3s; }
+        footer { color: #888; text-align: center; padding: 40px 20px; font-size: 0.8rem; border-top: 1px solid rgba(0,0,0,0.1); }
+        .footer-link { color: var(--text); }
+        
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        .list-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2500; justify-content: center; align-items: flex-start; overflow-y: auto; padding: 60px 20px 20px; }
-        .list-modal.open { display: flex; animation: fadeIn 0.2s; }
-        .list-container { width: 100%; max-width: 600px; background: var(--bg); border-radius: 12px; padding: 20px; position: relative; color: var(--text); box-shadow: 0 4px 20px rgba(0,0,0,0.3); margin-top: 20px; margin-bottom: 50px; }
-        .list-header { text-align: center; font-size: 1.2rem; font-weight: bold; margin-bottom: 20px; border-bottom: 2px solid var(--primary); padding-bottom: 10px; }
-        .list-ul { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 10px; }
-        .list-item { background: rgba(0,0,0,0.05); padding: 10px 16px; border-radius: 30px; cursor: pointer; transition: 0.2s; font-size: 0.95rem; font-weight: bold; border: 1px solid transparent; flex: 1 1 auto; text-align: center; }
-        .list-item:hover { background: var(--primary); color: #fff; transform: scale(1.05); }
-        body.dark-mode .list-item { background: rgba(255,255,255,0.1); }
-        body.dark-mode .list-item:hover { background: var(--primary); }
-
-        .empty-guide { text-align: center; padding: 30px 10px; color: #666; }
-        .guide-tags { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
-        .guide-chip { background: var(--primary); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; cursor: pointer; opacity: 0.8; transition: 0.2s; }
-        .guide-chip:hover { opacity: 1; transform: scale(1.05); }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        #loading-sentinel { text-align: center; padding: 40px; color: var(--primary); }
     </style>
 </head>
 <body>
@@ -269,94 +184,390 @@
         </div>
         <div class="header-controls">
             <a id="contact-link" href="#" target="_blank" class="icon-btn"><i class="far fa-envelope"></i></a>
-            <button class="icon-btn" onclick="toggleTheme()"><i class="fas fa-moon"></i></button>
+            <button class="icon-btn" onclick="document.body.classList.toggle('dark-mode')"><i class="fas fa-moon"></i></button>
         </div>
     </div>
 
-    <div class="stories-container" id="stories-container"></div>
+    <div class="stories-container" id="stories-container" style="overflow-x: auto; white-space: nowrap; padding: 5px 0 10px; display: flex; gap: 12px;"></div>
 
     <div class="tools">
         <input type="text" id="searchInput" placeholder="検索 (例: うるは)" oninput="handleSearch()">
         <button class="tool-btn active" id="btn-new" onclick="setSort('new')">新着順</button>
         <button class="tool-btn" id="btn-orig" onclick="setSort('original')">登録順</button>
         <button class="tool-btn" id="btn-shuf" onclick="setSort('shuffle')">シャッフル</button>
-        <button class="tool-btn" onclick="openCosplayerList()" style="background:var(--primary); color:#fff;">レイヤー一覧</button>
     </div>
 
-    <div id="unit-buttons-container" style="padding: 5px 10px; display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch;"></div>
-
+    <div id="unit-buttons-container" style="padding: 5px 10px; display: flex; gap: 8px; overflow-x: auto; white-space: nowrap;"></div>
     <div class="member-scroll-container" id="memberBar"></div>
 </header>
 
 <nav>
-    <button onclick="setMode('member')" class="view-btn active" id="nav-member">
-        <i class="fas fa-home"></i> メンバー別
-    </button>
-    <button onclick="setMode('cosplayer')" class="view-btn" id="nav-cosplayer">
-        <i class="fas fa-users"></i> レイヤー別
-    </button>
-    <button onclick="setMode('favorite')" class="view-btn" id="nav-favorite">
-        <i class="fas fa-heart"></i> お気に入り
-    </button>
-    <button onclick="setMode('history')" class="view-btn" id="nav-history">
-        <i class="fas fa-clock"></i> 履歴
-    </button>
+    <button onclick="setMode('member')" class="view-btn active" id="nav-member"><i class="fas fa-home"></i> メンバー別</button>
+    <button onclick="setMode('cosplayer')" class="view-btn" id="nav-cosplayer"><i class="fas fa-users"></i> レイヤー別</button>
+    <button onclick="setMode('favorite')" class="view-btn" id="nav-favorite"><i class="fas fa-heart"></i> お気に入り</button>
+    <button onclick="setMode('history')" class="view-btn" id="nav-history"><i class="fas fa-clock"></i> 履歴</button>
 </nav>
 
-<main id="app">
-    </main>
+<main id="app"></main>
 <div id="loading-sentinel">読み込み中...</div>
 
 <footer>
-    <p>本サイトは非公式ファンサイトです。<br>画像の著作権・肖像権は各権利所有者に帰属します。</p>
+    <p>本サイトは非公式ファンサイトです。<br>画像の著作権は各権利所有者に帰属します。</p>
     <p style="margin-top:10px;"><a id="remove-link" href="#" target="_blank" class="footer-link">掲載削除依頼はこちら</a></p>
 </footer>
 
-<button class="fab" id="scrollTopBtn" onclick="scrollToTop()"><i class="fas fa-arrow-up"></i></button>
-<div id="toast">メッセージ</div>
+<button class="fab" id="scrollTopBtn" onclick="window.scrollTo({top:0, behavior:'smooth'})"><i class="fas fa-arrow-up"></i></button>
+<div id="toast" style="visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 2000; left: 50%; bottom: 100px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: 0.5s;">メッセージ</div>
 
 <div id="modal" class="modal" onclick="closeModal()">
     <span class="modal-close">&times;</span>
     <button class="slide-btn prev-btn" onclick="changeImage(-1, event)"><i class="fas fa-chevron-left"></i></button>
     <button class="slide-btn next-btn" onclick="changeImage(1, event)"><i class="fas fa-chevron-right"></i></button>
-    
     <img id="m-img" onclick="event.stopPropagation()">
-    
-    <div id="rec-label" class="recommend-label" style="display:none;">✨ こちらもおすすめ</div>
-    <div id="m-recommend" class="recommend-area" onclick="event.stopPropagation()"></div>
-    <div id="m-tags" class="modal-tags" onclick="event.stopPropagation()"></div>
-
     <div class="share-area" onclick="event.stopPropagation()">
         <a id="btn-profile" href="#" target="_blank" class="share-btn btn-profile" style="display:none;"><i class="fas fa-user"></i> プロフ</a>
         <button class="share-btn btn-copy" onclick="copyLink()"><i class="fas fa-link"></i> リンク</button>
-        <button class="share-btn btn-native" id="btn-native" onclick="nativeShare()"><i class="fas fa-share-alt"></i> 送る</button>
         <button class="share-btn btn-x" onclick="shareX()"><i class="fab fa-x-twitter"></i> ポスト</button>
-        <button class="share-btn btn-play" onclick="toggleAutoPlay()" id="btn-play"><i class="fas fa-play"></i> 再生</button>
         <a id="m-link" href="#" target="_blank" class="share-btn btn-link"><i class="fas fa-external-link-alt"></i> 元投稿</a>
     </div>
 </div>
 
-<div id="list-modal" class="list-modal" onclick="closeCosplayerList()">
-    <div class="list-container" onclick="event.stopPropagation()">
-        <span class="modal-close" onclick="closeCosplayerList()" style="color:var(--text); top:10px; right:15px;">&times;</span>
-        <div class="list-header">📔 レイヤー名鑑 (50音順)</div>
-        <ul id="cosplayer-list" class="list-ul"></ul>
-    </div>
-</div>
+<script>
+    // ▼▼▼ プログラム開始 ▼▼▼
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
+    const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog";
 
-<div id="story-viewer" class="story-viewer" onclick="closeStory()">
-    <div class="story-content" onclick="event.stopPropagation()">
-        <div class="story-bars" id="story-bars"></div>
-        <div class="story-meta">
-            <img id="story-icon"> <span id="story-user" style="font-weight:bold;"></span>
-        </div>
-        <img id="story-main" class="story-img-main">
-        <div class="story-nav nav-left" onclick="prevStory()"></div>
-        <div class="story-nav nav-right" onclick="nextStory()"></div>
-    </div>
-</div>
+    // CSSクラスのマッピング（これで確実に色が変わります）
+    const memberClassMap = {
+        "花芽すみれ": "theme-sumire", "花芽なずな": "theme-nazuna", "小雀とと": "theme-toto",
+        "一ノ瀬うるは": "theme-uruha", "胡桃のあ": "theme-noa", "橘ひなの": "theme-hinano",
+        "如月れん": "theme-ren", "英リサ": "theme-lisa", "空澄セナ": "theme-sena",
+        "兎咲ミミ": "theme-mimi", "神成きゅぴ": "theme-qpi", "八雲べに": "theme-beni",
+        "藍沢エマ": "theme-ema", "紫宮るな": "theme-luna", "猫汰つな": "theme-tsuna",
+        "白波らむね": "theme-ramune", "小森めと": "theme-meto", "夢野あかり": "theme-akari",
+        "夜乃くろむ": "theme-kuromu", "紡木こかげ": "theme-kokage", "千燈ゆうひ": "theme-yuhi",
+        "蝶屋はなび": "theme-hanabi", "甘結もか": "theme-moka"
+    };
 
-<script src="script.js?v=2026"></script>
+    const memberIcons = {
+        "花芽すみれ": "👾💤", "花芽なずな": "🍣", "小雀とと": "🔫🐥", "一ノ瀬うるは": "🌠", "胡桃のあ": "🧸♔",
+        "橘ひなの": "🍫💘", "如月れん": "⏰", "英リサ": "💐", "空澄セナ": "🗝♠︎", "兎咲ミミ": "🐰🍭",
+        "神成きゅぴ": "🌩", "八雲べに": "💄💚", "藍沢エマ": "🥞💫", "紫宮るな": "☪🐾", "猫汰つな": "🍒✨",
+        "白波らむね": "🐻‍❄️🏖", "小森めと": "🪐", "夢野あかり": "🍼", "夜乃くろむ": "💀⛓", "紡木こかげ": "📘💧",
+        "千燈ゆうひ": "🫠", "蝶屋はなび": "🦋🎆", "甘結もか": "🕹🔖"
+    };
 
+    let allData = [], filteredData = [], currentMode = 'member', currentSort = 'new';
+    let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
+    let history = JSON.parse(localStorage.getItem('vspo_history')) || [];
+    let slideshowList = [], currentImageIndex = 0, displayLimit = 40;
+
+    // 初期化
+    window.onload = function() {
+        const contactLink = document.getElementById('contact-link');
+        if(contactLink) contactLink.href = FORM_URL;
+        const removeLink = document.getElementById('remove-link');
+        if(removeLink) removeLink.href = FORM_URL;
+
+        generateMemberTags();
+        renderUnitButtons();
+
+        Papa.parse(CSV_URL, {
+            download: true, header: true,
+            complete: function(results) {
+                allData = results.data.filter(item => item.member && item.image).map((item, index) => {
+                    item._originalIndex = index;
+                    // 検索用キー作成
+                    let searchStr = (item.member + item.cosplayer + (item.Tags||"") + (item.unit||"")).toLowerCase();
+                    item._searchKey = searchStr;
+                    return item;
+                });
+                
+                document.getElementById('total-count').innerText = `現在 ${allData.length} 枚`;
+                filteredData = [...allData];
+                generateStories();
+                applySort();
+            }
+        });
+
+        window.addEventListener('scroll', () => {
+            const btn = document.getElementById('scrollTopBtn');
+            if (btn) btn.style.display = window.scrollY > 300 ? "flex" : "none";
+            if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) loadMore();
+        });
+    };
+
+    // ★重要：色を変える関数
+    function setMemberTheme(memberName) {
+        // 一旦全クラス削除
+        document.body.className = document.body.className.replace(/theme-[\w-]+/g, "").trim();
+        
+        if (memberName && memberClassMap[memberName]) {
+            document.body.classList.add(memberClassMap[memberName]); // クラスを追加して色を変える
+        }
+    }
+
+    // メンバー絞り込み
+    function filterByMember(name, el) {
+        document.querySelectorAll('.member-chip').forEach(c=>c.classList.remove('active'));
+        if(el) el.classList.add('active');
+
+        if(name === 'all') {
+            filteredData = [...allData];
+            setMemberTheme(null); // デフォルトに戻す
+        } else {
+            filteredData = allData.filter(d => d.member === name);
+            setMemberTheme(name); // ★ここで色が変わる！
+        }
+        setMode('member');
+        applySort();
+    }
+
+    // レンダリング（表示）
+    function render() {
+        const app = document.getElementById('app');
+        app.innerHTML = '';
+        prepareSlideshowList();
+        
+        // 0件の時
+        if(slideshowList.length === 0) {
+            app.innerHTML = `<div style="text-align:center; padding:50px; color:#888;">画像が見つかりませんでした...</div>`;
+            return;
+        }
+
+        // プロフヘッダー判定
+        const searchInput = document.getElementById('searchInput');
+        const searchTerm = searchInput ? searchInput.value.trim() : "";
+        const uniqueMembers = [...new Set(slideshowList.map(d => d.member))];
+        const uniqueCosplayers = [...new Set(slideshowList.map(d => d.cosplayer))];
+
+        // 検索や絞り込みで1人のメンバーになった時も色を変える
+        if (uniqueMembers.length === 1 && currentMode !== 'favorite' && currentMode !== 'history') {
+             // 既にfilterByMemberで変わってるかもしれないが念のため
+             if (!document.body.className.includes('theme-')) {
+                 setMemberTheme(uniqueMembers[0]);
+             }
+        }
+
+        // レイヤー専用ページヘッダー
+        if (uniqueCosplayers.length === 1 && searchTerm !== "" && currentMode !== 'favorite' && currentMode !== 'history') {
+            const targetName = uniqueCosplayers[0];
+            const firstItem = slideshowList[0];
+            let profileUrl = null;
+            if (firstItem.link) {
+                const match = firstItem.link.match(/https?:\/\/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/);
+                if (match) profileUrl = `https://twitter.com/${match[1]}`;
+            }
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'profile-header';
+            let html = `<button class="profile-close" onclick="clearSearch()" title="閉じる">&times;</button><div class="profile-name">${targetName}</div>`;
+            if (profileUrl) html += `<a href="${profileUrl}" target="_blank" class="profile-link-btn"><i class="fab fa-x-twitter"></i> X (Twitter) を見る</a>`;
+            html += `<div class="profile-info"><span>投稿数: ${slideshowList.length}枚</span></div><button class="profile-back" onclick="clearSearch()">← 全員表示に戻る</button>`;
+            headerDiv.innerHTML = html;
+            app.appendChild(headerDiv);
+        }
+
+        let grid = document.createElement('div');
+        grid.className = 'masonry-grid';
+        app.appendChild(grid);
+
+        const targetData = slideshowList.slice(0, displayLimit);
+        let html = '';
+        targetData.forEach(item => {
+            const isFav = favorites.includes(item.image);
+            const isNew = item._originalIndex >= (allData.length - 5);
+            html += `
+            <div class="card" onclick="openModal('${item.image}')" ondblclick="event.stopPropagation(); playHeart(this); toggleFav('${item.image}', this.querySelector('.card-fav'))">
+                ${isNew ? '<div class="card-new">NEW</div>' : ''}
+                <button class="card-fav ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav('${item.image}', this)"><i class="fas fa-heart"></i></button>
+                <img src="${item.image}" loading="lazy" onload="this.style.opacity=1">
+                <div class="card-overlay">
+                    <span class="card-tag">${item.member}</span>
+                    <div class="card-name">${item.cosplayer}</div>
+                </div>
+            </div>`;
+        });
+        grid.innerHTML = html;
+    }
+
+    // ハート演出
+    function playHeart(cardElement) {
+        const heart = document.createElement('i');
+        heart.className = 'fas fa-heart pop-heart';
+        cardElement.appendChild(heart);
+        setTimeout(() => heart.remove(), 1000); 
+    }
+
+    // その他必須関数群
+    function prepareSlideshowList() {
+        if(currentMode === 'favorite') {
+            slideshowList = allData.filter(item => favorites.includes(item.image));
+        } else if (currentMode === 'history') {
+            const uniqueHistory = [...new Set(history)].reverse();
+            slideshowList = uniqueHistory.map(url => allData.find(d => d.image === url)).filter(d => d);
+        } else {
+            slideshowList = filteredData;
+        }
+    }
+
+    function generateMemberTags() {
+        const box = document.getElementById('memberBar');
+        if(!box) return;
+        box.innerHTML = `<span class="member-chip active" onclick="filterByMember('all', this)">🏠</span>`;
+        Object.keys(memberIcons).forEach(k => {
+            box.innerHTML += `<span class="member-chip" onclick="filterByMember('${k}', this)">${memberIcons[k]}</span>`; // アイコンのみ表示
+        });
+    }
+
+    function renderUnitButtons() {
+        // ユニットボタン生成（省略なし）
+        const unitList = ["花芽姉妹","あいかが","ととつな","ととリサ","BIG☆STAR","のせれん","のせミミ","のあうひ","のあらむ","のあセナ","セナひな","セナうひ","セナつな","はなばな","花鳥牛月","こかげに咲くはなばな","すみひな","のせひな","のあひな","べにエマ","ひなるな","すみるな","寒色組","ひなつな","つならむ","バカ信号機","くろかげ","蝶結び","集合"];
+        const container = document.getElementById('unit-buttons-container');
+        container.innerHTML = "";
+        unitList.forEach(u => {
+            const btn = document.createElement('button');
+            btn.innerText = u;
+            btn.className = "tool-btn";
+            btn.onclick = () => { document.getElementById('searchInput').value = u; handleSearch(); };
+            container.appendChild(btn);
+        });
+    }
+
+    function handleSearch() {
+        const val = document.getElementById('searchInput').value.toLowerCase();
+        const keywords = val.split(/\s+/).filter(k => k.trim() !== "");
+        filteredData = allData.filter(d => keywords.every(k => d._searchKey.includes(k)));
+        
+        // 検索ワードがメンバー名なら色を変える
+        const exactMember = Object.keys(memberClassMap).find(m => m === val);
+        setMemberTheme(exactMember || null);
+        
+        applySort();
+    }
+
+    function setSort(type) {
+        currentSort = type;
+        document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+        if(type === 'new') document.getElementById('btn-new').classList.add('active');
+        if(type === 'original') document.getElementById('btn-orig').classList.add('active');
+        if(type === 'shuffle') document.getElementById('btn-shuf').classList.add('active');
+        applySort();
+    }
+
+    function applySort() {
+        if(currentSort === 'new') filteredData.sort((a,b) => b._originalIndex - a._originalIndex);
+        else if(currentSort === 'original') filteredData.sort((a,b) => a._originalIndex - b._originalIndex);
+        else if(currentSort === 'shuffle') filteredData.sort(() => Math.random() - 0.5);
+        render();
+    }
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('nav-' + mode).classList.add('active');
+        if(mode !== 'member') setMemberTheme(null); // メンバーモード以外は色リセット
+        render();
+    }
+
+    function loadMore() {
+        if(displayLimit >= slideshowList.length) return;
+        displayLimit += 40;
+        render();
+    }
+
+    function toggleFav(imgUrl, btn) {
+        if(favorites.includes(imgUrl)) favorites = favorites.filter(u => u !== imgUrl);
+        else favorites.push(imgUrl);
+        localStorage.setItem('vspo_favs', JSON.stringify(favorites));
+        if(btn) btn.classList.toggle('active');
+        if(currentMode === 'favorite') render();
+    }
+
+    function openModal(url) {
+        // 履歴追加
+        history = history.filter(h => h !== url);
+        history.push(url);
+        if(history.length > 50) history.shift();
+        localStorage.setItem('vspo_history', JSON.stringify(history));
+
+        let idx = slideshowList.findIndex(d => d.image === url);
+        if(idx === -1) { slideshowList = allData; idx = allData.findIndex(d => d.image === url); }
+        if(idx !== -1) {
+            currentImageIndex = idx;
+            updateModal();
+            document.getElementById('modal').classList.add('open');
+            document.body.classList.add('modal-open');
+        }
+    }
+
+    function updateModal() {
+        const item = slideshowList[currentImageIndex];
+        if(!item) return;
+        document.getElementById('m-img').src = item.image;
+        document.getElementById('m-link').href = item.link;
+        
+        // プロフボタン
+        const btnProfile = document.getElementById('btn-profile');
+        const match = item.link.match(/https?:\/\/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/);
+        if(match) {
+            btnProfile.style.display = 'flex';
+            btnProfile.href = `https://twitter.com/${match[1]}`;
+        } else {
+            btnProfile.style.display = 'none';
+        }
+    }
+
+    function closeModal() {
+        document.getElementById('modal').classList.remove('open');
+        document.body.classList.remove('modal-open');
+        if(currentMode === 'history') render();
+    }
+
+    function changeImage(dir, e) {
+        if(e) e.stopPropagation();
+        currentImageIndex += dir;
+        if(currentImageIndex < 0) currentImageIndex = slideshowList.length - 1;
+        if(currentImageIndex >= slideshowList.length) currentImageIndex = 0;
+        updateModal();
+    }
+
+    function copyLink() {
+        const item = slideshowList[currentImageIndex];
+        if(item) {
+            navigator.clipboard.writeText(item.link).then(() => showToast("リンクをコピーしました！")).catch(() => showToast("失敗しました"));
+        }
+    }
+
+    function shareX() {
+        const item = slideshowList[currentImageIndex];
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(item.member + "コスプレ")}&url=${encodeURIComponent(item.link)}`);
+    }
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg; t.style.opacity = 1; t.style.visibility = 'visible';
+        setTimeout(() => { t.style.opacity = 0; t.style.visibility = 'hidden'; }, 3000);
+    }
+
+    function generateStories() {
+        // 簡易実装: ランダムに表示
+        const container = document.getElementById('stories-container');
+        container.innerHTML = "";
+        const picked = [];
+        Object.keys(memberIcons).forEach(m => {
+            const items = allData.filter(d => d.member === m);
+            if(items.length > 0) picked.push({ name: m, img: items[0].image });
+        });
+        picked.sort(() => Math.random() - 0.5);
+        picked.forEach(p => {
+            const el = document.createElement('div');
+            el.className = 'story-item';
+            el.innerHTML = `<div class="story-ring"><img class="story-img" src="${p.img}"></div><div class="story-name">${p.name}</div>`;
+            container.appendChild(el);
+        });
+    }
+    
+    function clearSearch() { document.getElementById('searchInput').value = ""; handleSearch(); }
+</script>
 </body>
 </html>
