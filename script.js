@@ -71,7 +71,6 @@ window.onload = function() {
     const contactLink = document.getElementById('contact-link');
     if (FORM_URL && contactLink) { contactLink.href = FORM_URL; }
     
-    // ★追加：フッターの削除依頼リンクにも同じURLを設定
     const removeLink = document.getElementById('remove-link');
     if (FORM_URL && removeLink) { removeLink.href = FORM_URL; }
 
@@ -182,6 +181,40 @@ function render() {
 }
 
 function renderFlatMode(container) {
+    // ★追加：レイヤー専用ページ（プロフィールヘッダー）の判定と生成
+    const searchInput = document.getElementById('searchInput');
+    const searchTerm = searchInput ? searchInput.value.trim() : "";
+    
+    // 現在のリストに含まれるユニークなレイヤー名を取得
+    const uniqueCosplayers = [...new Set(slideshowList.map(d => d.cosplayer))];
+
+    // 「検索ワードが入力されている」かつ「結果が1人のレイヤーさんのみ」の場合、専用ヘッダーを表示
+    // (検索ワードがレイヤー名と一致するかどうかもチェックして誤爆を防ぐ)
+    const isCosplayerPage = uniqueCosplayers.length === 1 && searchTerm !== "" && (searchTerm === uniqueCosplayers[0] || memberReadings[searchTerm] === undefined);
+
+    if (isCosplayerPage) {
+        const targetName = uniqueCosplayers[0];
+        // 最初の画像のリンクからIDを抽出してプロフィールURLを作る
+        const firstItem = slideshowList[0];
+        let profileUrl = null;
+        if (firstItem.link) {
+            const match = firstItem.link.match(/https?:\/\/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/);
+            if (match && match[1]) {
+                profileUrl = `https://twitter.com/${match[1]}`;
+            }
+        }
+
+        const headerDiv = document.createElement('div');
+        headerDiv.className = 'profile-header';
+        let html = `<div class="profile-name">${targetName}</div>`;
+        if (profileUrl) {
+            html += `<a href="${profileUrl}" target="_blank" class="profile-link-btn"><i class="fab fa-x-twitter"></i> X (Twitter) を見る</a>`;
+        }
+        html += `<div class="profile-count">${slideshowList.length} 件の投稿</div>`;
+        headerDiv.innerHTML = html;
+        container.appendChild(headerDiv);
+    }
+
     let grid = container.querySelector('.masonry-grid');
     if (!grid) {
         grid = document.createElement('div');
@@ -346,10 +379,8 @@ function updateModal() {
     document.getElementById('m-img').src = item.image;
     document.getElementById('m-link').href = item.link; 
     
-    // ★追加：プロフィールへGOボタンの生成
     const btnProfile = document.getElementById('btn-profile');
     if (btnProfile && item.link) {
-        // ツイートURLからユーザー名を抽出 (例: https://twitter.com/user/status/123 -> user)
         const match = item.link.match(/https?:\/\/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/);
         if (match && match[1]) {
             btnProfile.style.display = 'flex';
@@ -657,10 +688,7 @@ function openCosplayerList() {
     const list = document.getElementById('cosplayer-list');
     if(!modal || !list) return;
 
-    // レイヤーさん名を重複なしで取得
     const cosplayers = [...new Set(allData.map(d => d.cosplayer).filter(n => n))];
-    
-    // 日本語の50音順にソート (localeCompareを使用)
     cosplayers.sort((a, b) => a.localeCompare(b, 'ja'));
 
     list.innerHTML = "";
@@ -670,7 +698,7 @@ function openCosplayerList() {
         li.innerText = name;
         li.onclick = () => {
             closeCosplayerList();
-            filterByText(name); // その人名で検索実行
+            filterByText(name); 
         };
         list.appendChild(li);
     });
