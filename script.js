@@ -104,8 +104,6 @@ window.onload = function() {
 
                     let unitName = item["ユニット"] || item["Unit"] || item["unit"] || "";
                     item._unitName = unitName.trim();
-
-                    // おすすめ機能のためにタグを配列化して保持
                     item._tagsArray = rawTags.split(',').map(t => t.trim().toLowerCase());
 
                     item._searchKey = (
@@ -149,6 +147,27 @@ function render() {
     const sentinel = document.getElementById('loading-sentinel');
     if(sentinel) sentinel.style.display = 'block';
 
+    // ★0件時のコンシェルジュ表示
+    if (slideshowList.length === 0) {
+        app.innerHTML = `
+            <div class="empty-guide">
+                <div style="font-size:3rem; margin-bottom:10px;">😢</div>
+                <p>条件に合う画像が見つかりませんでした...</p>
+                <p style="margin-top:20px; font-weight:bold;">人気のタグで探してみる？</p>
+                <div class="guide-tags">
+                    <span class="guide-chip" onclick="filterByText('メイド')">メイド</span>
+                    <span class="guide-chip" onclick="filterByText('制服')">制服</span>
+                    <span class="guide-chip" onclick="filterByText('水着')">水着</span>
+                    <span class="guide-chip" onclick="filterByText('眼鏡')">眼鏡</span>
+                    <span class="guide-chip" onclick="filterByText('猫耳')">猫耳</span>
+                    <span class="guide-chip" onclick="filterByText('バニー')">バニー</span>
+                </div>
+            </div>
+        `;
+        if(sentinel) sentinel.style.display = 'none';
+        return;
+    }
+
     isGroupMode = !(currentSort === 'new' || currentSort === 'shuffle' || currentMode === 'favorite' || currentMode === 'cosplayer');
 
     if (isGroupMode) {
@@ -191,11 +210,6 @@ function renderGroupMode(container) {
         if (!groups[groupName]) groups[groupName] = [];
         groups[groupName].push(item);
     });
-
-    if(Object.keys(groups).length === 0) {
-        container.innerHTML = '<p style="text-align:center; margin-top:50px; color:#666;">データが見つかりません</p>';
-        return;
-    }
 
     let fullHtml = '';
     Object.keys(groups).forEach(name => {
@@ -303,7 +317,7 @@ function filterByMember(name, el) {
 }
 
 // ==========================================
-//  モーダル (画像拡大) ＆ ★レコメンド機能★
+//  モーダル (画像拡大) ＆ レコメンド
 // ==========================================
 function prepareSlideshowList() {
     if (currentMode === 'favorite') slideshowList = allData.filter(item => favorites.includes(item.image));
@@ -312,15 +326,8 @@ function prepareSlideshowList() {
 
 function openModal(url) {
     if(autoPlayInterval) clearInterval(autoPlayInterval);
-    // 現在のリスト内から探す
     let idx = slideshowList.findIndex(d => d.image === url);
-    
-    // なければ全体から探してリストを切り替える（レコメンド経由で飛んだ場合など）
-    if (idx === -1) {
-        slideshowList = allData;
-        idx = allData.findIndex(d => d.image === url);
-    }
-    
+    if (idx === -1) { slideshowList = allData; idx = allData.findIndex(d => d.image === url); }
     if (idx !== -1) {
         currentImageIndex = idx;
         updateModal();
@@ -336,7 +343,6 @@ function updateModal() {
     document.getElementById('m-img').src = item.image;
     document.getElementById('m-link').href = item.link; 
     
-    // 1. タグ生成
     const tagsContainer = document.getElementById('m-tags');
     if (tagsContainer) {
         tagsContainer.innerHTML = ''; 
@@ -355,31 +361,20 @@ function updateModal() {
         });
     }
 
-    // ★2. AI風レコメンド（おすすめ画像）生成
     const recContainer = document.getElementById('m-recommend');
     const recLabel = document.getElementById('rec-label');
     if (recContainer && recLabel) {
         recContainer.innerHTML = '';
-        
-        // 自分以外のデータをスコアリングして並び替え
         const candidates = allData.filter(d => d.image !== item.image).map(other => {
             let score = 0;
-            // 同じメンバーなら +3点
             if (other.member === item.member) score += 3;
-            // 同じユニットなら +5点
             if (item._unitName && other._unitName === item._unitName) score += 5;
-            // 同じレイヤーさんなら +2点
             if (other.cosplayer === item.cosplayer) score += 2;
-            
-            // 共通するタグが多ければ加点
             const commonTags = other._tagsArray.filter(t => item._tagsArray.includes(t));
             const validCommon = commonTags.filter(t => !["best quality", "high quality", "absurdres", "1girl", "cosplay"].includes(t));
             score += validCommon.length * 1.5;
-
             return { item: other, score: score };
         });
-
-        // スコアが高い順に上位4つを取得
         candidates.sort((a, b) => b.score - a.score);
         const topPicks = candidates.slice(0, 4);
 
@@ -389,15 +384,10 @@ function updateModal() {
                 const imgDiv = document.createElement('div');
                 imgDiv.className = 'recommend-card';
                 imgDiv.innerHTML = `<img src="${pick.item.image}">`;
-                imgDiv.onclick = (e) => {
-                    e.stopPropagation();
-                    openModal(pick.item.image); // おすすめ画像へジャンプ！
-                };
+                imgDiv.onclick = (e) => { e.stopPropagation(); openModal(pick.item.image); };
                 recContainer.appendChild(imgDiv);
             });
-        } else {
-            recLabel.style.display = 'none';
-        }
+        } else { recLabel.style.display = 'none'; }
     }
 }
 
@@ -500,17 +490,13 @@ function generateStories() {
             if (!seenLayer.has(item.cosplayer)) {
                 picks.push(item);
                 seenLayer.add(item.cosplayer);
-            } else {
-                spares.push(item);
-            }
+            } else { spares.push(item); }
             if (picks.length >= 5) break;
         }
 
         if (picks.length < 5) {
             const needed = 5 - picks.length;
-            for (let i = 0; i < needed; i++) {
-                if (spares[i]) picks.push(spares[i]);
-            }
+            for (let i = 0; i < needed; i++) { if (spares[i]) picks.push(spares[i]); }
         }
 
         storiesData.push({ name: member, icon: picks[0].image, images: picks });
@@ -623,32 +609,62 @@ const unitList = [
 function renderUnitButtons() {
     const container = document.getElementById('unit-buttons-container');
     if (!container) return;
-    
     container.innerHTML = ""; 
-
     unitList.forEach(unit => {
         const btn = document.createElement('button');
         btn.innerText = unit.label;
-        
         btn.className = "tool-btn"; 
         btn.style.backgroundColor = "rgba(255,255,255,0.15)";
         btn.style.border = "1px solid rgba(255,255,255,0.3)";
         btn.style.marginRight = "6px";
         btn.style.borderRadius = "15px";
         btn.style.whiteSpace = "nowrap";
-
         btn.onclick = () => {
             const searchInput = document.getElementById('searchInput');
             if (searchInput) {
                 searchInput.value = unit.keyword; 
-                if (typeof handleSearch === "function") {
-                    handleSearch();
-                } else {
-                    const event = new Event('input');
-                    searchInput.dispatchEvent(event);
-                }
+                if (typeof handleSearch === "function") { handleSearch(); } 
+                else { const event = new Event('input'); searchInput.dispatchEvent(event); }
             }
         };
         container.appendChild(btn);
     });
+}
+
+// ==========================================
+// ★変更：レイヤー一覧（50音順リスト）機能
+// ==========================================
+function openCosplayerList() {
+    const modal = document.getElementById('list-modal');
+    const list = document.getElementById('cosplayer-list');
+    if(!modal || !list) return;
+
+    // レイヤーさん名を重複なしで取得
+    const cosplayers = [...new Set(allData.map(d => d.cosplayer).filter(n => n))];
+    
+    // 日本語の50音順にソート (localeCompareを使用)
+    cosplayers.sort((a, b) => a.localeCompare(b, 'ja'));
+
+    list.innerHTML = "";
+    cosplayers.forEach(name => {
+        const li = document.createElement('li');
+        li.className = "list-item";
+        li.innerText = name;
+        li.onclick = () => {
+            closeCosplayerList();
+            filterByText(name); // その人名で検索実行
+        };
+        list.appendChild(li);
+    });
+
+    modal.classList.add('open');
+    document.body.classList.add('modal-open');
+}
+
+function closeCosplayerList() {
+    const modal = document.getElementById('list-modal');
+    if(modal) modal.classList.remove('open');
+    if(!document.getElementById('modal').classList.contains('open')) {
+        document.body.classList.remove('modal-open');
+    }
 }
