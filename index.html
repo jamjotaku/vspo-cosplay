@@ -8,6 +8,7 @@
       gtag('js', new Date());
       gtag('config', 'G-QE8MD8LCQ0');
     </script>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -31,7 +32,7 @@
         /* --- 基本設定 --- */
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         :root { 
-            --primary: #5c6ac4; /* デフォルト色 */
+            --primary: #5c6ac4; /* デフォルトテーマ色 */
             --bg: #f4f6f8; --text: #333; --heart: #ff4757; 
             --overlay-grad: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
             --glass-bg: rgba(92, 106, 196, 0.95);
@@ -48,6 +49,7 @@
             letter-spacing: 0.03em;
         }
 
+        /* スクロールバー装飾 */
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--primary); opacity: 0.5; border-radius: 5px; }
@@ -61,8 +63,7 @@
             color: #fff; padding: 15px 15px 5px; position: sticky; top: 0; z-index: 100; 
             box-shadow: 0 4px 20px rgba(0,0,0,0.15); padding-top: max(15px, env(safe-area-inset-top)); 
             transition: background-color 0.5s ease;
-            /* ★追加：明るいメンバーカラーでも文字が見えるように影をつける */
-            text-shadow: 0 1px 3px rgba(0,0,0,0.3); 
+            text-shadow: 0 1px 3px rgba(0,0,0,0.3); /* 文字が見やすいように影 */
         }
         .header-top { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
         .title-area { flex: 1; min-width: 0; }
@@ -72,6 +73,7 @@
         .icon-btn { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; padding: 0; text-decoration: none; opacity: 0.9; transition: transform 0.2s; text-shadow: 0 1px 3px rgba(0,0,0,0.3); }
         .icon-btn:active { transform: scale(0.9); }
         
+        /* ストーリーズ */
         .stories-container { overflow-x: auto; white-space: nowrap; padding: 5px 0 10px; display: flex; gap: 12px; scrollbar-width: none; }
         .stories-container::-webkit-scrollbar { display: none; }
         .story-item { width: 68px; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex-shrink: 0; transition: transform 0.2s; }
@@ -82,6 +84,7 @@
         body.dark-mode .story-img { border-color: #111; }
         .story-name { font-size: 0.7rem; margin-top: 4px; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
 
+        /* ツールバー */
         .tools { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .tools::-webkit-scrollbar { display: none; }
         input { padding: 8px 15px; border-radius: 20px; border: none; min-width: 150px; outline: none; font-size: 0.9rem; font-family: inherit; background: rgba(255,255,255,0.9); }
@@ -89,12 +92,13 @@
         button.tool-btn:active { transform: scale(0.95); }
         button.tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.2); text-shadow: none; }
 
+        /* メンバーチップ */
         #unit-buttons-container { padding: 5px 10px; display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
         .member-scroll-container { overflow-x: auto; white-space: nowrap; padding: 8px 0 10px; scrollbar-width: none; }
         .member-chip { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 20px; margin-right: 6px; cursor: pointer; font-size: 1.1rem; line-height: 1; transition: 0.2s; border: 1px solid transparent; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
         .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; transform: scale(1.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2); text-shadow: none; }
 
-        /* ナビゲーション */
+        /* --- ナビゲーション (ハイブリッドUI) --- */
         nav { 
             position: fixed; bottom: 0; left: 0; width: 100%; 
             background: rgba(255, 255, 255, 0.9); 
@@ -116,6 +120,7 @@
         .view-btn.active { background: none; color: var(--primary); box-shadow: none; }
         .view-btn.active i { transform: translateY(-3px) scale(1.1); filter: drop-shadow(0 0 5px var(--primary)); }
 
+        /* PC (768px以上) */
         @media (min-width: 768px) {
             body { padding-bottom: 0; }
             nav {
@@ -140,6 +145,7 @@
             #toast.show { bottom: 50px; }
         }
 
+        /* コンテンツエリア */
         main { padding: 10px; max-width: 1600px; margin: 0 auto; width: 100%; min-height: 50vh; }
         .section-title { font-size: 1.1rem; font-weight: bold; margin: 40px 0 15px; padding-left: 10px; border-left: 4px solid var(--primary); color: var(--text); clear: both; transition: border-color 0.5s; }
 
@@ -148,6 +154,7 @@
         @media (min-width: 900px) { .masonry-grid { column-count: 4; column-gap: 20px; } }
         @media (min-width: 1400px) { .masonry-grid { column-count: 5; } }
 
+        /* カード */
         .card { break-inside: avoid; margin-bottom: 10px; border-radius: 12px; overflow: hidden; position: relative; background: #000; transform: translateZ(0); box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s; cursor: pointer; }
         @media (min-width: 600px) { .card { margin-bottom: 15px; } }
         .card:hover { transform: translateY(-5px) scale(1.02); box-shadow: 0 10px 20px rgba(0,0,0,0.2); z-index: 5; }
@@ -166,6 +173,7 @@
         .card-new::after { content: ""; position: absolute; top: 0; left: -100%; width: 100%; height: 100%; background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent); animation: shine 2s infinite; }
         @keyframes shine { 0% { left: -100%; } 20% { left: 100%; } 100% { left: 100%; } }
 
+        /* ダブルタップのハート */
         .pop-heart {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0);
             color: var(--heart); font-size: 4rem; pointer-events: none; z-index: 20;
@@ -178,6 +186,7 @@
             100% { transform: translate(-50%, -50%) scale(1); opacity: 0; }
         }
 
+        /* モーダル */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
         .modal.open { display: flex; animation: fadeIn 0.2s; }
         .modal img { max-height: 80vh; max-width: 95%; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.5); object-fit: contain; }
@@ -208,19 +217,19 @@
         .btn-copy { background: #5865F2; }
         .btn-profile { background: #333; }
         
-        .story-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 3000; display: none; justify-content: center; align-items: center; }
-        .story-viewer.active { display: flex; animation: fadeIn 0.2s; }
-        .story-content { position: relative; width: 100%; height: 100%; max-width: 450px; max-height: 900px; display: flex; flex-direction: column; background: #111; }
-        @media (min-width: 768px) { .story-content { height: 90vh; border-radius: 12px; overflow: hidden; } }
-        .story-img-main { flex: 1; width: 100%; object-fit: contain; }
-        .story-bars { position: absolute; top: 10px; left: 0; width: 100%; display: flex; gap: 4px; padding: 0 5px; z-index: 10; }
-        .story-bar { flex: 1; height: 3px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
-        .story-fill { height: 100%; background: #fff; width: 0%; }
-        .story-meta { position: absolute; top: 25px; left: 10px; display: flex; align-items: center; gap: 10px; color: #fff; z-index: 10; text-shadow: 0 1px 2px rgba(0,0,0,0.8); }
-        .story-meta img { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #fff; }
-        .story-nav { position: absolute; top: 0; bottom: 0; width: 30%; z-index: 5; }
-        .nav-left { left: 0; } .nav-right { right: 0; width: 70%; }
+        /* レイヤー専用ページヘッダー */
+        .profile-header { text-align: center; padding: 20px 15px; margin-bottom: 10px; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%); border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); position: relative; border-left: 5px solid var(--primary); transition: border-color 0.5s; }
+        .profile-close { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.1); color: var(--text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .profile-close:hover { background: rgba(0,0,0,0.2); }
+        .profile-name { font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; }
+        .profile-link-btn { display: inline-flex; align-items: center; gap: 8px; background: #000; color: #fff; padding: 8px 20px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .profile-link-btn:hover { transform: scale(1.05); }
+        .profile-info { font-size: 0.85rem; opacity: 0.9; margin-top: 15px; }
+        .profile-tags { margin-top: 8px; }
+        .profile-tag-chip { display: inline-block; background: rgba(255,255,255,0.5); color: var(--primary); padding: 3px 10px; border-radius: 15px; font-size: 0.8rem; margin: 2px; font-weight: bold; }
+        .profile-back { margin-top: 15px; font-size: 0.85rem; color: var(--primary); cursor: pointer; text-decoration: underline; background: none; border: none; }
 
+        /* その他 */
         .fab { position: fixed; bottom: 25px; right: 25px; width: 56px; height: 56px; background: var(--primary); color: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 100; border: none; transition: 0.3s; }
         .fab:hover { transform: scale(1.1); }
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 2000; left: 50%; bottom: 100px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: 0.5s; font-family: inherit; }
@@ -248,17 +257,6 @@
         .guide-tags { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 15px; }
         .guide-chip { background: var(--primary); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; cursor: pointer; opacity: 0.8; transition: 0.2s; }
         .guide-chip:hover { opacity: 1; transform: scale(1.05); }
-
-        .profile-header { text-align: center; padding: 20px 15px; margin-bottom: 10px; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.2) 100%); border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); position: relative; border-left: 5px solid var(--primary); }
-        .profile-close { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.1); color: var(--text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
-        .profile-close:hover { background: rgba(0,0,0,0.2); }
-        .profile-name { font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; }
-        .profile-link-btn { display: inline-flex; align-items: center; gap: 8px; background: #000; color: #fff; padding: 8px 20px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .profile-link-btn:hover { transform: scale(1.05); }
-        .profile-info { font-size: 0.85rem; opacity: 0.9; margin-top: 15px; }
-        .profile-tags { margin-top: 8px; }
-        .profile-tag-chip { display: inline-block; background: rgba(255,255,255,0.5); color: var(--primary); padding: 3px 10px; border-radius: 15px; font-size: 0.8rem; margin: 2px; font-weight: bold; }
-        .profile-back { margin-top: 15px; font-size: 0.85rem; color: var(--primary); cursor: pointer; text-decoration: underline; background: none; border: none; }
     </style>
 </head>
 <body>
@@ -357,7 +355,8 @@
         <div class="story-nav nav-right" onclick="nextStory()"></div>
     </div>
 </div>
-<script src="script.js?v=2"></script>
+
+<script src="script.js?v=2026"></script>
+
 </body>
 </html>
-
