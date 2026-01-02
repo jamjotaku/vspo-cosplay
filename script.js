@@ -679,4 +679,6 @@ function closeCosplayerList() {
     const modal = document.getElementById('list-modal');
     if(modal) modal.classList.remove('open');
     if(!document.getElementById('modal').classList.contains('open')) { document.body.classList.remove('modal-open'); }
+    // ▼▼▼ これを一番下に追加して保存！ ▼▼▼
+alert("新しいコードが読み込まれました！推し色機能、準備OKです！");
 }
