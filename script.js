@@ -51,6 +51,8 @@ let filteredData = [];
 let currentMode = 'member';
 let currentSort = 'new';
 let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
+// ★追加：履歴データ
+let history = JSON.parse(localStorage.getItem('vspo_history')) || [];
 let currentImageIndex = 0;
 let slideshowList = [];
 let latestIndexThreshold = 0;
@@ -151,26 +153,37 @@ function render() {
     if(sentinel) sentinel.style.display = 'block';
 
     if (slideshowList.length === 0) {
-        app.innerHTML = `
-            <div class="empty-guide">
-                <div style="font-size:3rem; margin-bottom:10px;">😢</div>
-                <p>条件に合う画像が見つかりませんでした...</p>
-                <p style="margin-top:20px; font-weight:bold;">人気のタグで探してみる？</p>
-                <div class="guide-tags">
-                    <span class="guide-chip" onclick="filterByText('メイド')">メイド</span>
-                    <span class="guide-chip" onclick="filterByText('制服')">制服</span>
-                    <span class="guide-chip" onclick="filterByText('水着')">水着</span>
-                    <span class="guide-chip" onclick="filterByText('眼鏡')">眼鏡</span>
-                    <span class="guide-chip" onclick="filterByText('猫耳')">猫耳</span>
-                    <span class="guide-chip" onclick="filterByText('バニー')">バニー</span>
+        // 履歴画面で0件の場合はメッセージを変える
+        if (currentMode === 'history') {
+            app.innerHTML = `
+                <div class="empty-guide">
+                    <div style="font-size:3rem; margin-bottom:10px;">🕒</div>
+                    <p>閲覧履歴はありません</p>
+                    <p style="font-size:0.8rem; color:#888;">画像を見るとここに表示されます</p>
                 </div>
-            </div>
-        `;
+            `;
+        } else {
+            app.innerHTML = `
+                <div class="empty-guide">
+                    <div style="font-size:3rem; margin-bottom:10px;">😢</div>
+                    <p>条件に合う画像が見つかりませんでした...</p>
+                    <p style="margin-top:20px; font-weight:bold;">人気のタグで探してみる？</p>
+                    <div class="guide-tags">
+                        <span class="guide-chip" onclick="filterByText('メイド')">メイド</span>
+                        <span class="guide-chip" onclick="filterByText('制服')">制服</span>
+                        <span class="guide-chip" onclick="filterByText('水着')">水着</span>
+                        <span class="guide-chip" onclick="filterByText('眼鏡')">眼鏡</span>
+                        <span class="guide-chip" onclick="filterByText('猫耳')">猫耳</span>
+                        <span class="guide-chip" onclick="filterByText('バニー')">バニー</span>
+                    </div>
+                </div>
+            `;
+        }
         if(sentinel) sentinel.style.display = 'none';
         return;
     }
 
-    isGroupMode = !(currentSort === 'new' || currentSort === 'shuffle' || currentMode === 'favorite' || currentMode === 'cosplayer');
+    isGroupMode = !(currentSort === 'new' || currentSort === 'shuffle' || currentMode === 'favorite' || currentMode === 'cosplayer' || currentMode === 'history');
 
     if (isGroupMode) {
         renderGroupMode(app);
@@ -181,7 +194,6 @@ function render() {
 }
 
 function renderFlatMode(container) {
-    // ★レイヤー専用ページ（プロフィールヘッダー）の判定と分析生成
     const searchInput = document.getElementById('searchInput');
     const searchTerm = searchInput ? searchInput.value.trim() : "";
     const uniqueCosplayers = [...new Set(slideshowList.map(d => d.cosplayer))];
@@ -196,14 +208,13 @@ function renderFlatMode(container) {
             if (match && match[1]) profileUrl = `https://twitter.com/${match[1]}`;
         }
 
-        // 統計情報の作成（どのメンバーを多くやっているか）
         const memberCounts = {};
         slideshowList.forEach(item => {
             if (item.member) memberCounts[item.member] = (memberCounts[item.member] || 0) + 1;
         });
         const topMembers = Object.entries(memberCounts)
             .sort((a, b) => b[1] - a[1])
-            .slice(0, 3) // 上位3名
+            .slice(0, 3) 
             .map(([name, count]) => `<span class="profile-tag-chip">${memberIcons[name] || ""} ${name}</span>`)
             .join("");
 
@@ -250,7 +261,7 @@ function clearSearch() {
     const searchInput = document.getElementById('searchInput');
     if(searchInput) {
         searchInput.value = "";
-        handleSearch(); // 全件表示に戻す
+        handleSearch(); 
     }
 }
 
@@ -375,15 +386,27 @@ function filterByMember(name, el) {
 }
 
 // ==========================================
-//  モーダル (画像拡大) ＆ レコメンド
+//  モーダル (画像拡大) ＆ レコメンド ＆ 履歴
 // ==========================================
 function prepareSlideshowList() {
-    if (currentMode === 'favorite') slideshowList = allData.filter(item => favorites.includes(item.image));
-    else slideshowList = filteredData;
+    if (currentMode === 'favorite') {
+        slideshowList = allData.filter(item => favorites.includes(item.image));
+    } else if (currentMode === 'history') {
+        // 履歴モードの場合、履歴配列(URL文字列)から該当するデータを探す
+        // 重複を除去し、最新のものを上に
+        const uniqueHistory = [...new Set(history)].reverse();
+        slideshowList = uniqueHistory.map(url => allData.find(d => d.image === url)).filter(d => d);
+    } else {
+        slideshowList = filteredData;
+    }
 }
 
 function openModal(url) {
     if(autoPlayInterval) clearInterval(autoPlayInterval);
+    
+    // ★追加：履歴に追加
+    addToHistory(url);
+
     let idx = slideshowList.findIndex(d => d.image === url);
     if (idx === -1) { slideshowList = allData; idx = allData.findIndex(d => d.image === url); }
     if (idx !== -1) {
@@ -393,6 +416,16 @@ function openModal(url) {
         if(modal) modal.classList.add('open');
         document.body.classList.add('modal-open');
     }
+}
+
+// ★追加：履歴保存関数
+function addToHistory(url) {
+    // 既に履歴にある場合は一度削除（最新にするため）
+    history = history.filter(h => h !== url);
+    history.push(url);
+    // 最大50件まで保持
+    if (history.length > 50) history.shift();
+    localStorage.setItem('vspo_history', JSON.stringify(history));
 }
 
 function updateModal() {
@@ -462,11 +495,26 @@ function updateModal() {
     }
 }
 
+// ★追加：リンクコピー機能
+function copyLink() {
+    const item = slideshowList[currentImageIndex];
+    if (item && item.link) {
+        navigator.clipboard.writeText(item.link).then(() => {
+            showToast("リンクをコピーしました！📋");
+        }).catch(err => {
+            showToast("コピーできませんでした💦");
+        });
+    }
+}
+
 function closeModal() {
     if(autoPlayInterval) clearInterval(autoPlayInterval);
     const modal = document.getElementById('modal');
     if(modal) modal.classList.remove('open');
     document.body.classList.remove('modal-open');
+    
+    // 履歴画面のときは再描画して最新の履歴を反映
+    if(currentMode === 'history') render();
 }
 
 function changeImage(dir, e) {
@@ -474,6 +522,11 @@ function changeImage(dir, e) {
     currentImageIndex += dir;
     if(currentImageIndex < 0) currentImageIndex = slideshowList.length -1;
     if(currentImageIndex >= slideshowList.length) currentImageIndex = 0;
+    
+    // スライドした時も履歴に追加
+    const item = slideshowList[currentImageIndex];
+    if(item) addToHistory(item.image);
+    
     updateModal();
 }
 
