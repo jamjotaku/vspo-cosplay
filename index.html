@@ -33,20 +33,24 @@
         :root { 
             --primary: #5c6ac4; --bg: #f4f6f8; --text: #333; --heart: #ff4757; 
             --overlay-grad: linear-gradient(to top, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.4) 50%, transparent 100%);
-            --glass-bg: rgba(92, 106, 196, 0.85);
+            --glass-bg: rgba(92, 106, 196, 0.95);
+            --nav-height-mobile: 70px; /* スマホ用ナビ高さ */
+            --header-offset-pc: 180px; /* PC用スティッキー位置調整 */
         }
-        body.dark-mode { --bg: #111; --text: #eee; --glass-bg: rgba(20, 20, 30, 0.85); }
+        body.dark-mode { --bg: #111; --text: #eee; --glass-bg: rgba(20, 20, 30, 0.95); }
         
         body { 
             font-family: "M PLUS Rounded 1c", "Helvetica Neue", Arial, sans-serif;
             background: var(--bg); color: var(--text); margin: 0; padding: 0; 
             transition: 0.3s; display: flex; flex-direction: column; min-height: 100vh; 
-            padding-bottom: env(safe-area-inset-bottom); letter-spacing: 0.03em;
+            padding-bottom: calc(env(safe-area-inset-bottom) + var(--nav-height-mobile)); /* スマホデフォルト */
+            letter-spacing: 0.03em;
         }
 
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        /* PCでのスクロールバー */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(92, 106, 196, 0.3); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(92, 106, 196, 0.3); border-radius: 5px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
         body.modal-open .fab { display: none !important; }
@@ -54,7 +58,7 @@
         /* --- ヘッダー --- */
         header { 
             background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-            color: #fff; padding: 15px 15px 10px; position: sticky; top: 0; z-index: 100; 
+            color: #fff; padding: 15px 15px 5px; position: sticky; top: 0; z-index: 100; 
             box-shadow: 0 4px 20px rgba(0,0,0,0.1); padding-top: max(15px, env(safe-area-inset-top)); 
             transition: background 0.3s;
         }
@@ -70,7 +74,7 @@
         .stories-container { overflow-x: auto; white-space: nowrap; padding: 5px 0 10px; display: flex; gap: 12px; scrollbar-width: none; }
         .stories-container::-webkit-scrollbar { display: none; }
         .story-item { width: 68px; display: flex; flex-direction: column; align-items: center; cursor: pointer; flex-shrink: 0; transition: transform 0.2s; }
-        .story-item:active { transform: scale(0.95); }
+        .story-item:hover { transform: scale(1.05); }
         .story-ring { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); }
         .story-ring.seen { background: #ccc; }
         .story-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
@@ -89,17 +93,69 @@
         button.tool-btn:active { transform: scale(0.95); }
         button.tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
-        .member-scroll-container { overflow-x: auto; white-space: nowrap; padding: 8px 0 0; scrollbar-width: none; }
-        .member-scroll-container::-webkit-scrollbar { display: none; }
+        /* ユニット・メンバーバー */
+        #unit-buttons-container { padding: 5px 10px; display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+        .member-scroll-container { overflow-x: auto; white-space: nowrap; padding: 8px 0 10px; scrollbar-width: none; }
         .member-chip { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 20px; margin-right: 6px; cursor: pointer; font-size: 1.1rem; line-height: 1; transition: 0.2s; border: 1px solid transparent; }
-        .member-chip:active { transform: scale(0.9); }
         .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; transform: scale(1.1); box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
-        nav { display: flex; justify-content: center; gap: 10px; padding: 15px; background: var(--bg); position: sticky; top: 125px; z-index: 90; transition: 0.3s; }
-        .view-btn { background: rgba(0,0,0,0.05); color: var(--text); border: 1px solid transparent; padding: 6px 16px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.9rem; font-family: inherit; transition: all 0.2s; }
-        .view-btn:active { transform: scale(0.95); }
-        body.dark-mode .view-btn { background: rgba(255,255,255,0.1); }
-        .view-btn.active { background: var(--primary); color: #fff; box-shadow: 0 2px 8px rgba(92, 106, 196, 0.4); }
+        /* --- ナビゲーション (レスポンシブ対応) --- */
+        nav { 
+            /* スマホ用デフォルト (ボトム固定) */
+            position: fixed; bottom: 0; left: 0; width: 100%; 
+            background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
+            z-index: 1000; display: flex; justify-content: space-around; align-items: center;
+            padding: 8px 0; padding-bottom: max(8px, env(safe-area-inset-bottom));
+            border-top: 1px solid rgba(255,255,255,0.1); box-shadow: 0 -5px 20px rgba(0,0,0,0.2);
+            transition: all 0.3s;
+        }
+        .view-btn { 
+            background: none; border: none; color: #888; padding: 5px; 
+            display: flex; flex-direction: column; align-items: center; gap: 4px;
+            font-size: 0.65rem; font-weight: bold; flex: 1; cursor: pointer; transition: 0.2s;
+            border-radius: 0; box-shadow: none; font-family: inherit;
+        }
+        .view-btn i { font-size: 1.4rem; margin-bottom: 2px; transition: 0.2s; }
+        body.dark-mode .view-btn { background: none; }
+        .view-btn.active { background: none; color: #fff; box-shadow: none; }
+        .view-btn.active i { color: var(--primary); transform: translateY(-3px) scale(1.1); filter: drop-shadow(0 0 5px rgba(92,106,196,0.6)); }
+
+        /* --- 💻 PC用スタイル (768px以上) --- */
+        @media (min-width: 768px) {
+            body { padding-bottom: 0; } /* ボトムナビの余白を消す */
+            
+            nav {
+                /* PCではヘッダーの下に吸着させる */
+                position: sticky; bottom: auto; 
+                /* headerの高さ等が変動する可能性があるが、大体この位置で固定 */
+                top: 0; 
+                margin-top: 0;
+                border-top: none; border-bottom: 1px solid rgba(255,255,255,0.1);
+                box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+                justify-content: center; gap: 20px; padding: 10px 0;
+            }
+            
+            /* PC版ボタンのデザイン（横並びタブ風） */
+            .view-btn {
+                flex: 0 0 auto; flex-direction: row; gap: 8px; padding: 8px 25px;
+                font-size: 0.9rem; border-radius: 25px; color: #ccc;
+                background: rgba(0,0,0,0.2);
+            }
+            .view-btn i { font-size: 1rem; margin: 0; }
+            
+            .view-btn.active {
+                background: var(--primary); color: #fff;
+                transform: scale(1.05); box-shadow: 0 4px 10px rgba(92,106,196,0.3);
+            }
+            .view-btn.active i { transform: none; filter: none; color: #fff; }
+            .view-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
+            .view-btn.active:hover { background: var(--primary); }
+
+            /* PCではFABを少し下げる */
+            .fab { bottom: 30px; width: 60px; height: 60px; font-size: 1.5rem; }
+            #toast { bottom: 30px; }
+            #toast.show { bottom: 50px; }
+        }
 
         main { padding: 10px; max-width: 1600px; margin: 0 auto; width: 100%; min-height: 50vh; }
         .section-title { font-size: 1.1rem; font-weight: bold; margin: 40px 0 15px; padding-left: 10px; border-left: 4px solid var(--primary); color: var(--text); clear: both; }
@@ -107,7 +163,7 @@
         .masonry-grid { column-count: 2; column-gap: 10px; width: 100%; }
         @media (min-width: 600px) { .masonry-grid { column-count: 3; column-gap: 15px; } }
         @media (min-width: 900px) { .masonry-grid { column-count: 4; column-gap: 20px; } }
-        @media (min-width: 1200px) { .masonry-grid { column-count: 5; } }
+        @media (min-width: 1400px) { .masonry-grid { column-count: 5; } }
 
         .card { 
             break-inside: avoid; margin-bottom: 10px; border-radius: 12px; overflow: hidden; 
@@ -175,10 +231,11 @@
         .story-nav { position: absolute; top: 0; bottom: 0; width: 30%; z-index: 5; }
         .nav-left { left: 0; } .nav-right { right: 0; width: 70%; }
 
+        /* FAB */
         .fab { position: fixed; bottom: 25px; right: 25px; width: 56px; height: 56px; background: var(--primary); color: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; z-index: 100; border: none; transition: 0.3s; }
         .fab:hover { transform: scale(1.1); }
-        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 2000; left: 50%; bottom: 30px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: 0.5s; font-family: inherit; }
-        #toast.show { visibility: visible; opacity: 1; bottom: 50px; }
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 2000; left: 50%; bottom: 100px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: 0.5s; font-family: inherit; }
+        #toast.show { visibility: visible; opacity: 1; bottom: 120px; }
         footer { color: var(--footer-text); text-align: center; padding: 40px 20px; font-size: 0.8rem; margin-top: 20px; border-top: 1px solid #ddd; opacity: 0.8; }
         .footer-link { color: var(--text); text-decoration: none; border-bottom: 1px dashed var(--text); transition: 0.2s; }
         .footer-link:hover { color: var(--primary); border-color: var(--primary); }
@@ -203,32 +260,15 @@
         .guide-chip { background: var(--primary); color: #fff; padding: 6px 12px; border-radius: 20px; font-size: 0.9rem; cursor: pointer; opacity: 0.8; transition: 0.2s; }
         .guide-chip:hover { opacity: 1; transform: scale(1.05); }
 
-        /* ▼▼▼ 追加：レイヤー専用ページヘッダー ▼▼▼ */
-        .profile-header {
-            text-align: center; padding: 20px 15px; margin-bottom: 10px;
-            background: linear-gradient(135deg, rgba(92,106,196,0.1) 0%, rgba(255,71,87,0.1) 100%);
-            border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); position: relative;
-        }
-        .profile-close {
-            position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.1); color: var(--text);
-            border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 1.2rem; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; transition: 0.2s;
-        }
+        .profile-header { text-align: center; padding: 20px 15px; margin-bottom: 10px; background: linear-gradient(135deg, rgba(92,106,196,0.1) 0%, rgba(255,71,87,0.1) 100%); border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); position: relative; }
+        .profile-close { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.1); color: var(--text); border: none; border-radius: 50%; width: 30px; height: 30px; font-size: 1.2rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
         .profile-close:hover { background: rgba(0,0,0,0.2); }
         .profile-name { font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; }
-        .profile-link-btn {
-            display: inline-flex; align-items: center; gap: 8px;
-            background: #000; color: #fff; padding: 8px 20px; border-radius: 25px;
-            text-decoration: none; font-weight: bold; font-size: 0.9rem;
-            transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
+        .profile-link-btn { display: inline-flex; align-items: center; gap: 8px; background: #000; color: #fff; padding: 8px 20px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 0.9rem; transition: transform 0.2s; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
         .profile-link-btn:hover { transform: scale(1.05); }
         .profile-info { font-size: 0.85rem; opacity: 0.9; margin-top: 15px; }
         .profile-tags { margin-top: 8px; }
-        .profile-tag-chip {
-            display: inline-block; background: rgba(255,255,255,0.5); color: var(--primary);
-            padding: 3px 10px; border-radius: 15px; font-size: 0.8rem; margin: 2px; font-weight: bold;
-        }
+        .profile-tag-chip { display: inline-block; background: rgba(255,255,255,0.5); color: var(--primary); padding: 3px 10px; border-radius: 15px; font-size: 0.8rem; margin: 2px; font-weight: bold; }
         .profile-back { margin-top: 15px; font-size: 0.85rem; color: var(--primary); cursor: pointer; text-decoration: underline; background: none; border: none; }
     </style>
 </head>
@@ -262,9 +302,15 @@
 </header>
 
 <nav>
-    <button onclick="setMode('member')" class="view-btn active" id="nav-member">メンバー別</button>
-    <button onclick="setMode('cosplayer')" class="view-btn" id="nav-cosplayer">レイヤー別</button>
-    <button onclick="setMode('favorite')" class="view-btn" id="nav-favorite">💖 お気に入り</button>
+    <button onclick="setMode('member')" class="view-btn active" id="nav-member">
+        <i class="fas fa-home"></i> メンバー別
+    </button>
+    <button onclick="setMode('cosplayer')" class="view-btn" id="nav-cosplayer">
+        <i class="fas fa-users"></i> レイヤー別
+    </button>
+    <button onclick="setMode('favorite')" class="view-btn" id="nav-favorite">
+        <i class="fas fa-heart"></i> お気に入り
+    </button>
 </nav>
 
 <main id="app">
