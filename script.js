@@ -4,7 +4,6 @@
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog";
 
-// ▼▼▼ タグ翻訳辞書 ▼▼▼
 const tagMapping = {
     // 【衣装】
     "school_uniform": "制服", "maid": "メイド", "gym_uniform": "ジャージ",
@@ -95,7 +94,6 @@ window.onload = function() {
                 .map((item, index) => {
                     item._originalIndex = index;
                     
-                    // タグ翻訳
                     let rawTags = item["Tags"] || item["タグ"] || ""; 
                     let tagKeywords = "";
                     for (const [engTag, japWord] of Object.entries(tagMapping)) {
@@ -104,11 +102,9 @@ window.onload = function() {
                         }
                     }
 
-                    // ユニット名読み込み
                     let unitName = item["ユニット"] || item["Unit"] || item["unit"] || "";
                     item._unitName = unitName.trim();
 
-                    // 検索用テキスト作成
                     item._searchKey = (
                         item.member + 
                         (memberReadings[item.member] || "") + 
@@ -213,19 +209,19 @@ function createCardHTML(item) {
     const safeMember = (item.member || "").replace(/"/g, '&quot;');
     const safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
     
-    // ★ユニット名があれば表示＆クリックで検索
     let unitHtml = '';
     if (item._unitName) {
         unitHtml = `<span class="card-unit" onclick="event.stopPropagation(); filterByText('${item._unitName}')">${item._unitName}</span>`;
     }
     
+    // ★変更：画像が読み込まれたらフワッと表示させる (onloadを追加)
     return `
     <div class="card" onclick="openModal('${item.image}')">
-        ${isNew ? '<div class="new-badge">NEW</div>' : ''}
+        ${isNew ? '<div class="card-new">NEW</div>' : ''}
         <button class="card-fav ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav('${item.image}', this)">
             <i class="fas fa-heart"></i>
         </button>
-        <img src="${item.image}" loading="lazy" onerror="this.src='https://placehold.jp/300x300.png?text=No+Image'">
+        <img src="${item.image}" loading="lazy" onload="this.style.opacity=1" onerror="this.src='https://placehold.jp/300x300.png?text=No+Image'">
         <div class="card-overlay">
             <div style="display:flex; flex-wrap:wrap; width:100%;">
                 <span class="card-tag">${safeMember}</span>
@@ -245,7 +241,7 @@ function filterByText(text) {
         input.value = text;
         handleSearch();
         showToast(`「${text}」で絞り込みました🔍`);
-        closeModal(); // モーダルを閉じる
+        closeModal(); 
         scrollToTop();
     }
 }
@@ -328,40 +324,21 @@ function updateModal() {
     document.getElementById('m-img').src = item.image;
     document.getElementById('m-link').href = item.link; 
     
-    // ★ここが新機能！タグボタンの生成
     const tagsContainer = document.getElementById('m-tags');
     if (tagsContainer) {
-        tagsContainer.innerHTML = ''; // クリア
-        
-        // 1. メンバー名のタグ
-        if (item.member) {
-            tagsContainer.innerHTML += `<span class="modal-tag-chip" onclick="filterByText('${item.member}')">${item.member}</span>`;
-        }
-        
-        // 2. ユニット名のタグ
-        if (item._unitName) {
-            tagsContainer.innerHTML += `<span class="modal-tag-chip" onclick="filterByText('${item._unitName}')">${item._unitName}</span>`;
-        }
+        tagsContainer.innerHTML = ''; 
+        if (item.member) tagsContainer.innerHTML += `<span class="modal-tag-chip" onclick="filterByText('${item.member}')">${item.member}</span>`;
+        if (item._unitName) tagsContainer.innerHTML += `<span class="modal-tag-chip" onclick="filterByText('${item._unitName}')">${item._unitName}</span>`;
 
-        // 3. AIタグ (Tags列) を解析して表示
         let rawTags = item["Tags"] || item["タグ"] || "";
         let tagsArray = rawTags.split(',').map(t => t.trim()).filter(t => t);
         const ignoreList = ["best quality", "high quality", "absurdres", "1girl", "2girls", "multiple_girls", "cosplay", "general"];
 
         tagsArray.forEach(tag => {
-            // 無視リストに含まれず、かつ辞書にあるものだけ日本語化して表示
             if (ignoreList.includes(tag.toLowerCase())) return;
-
             let displayText = "";
-            if (tagMapping[tag]) {
-                displayText = tagMapping[tag].split(" ")[0]; // 辞書の最初の単語（例："眼鏡 メガネ" -> "眼鏡"）
-            } 
-            // もし辞書になくてもそのまま出したいなら下記を有効化（今回は辞書にあるものだけに限定してスッキリさせる）
-            // else { displayText = tag; }
-
-            if (displayText) {
-                tagsContainer.innerHTML += `<span class="modal-tag-chip" onclick="filterByText('${displayText}')">${displayText}</span>`;
-            }
+            if (tagMapping[tag]) displayText = tagMapping[tag].split(" ")[0]; 
+            if (displayText) tagsContainer.innerHTML += `<span class="modal-tag-chip" onclick="filterByText('${displayText}')">${displayText}</span>`;
         });
     }
 }
@@ -550,7 +527,7 @@ function closeStory() {
 }
 
 // ==========================================
-// 🌸 ユニット・ペア検索ボタン機能（絵文字なし版）
+// 🌸 ユニット・ペア検索ボタン機能
 // ==========================================
 const unitList = [
     { label: "花芽姉妹", keyword: "花芽姉妹" },
