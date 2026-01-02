@@ -8,7 +8,6 @@ const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ
 const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog";
 
 const tagMapping = {
-    // 【衣装】
     "school_uniform": "制服", "maid": "メイド", "gym_uniform": "ジャージ",
     "swimsuit": "水着", "bikini": "ビキニ", "santa_costume": "サンタ",
     "kimono": "着物", "yukata": "浴衣", "dress": "ドレス",
@@ -16,7 +15,6 @@ const tagMapping = {
     "nurse": "ナース", "police": "ポリス", "idol": "アイドル衣装",
     "bunny": "バニー", "miko": "巫女", "waitress": "ウェイトレス",
     "pajamas": "パジャマ", "track_suit": "ジャージ",
-    // 【特徴】
     "glasses": "眼鏡", "animal_ears": "ケモミミ", "cat_ears": "猫耳",
     "rabbit_ears": "うさ耳", "fox_ears": "狐耳", "dog_ears": "犬耳",
     "headphones": "ヘッドホン", "mask": "マスク", "twintails": "ツインテ",
@@ -46,7 +44,7 @@ const memberIcons = {
     "蝶屋はなび": "🦋🎆", "甘結もか": "🕹🔖"
 };
 
-// ★推し色設定 (ここが新機能！)
+// ★推し色設定
 const memberColors = {
     "花芽すみれ": "#b0c4de", "花芽なずな": "#fabedc", "小雀とと": "#f5eb4a",
     "一ノ瀬うるは": "#4182fa", "胡桃のあ": "#ffdbfe", "兎咲ミミ": "#c7b2d6",
@@ -59,9 +57,6 @@ const memberColors = {
 };
 const defaultColor = "#5c6ac4";
 
-// ==========================================
-//  状態管理変数
-// ==========================================
 let allData = [];
 let filteredData = []; 
 let currentMode = 'member';
@@ -81,9 +76,6 @@ let currentStoryMemberIndex = 0;
 let currentStorySlideIndex = 0;
 let storyTimer = null;
 
-// ==========================================
-//  初期化処理
-// ==========================================
 window.onload = function() {
     const contactLink = document.getElementById('contact-link');
     if (FORM_URL && contactLink) { contactLink.href = FORM_URL; }
@@ -145,9 +137,6 @@ window.onload = function() {
     });
 };
 
-// ==========================================
-//  レンダリング
-// ==========================================
 function render() {
     const app = document.getElementById('app');
     app.innerHTML = '';
@@ -159,16 +148,16 @@ function render() {
 
     if (slideshowList.length === 0) {
         let msg = (currentMode === 'history') ? 
-            `<div class="empty-guide"><div style="font-size:3rem; margin-bottom:10px;">🕒</div><p>閲覧履歴はありません</p><p style="font-size:0.8rem; color:#888;">画像を見るとここに表示されます</p></div>` :
-            `<div class="empty-guide"><div style="font-size:3rem; margin-bottom:10px;">😢</div><p>条件に合う画像が見つかりませんでした...</p><p style="margin-top:20px; font-weight:bold;">人気のタグで探してみる？</p><div class="guide-tags"><span class="guide-chip" onclick="filterByText('メイド')">メイド</span><span class="guide-chip" onclick="filterByText('制服')">制服</span><span class="guide-chip" onclick="filterByText('水着')">水着</span><span class="guide-chip" onclick="filterByText('眼鏡')">眼鏡</span><span class="guide-chip" onclick="filterByText('猫耳')">猫耳</span><span class="guide-chip" onclick="filterByText('バニー')">バニー</span></div></div>`;
+            `<div class="empty-guide"><div style="font-size:3rem; margin-bottom:10px;">🕒</div><p>閲覧履歴はありません</p></div>` :
+            `<div class="empty-guide"><div style="font-size:3rem; margin-bottom:10px;">😢</div><p>画像が見つかりませんでした...</p></div>`;
         app.innerHTML = msg;
         if(sentinel) sentinel.style.display = 'none';
         return;
     }
+    
+    const isGroup = !(currentSort === 'new' || currentSort === 'shuffle' || currentMode === 'favorite' || currentMode === 'cosplayer' || currentMode === 'history');
 
-    isGroupMode = !(currentSort === 'new' || currentSort === 'shuffle' || currentMode === 'favorite' || currentMode === 'cosplayer' || currentMode === 'history');
-
-    if (isGroupMode) {
+    if (isGroup) {
         renderGroupMode(app);
         if(sentinel) sentinel.style.display = 'none';
     } else {
@@ -176,7 +165,6 @@ function render() {
     }
 }
 
-// ★推し色変更関数
 function setThemeColor(memberName) {
     const color = (memberName && memberColors[memberName]) ? memberColors[memberName] : defaultColor;
     document.documentElement.style.setProperty('--primary', color);
@@ -256,7 +244,6 @@ function clearSearch() {
 }
 
 function loadMore() {
-    if (isGroupMode) return;
     if (displayLimit >= slideshowList.length) return;
     displayLimit += displayStep;
     renderFlatMode(document.getElementById('app'));
@@ -286,7 +273,6 @@ function createCardHTML(item) {
     let unitHtml = '';
     if (item._unitName) { unitHtml = `<span class="card-unit" onclick="event.stopPropagation(); filterByText('${item._unitName}')">${item._unitName}</span>`; }
     
-    // ★ダブルタップ (ondblclick) イベント追加
     return `
     <div class="card" onclick="openModal('${item.image}')" ondblclick="event.stopPropagation(); playHeart(this); toggleFav('${item.image}', this.querySelector('.card-fav'))">
         ${isNew ? '<div class="card-new">NEW</div>' : ''}
@@ -304,7 +290,6 @@ function createCardHTML(item) {
     </div>`;
 }
 
-// ★ダブルタップ用ハート演出
 function playHeart(cardElement) {
     const heart = document.createElement('i');
     heart.className = 'fas fa-heart pop-heart';
@@ -312,9 +297,6 @@ function playHeart(cardElement) {
     setTimeout(() => heart.remove(), 1000); 
 }
 
-// ==========================================
-//  検索・ソート
-// ==========================================
 function filterByText(text) {
     const input = document.getElementById('searchInput');
     if(input) { input.value = text; handleSearch(); showToast(`「${text}」で絞り込みました🔍`); closeModal(); scrollToTop(); }
@@ -327,7 +309,6 @@ function handleSearch() {
     const keywords = rawKey.split(/\s+/).filter(k => k.trim() !== "");
     filteredData = allData.filter(d => keywords.every(k => d._searchKey.includes(k)));
     
-    // 検索ワードでの色変更チェック
     const exactMember = Object.keys(memberReadings).find(m => m === input.value.trim());
     setThemeColor(exactMember || null);
 
@@ -346,20 +327,12 @@ function setSort(type) {
     applySort();
 }
 
-function applySort() {
-    if(currentSort === 'new') filteredData.sort((a,b) => b._originalIndex - a._originalIndex);
-    else if(currentSort === 'original') filteredData.sort((a,b) => a._originalIndex - b._originalIndex);
-    else if(currentSort === 'shuffle') filteredData.sort(() => Math.random() - 0.5);
-    render();
-}
-
 function setMode(mode) {
     currentMode = mode;
     document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
     const navBtn = document.getElementById('nav-' + mode);
     if(navBtn) navBtn.classList.add('active');
     
-    // モード切替時は色リセット
     setThemeColor(null);
     render();
 }
@@ -373,23 +346,6 @@ function generateMemberTags() {
     });
 }
 
-function filterByMember(name, el) {
-    document.querySelectorAll('.member-chip').forEach(c=>c.classList.remove('active'));
-    if(el) el.classList.add('active');
-    if(name==='all') {
-        filteredData = [...allData];
-        setThemeColor(null);
-    } else {
-        filteredData = allData.filter(d=>d.member===name);
-        setThemeColor(name);
-    }
-    setMode('member');
-    applySort();
-}
-
-// ==========================================
-//  モーダル (画像拡大) ＆ レコメンド ＆ 履歴
-// ==========================================
 function prepareSlideshowList() {
     if (currentMode === 'favorite') {
         slideshowList = allData.filter(item => favorites.includes(item.image));
@@ -427,7 +383,6 @@ function updateModal() {
     if(!item) return;
     document.getElementById('m-img').src = item.image;
     document.getElementById('m-link').href = item.link; 
-    
     const btnProfile = document.getElementById('btn-profile');
     if (btnProfile && item.link) {
         const match = item.link.match(/https?:\/\/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/);
@@ -436,7 +391,6 @@ function updateModal() {
             btnProfile.href = `https://twitter.com/${match[1]}`;
         } else { btnProfile.style.display = 'none'; }
     } else if (btnProfile) { btnProfile.style.display = 'none'; }
-
     const tagsContainer = document.getElementById('m-tags');
     if (tagsContainer) {
         tagsContainer.innerHTML = ''; 
@@ -452,7 +406,6 @@ function updateModal() {
             if (displayText) tagsContainer.innerHTML += `<span class="modal-tag-chip" onclick="filterByText('${displayText}')">${displayText}</span>`;
         });
     }
-
     const recContainer = document.getElementById('m-recommend');
     const recLabel = document.getElementById('rec-label');
     if (recContainer && recLabel) {
@@ -512,9 +465,6 @@ function toggleAutoPlay() {
     else { autoPlayInterval = setInterval(() => changeImage(1), 3000); }
 }
 
-// ==========================================
-//  お気に入り・シェア・その他機能
-// ==========================================
 function toggleFav(imgUrl, btn) {
     if (favorites.includes(imgUrl)) favorites = favorites.filter(u => u !== imgUrl);
     else favorites.push(imgUrl);
@@ -559,9 +509,6 @@ window.onscroll = function() {
     }
 };
 
-// ==========================================
-//  ストーリーズ機能
-// ==========================================
 function generateStories() {
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     let seed = parseInt(today);
