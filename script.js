@@ -4,34 +4,22 @@
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog";
 
-// ▼▼▼ 新機能：タグ翻訳辞書 ▼▼▼
-// 英語タグを日本語の検索ワードに変換します
+// ▼▼▼ タグ翻訳辞書 ▼▼▼
 const tagMapping = {
     // 【衣装】
-    "school_uniform": "制服",
-    "maid": "メイド",
-    "gym_uniform": "ジャージ 体操服",
-    "swimsuit": "水着",
-    "bikini": "水着",
-    "santa_costume": "サンタ",
-    "kimono": "着物 和服",
-    "yukata": "浴衣",
-    "dress": "ドレス",
-    "china_dress": "チャイナ",
-    "hoodie": "パーカー",
-    "jacket": "ジャケット アウター",
-    // 【特徴・アクセサリ】
-    "glasses": "眼鏡 メガネ",
-    "animal_ears": "ケモミミ",       // 「猫耳」という言葉を外す（どうしても検索させたければ残す）
-　　"cat_ears": "猫耳",             // 猫耳だけをヒットさせる
-    "rabbit_ears": "バニー うさ耳",   // バニーを分けちゃう
-    "fox_ears": "狐耳",             // 狐（白上フブキさん的な）も分けちゃう
-    "headphones": "ヘッドホン",
-    "mask": "マスク",
-    "twintails": "ツインテール",
-    "ponytail": "ポニーテール",
-    "short_hair": "ショート",
-    "long_hair": "ロング"
+    "school_uniform": "制服", "maid": "メイド", "gym_uniform": "ジャージ",
+    "swimsuit": "水着", "bikini": "ビキニ", "santa_costume": "サンタ",
+    "kimono": "着物", "yukata": "浴衣", "dress": "ドレス",
+    "china_dress": "チャイナ", "hoodie": "パーカー", "jacket": "ジャケット",
+    "nurse": "ナース", "police": "ポリス", "idol": "アイドル衣装",
+    "bunny": "バニー", "miko": "巫女", "waitress": "ウェイトレス",
+    "pajamas": "パジャマ", "track_suit": "ジャージ",
+    // 【特徴】
+    "glasses": "眼鏡", "animal_ears": "ケモミミ", "cat_ears": "猫耳",
+    "rabbit_ears": "うさ耳", "fox_ears": "狐耳", "dog_ears": "犬耳",
+    "headphones": "ヘッドホン", "mask": "マスク", "twintails": "ツインテ",
+    "ponytail": "ポニテ", "short_hair": "ショート", "long_hair": "ロング",
+    "braid": "三つ編み", "ahoge": "アホ毛", "heterochromia": "オッドアイ"
 };
 
 const memberReadings = {
@@ -72,29 +60,26 @@ let displayLimit = 40;
 let displayStep = 40;
 let isGroupMode = false;
 
-// ストーリーズ用変数
 let storiesData = [];
 let currentStoryMemberIndex = 0;
 let currentStorySlideIndex = 0;
 let storyTimer = null;
 
 // ==========================================
-//  初期化処理 (window.onload)
+//  初期化処理
 // ==========================================
 window.onload = function() {
-    // お問い合わせリンク設定
     const contactLink = document.getElementById('contact-link');
     if (FORM_URL && contactLink) { contactLink.href = FORM_URL; }
 
     generateMemberTags();
+    renderUnitButtons();
     
-    // シェア機能チェック
     if (navigator.share) {
         const btnNative = document.getElementById('btn-native');
         if(btnNative) btnNative.style.display = 'flex';
     }
 
-    // キーボード操作設定
     document.addEventListener('keydown', function(e) {
         if (!document.getElementById('modal').classList.contains('open')) return;
         if (e.key === 'ArrowLeft') changeImage(-1);
@@ -102,33 +87,34 @@ window.onload = function() {
         if (e.key === 'Escape') closeModal();
     });
     
-    // CSV読み込み＆データ加工（★ここが進化しました！）
     Papa.parse(CSV_URL, {
         download: true, header: true,
         complete: function(results) {
             allData = results.data
-                .filter(item => item.member && item.image) // 空行除外
+                .filter(item => item.member && item.image)
                 .map((item, index) => {
                     item._originalIndex = index;
                     
-                    // ★進化ポイント：タグ情報の翻訳と結合
-                    let rawTags = item["Tags"] || ""; // E列(ヘッダー名が'タグ'である前提)
+                    // タグ翻訳
+                    let rawTags = item["Tags"] || item["タグ"] || ""; 
                     let tagKeywords = "";
-
-                    // 辞書にある英語タグが含まれていたら、日本語キーワードを追加
                     for (const [engTag, japWord] of Object.entries(tagMapping)) {
                         if (rawTags.includes(engTag)) {
                             tagKeywords += " " + japWord;
                         }
                     }
 
-                    // 検索用テキストを作成
-                    // メンバー名 + ひらがな + コスプレイヤー名 + ★翻訳したタグ
+                    // ユニット名読み込み
+                    let unitName = item["ユニット"] || item["Unit"] || item["unit"] || "";
+                    item._unitName = unitName.trim();
+
+                    // 検索用テキスト作成
                     item._searchKey = (
                         item.member + 
                         (memberReadings[item.member] || "") + 
                         item.cosplayer + 
-                        tagKeywords
+                        tagKeywords + 
+                        " " + unitName 
                     ).toLowerCase();
 
                     return item;
@@ -145,7 +131,6 @@ window.onload = function() {
         error: function() { document.getElementById('app').innerHTML = '<p style="text-align:center;">読み込み失敗</p>'; }
     });
 
-    // 無限スクロール
     window.addEventListener('scroll', () => {
         if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
             loadMore();
@@ -154,7 +139,7 @@ window.onload = function() {
 };
 
 // ==========================================
-//  表示・レンダリング関連
+//  レンダリング
 // ==========================================
 function render() {
     const app = document.getElementById('app');
@@ -182,7 +167,6 @@ function renderFlatMode(container) {
         grid.className = 'masonry-grid';
         container.appendChild(grid);
     }
-
     const targetData = slideshowList.slice(0, displayLimit);
     let html = '';
     targetData.forEach(item => { html += createCardHTML(item); });
@@ -229,6 +213,12 @@ function createCardHTML(item) {
     const safeMember = (item.member || "").replace(/"/g, '&quot;');
     const safeCos = (item.cosplayer || "").replace(/"/g, '&quot;');
     
+    // ★ユニット名があれば表示＆クリックで検索
+    let unitHtml = '';
+    if (item._unitName) {
+        unitHtml = `<span class="card-unit" onclick="event.stopPropagation(); filterByText('${item._unitName}')">${item._unitName}</span>`;
+    }
+    
     return `
     <div class="card" onclick="openModal('${item.image}')">
         ${isNew ? '<div class="new-badge">NEW</div>' : ''}
@@ -237,14 +227,17 @@ function createCardHTML(item) {
         </button>
         <img src="${item.image}" loading="lazy" onerror="this.src='https://placehold.jp/300x300.png?text=No+Image'">
         <div class="card-overlay">
-            <span class="card-tag">${safeMember}</span>
+            <div style="display:flex; flex-wrap:wrap; width:100%;">
+                <span class="card-tag">${safeMember}</span>
+                ${unitHtml}
+            </div>
             <div class="card-name" title="このレイヤーさんで検索" onclick="event.stopPropagation(); filterByText('${safeCos}')">${safeCos}</div>
         </div>
     </div>`;
 }
 
 // ==========================================
-//  検索・ソート・フィルタリング
+//  検索・ソート
 // ==========================================
 function filterByText(text) {
     const input = document.getElementById('searchInput');
@@ -252,6 +245,7 @@ function filterByText(text) {
         input.value = text;
         handleSearch();
         showToast(`「${text}」で絞り込みました🔍`);
+        closeModal(); // モーダルを閉じる
         scrollToTop();
     }
 }
@@ -259,16 +253,9 @@ function filterByText(text) {
 function handleSearch() {
     const input = document.getElementById('searchInput');
     if(!input) return;
-
-    // ★進化ポイント：スペース区切りでAND検索（例：「うるは 眼鏡」）
     const rawKey = input.value.toLowerCase();
-    const keywords = rawKey.split(/\s+/).filter(k => k.trim() !== ""); // 空白で分割
-
-    filteredData = allData.filter(d => {
-        // 全てのキーワードが含まれているかチェック (AND検索)
-        return keywords.every(k => d._searchKey.includes(k));
-    });
-
+    const keywords = rawKey.split(/\s+/).filter(k => k.trim() !== "");
+    filteredData = allData.filter(d => keywords.every(k => d._searchKey.includes(k)));
     applySort();
 }
 
@@ -278,7 +265,6 @@ function setSort(type) {
     const btnNew = document.getElementById('btn-new');
     const btnOrig = document.getElementById('btn-orig');
     const btnShuf = document.getElementById('btn-shuf');
-    
     if(type === 'new' && btnNew) btnNew.classList.add('active');
     if(type === 'original' && btnOrig) btnOrig.classList.add('active');
     if(type === 'shuffle' && btnShuf) btnShuf.classList.add('active');
@@ -319,7 +305,7 @@ function filterByMember(name, el) {
 }
 
 // ==========================================
-//  モーダル・スライドショー
+//  モーダル (画像拡大) ＆ タグ生成
 // ==========================================
 function prepareSlideshowList() {
     if (currentMode === 'favorite') slideshowList = allData.filter(item => favorites.includes(item.image));
@@ -340,7 +326,44 @@ function updateModal() {
     const item = slideshowList[currentImageIndex];
     if(!item) return;
     document.getElementById('m-img').src = item.image;
-    document.getElementById('m-link').href = item.link; // 元ツイートリンク
+    document.getElementById('m-link').href = item.link; 
+    
+    // ★ここが新機能！タグボタンの生成
+    const tagsContainer = document.getElementById('m-tags');
+    if (tagsContainer) {
+        tagsContainer.innerHTML = ''; // クリア
+        
+        // 1. メンバー名のタグ
+        if (item.member) {
+            tagsContainer.innerHTML += `<span class="modal-tag-chip" onclick="filterByText('${item.member}')">${item.member}</span>`;
+        }
+        
+        // 2. ユニット名のタグ
+        if (item._unitName) {
+            tagsContainer.innerHTML += `<span class="modal-tag-chip" onclick="filterByText('${item._unitName}')">${item._unitName}</span>`;
+        }
+
+        // 3. AIタグ (Tags列) を解析して表示
+        let rawTags = item["Tags"] || item["タグ"] || "";
+        let tagsArray = rawTags.split(',').map(t => t.trim()).filter(t => t);
+        const ignoreList = ["best quality", "high quality", "absurdres", "1girl", "2girls", "multiple_girls", "cosplay", "general"];
+
+        tagsArray.forEach(tag => {
+            // 無視リストに含まれず、かつ辞書にあるものだけ日本語化して表示
+            if (ignoreList.includes(tag.toLowerCase())) return;
+
+            let displayText = "";
+            if (tagMapping[tag]) {
+                displayText = tagMapping[tag].split(" ")[0]; // 辞書の最初の単語（例："眼鏡 メガネ" -> "眼鏡"）
+            } 
+            // もし辞書になくてもそのまま出したいなら下記を有効化（今回は辞書にあるものだけに限定してスッキリさせる）
+            // else { displayText = tag; }
+
+            if (displayText) {
+                tagsContainer.innerHTML += `<span class="modal-tag-chip" onclick="filterByText('${displayText}')">${displayText}</span>`;
+            }
+        });
+    }
 }
 
 function closeModal() {
@@ -380,7 +403,7 @@ function nativeShare() {
         navigator.share({
             title: 'ぶいすぽっ！コスプレアーカイブ',
             text: `${item.member} (${item.cosplayer}さん) のコスプレ！ #ぶいすぽっ`,
-            url: item.link || window.location.href // リンクがない場合のフォールバック
+            url: item.link || window.location.href 
         }).catch(console.error);
     }
 }
@@ -524,4 +547,73 @@ function prevStory() {
 function closeStory() {
     if(storyTimer) clearTimeout(storyTimer);
     document.getElementById('story-viewer').classList.remove('active');
+}
+
+// ==========================================
+// 🌸 ユニット・ペア検索ボタン機能（絵文字なし版）
+// ==========================================
+const unitList = [
+    { label: "花芽姉妹", keyword: "花芽姉妹" },
+    { label: "あいかが", keyword: "あいかが" },
+    { label: "ととつな", keyword: "ととつな" },
+    { label: "ととリサ", keyword: "ととリサ" },
+    { label: "BIG☆STAR", keyword: "BIG☆STAR" },
+    { label: "のせれん", keyword: "のせれん" },
+    { label: "のせミミ", keyword: "のせミミ" },
+    { label: "のあうひ", keyword: "のあうひ" },
+    { label: "のあらむ", keyword: "のあらむ" },
+    { label: "わざとあざとエキスパート", keyword: "わざとあざとエキスパート歌みた" },
+    { label: "のあセナ", keyword: "のあセナ" },
+    { label: "セナひな", keyword: "セナひな" },
+    { label: "セナうひ", keyword: "セナうひ" },
+    { label: "セナつな", keyword: "セナつな" },
+    { label: "はなばな", keyword: "はなばな" },
+    { label: "花鳥牛月", keyword: "花鳥牛月" },
+    { label: "こかげに咲くはなばな", keyword: "こかげに咲くはなばな" },
+    { label: "すみひな", keyword: "すみひな" },
+    { label: "のせひな", keyword: "のせひな" },
+    { label: "のあひな", keyword: "のあひな" },
+    { label: "べにエマ", keyword: "べにエマ" },
+    { label: "ひなるな", keyword: "ひなるな" },
+    { label: "すみるな", keyword: "すみるな" },
+    { label: "寒色組", keyword: "寒色組" },
+    { label: "ひなつな", keyword: "ひなつな" },
+    { label: "つならむ", keyword: "つならむ" },
+    { label: "バカ信号機", keyword: "バカ信号機" },
+    { label: "くろかげ", keyword: "くろかげ" },
+    { label: "蝶結び", keyword: "蝶結び" },
+    { label: "集合・コラボ", keyword: "集合" }
+];
+
+function renderUnitButtons() {
+    const container = document.getElementById('unit-buttons-container');
+    if (!container) return;
+    
+    container.innerHTML = ""; 
+
+    unitList.forEach(unit => {
+        const btn = document.createElement('button');
+        btn.innerText = unit.label;
+        
+        btn.className = "tool-btn"; 
+        btn.style.backgroundColor = "rgba(255,255,255,0.15)";
+        btn.style.border = "1px solid rgba(255,255,255,0.3)";
+        btn.style.marginRight = "6px";
+        btn.style.borderRadius = "15px";
+        btn.style.whiteSpace = "nowrap";
+
+        btn.onclick = () => {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) {
+                searchInput.value = unit.keyword; 
+                if (typeof handleSearch === "function") {
+                    handleSearch();
+                } else {
+                    const event = new Event('input');
+                    searchInput.dispatchEvent(event);
+                }
+            }
+        };
+        container.appendChild(btn);
+    });
 }
