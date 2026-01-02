@@ -1,6 +1,9 @@
 // ==========================================
 //  設定・データ定義エリア
 // ==========================================
+// 読み込み確認用ログ
+console.log("Script Loaded: Version Ultimate-Color");
+
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog";
 
@@ -43,7 +46,7 @@ const memberIcons = {
     "蝶屋はなび": "🦋🎆", "甘結もか": "🕹🔖"
 };
 
-// ★修正：ご提供いただいた正確なメンバーカラー定義
+// ★推し色設定 (ここが新機能！)
 const memberColors = {
     "花芽すみれ": "#b0c4de", "花芽なずな": "#fabedc", "小雀とと": "#f5eb4a",
     "一ノ瀬うるは": "#4182fa", "胡桃のあ": "#ffdbfe", "兎咲ミミ": "#c7b2d6",
@@ -173,6 +176,36 @@ function render() {
     }
 }
 
+// ★推し色変更関数
+function setThemeColor(memberName) {
+    const color = (memberName && memberColors[memberName]) ? memberColors[memberName] : defaultColor;
+    document.documentElement.style.setProperty('--primary', color);
+    const rgb = hexToRgb(color);
+    if (rgb) {
+        document.documentElement.style.setProperty('--glass-bg', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`);
+    }
+}
+
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
+}
+
+function filterByMember(name, el) {
+    document.querySelectorAll('.member-chip').forEach(c=>c.classList.remove('active'));
+    if(el) el.classList.add('active');
+    
+    if(name==='all') {
+        filteredData = [...allData];
+        setThemeColor(null);
+    } else {
+        filteredData = allData.filter(d=>d.member===name);
+        setThemeColor(name);
+    }
+    setMode('member');
+    applySort();
+}
+
 function renderFlatMode(container) {
     const searchInput = document.getElementById('searchInput');
     const searchTerm = searchInput ? searchInput.value.trim() : "";
@@ -253,6 +286,7 @@ function createCardHTML(item) {
     let unitHtml = '';
     if (item._unitName) { unitHtml = `<span class="card-unit" onclick="event.stopPropagation(); filterByText('${item._unitName}')">${item._unitName}</span>`; }
     
+    // ★ダブルタップ (ondblclick) イベント追加
     return `
     <div class="card" onclick="openModal('${item.image}')" ondblclick="event.stopPropagation(); playHeart(this); toggleFav('${item.image}', this.querySelector('.card-fav'))">
         ${isNew ? '<div class="card-new">NEW</div>' : ''}
@@ -270,6 +304,7 @@ function createCardHTML(item) {
     </div>`;
 }
 
+// ★ダブルタップ用ハート演出
 function playHeart(cardElement) {
     const heart = document.createElement('i');
     heart.className = 'fas fa-heart pop-heart';
@@ -292,6 +327,7 @@ function handleSearch() {
     const keywords = rawKey.split(/\s+/).filter(k => k.trim() !== "");
     filteredData = allData.filter(d => keywords.every(k => d._searchKey.includes(k)));
     
+    // 検索ワードでの色変更チェック
     const exactMember = Object.keys(memberReadings).find(m => m === input.value.trim());
     setThemeColor(exactMember || null);
 
@@ -322,6 +358,8 @@ function setMode(mode) {
     document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
     const navBtn = document.getElementById('nav-' + mode);
     if(navBtn) navBtn.classList.add('active');
+    
+    // モード切替時は色リセット
     setThemeColor(null);
     render();
 }
@@ -347,19 +385,6 @@ function filterByMember(name, el) {
     }
     setMode('member');
     applySort();
-}
-
-function setThemeColor(memberName) {
-    const color = (memberName && memberColors[memberName]) ? memberColors[memberName] : defaultColor;
-    document.documentElement.style.setProperty('--primary', color);
-    const rgb = hexToRgb(color);
-    if (rgb) {
-        document.documentElement.style.setProperty('--glass-bg', `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.95)`);
-    }
-}
-function hexToRgb(hex) {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? { r: parseInt(result[1], 16), g: parseInt(result[2], 16), b: parseInt(result[3], 16) } : null;
 }
 
 // ==========================================
@@ -487,6 +512,9 @@ function toggleAutoPlay() {
     else { autoPlayInterval = setInterval(() => changeImage(1), 3000); }
 }
 
+// ==========================================
+//  お気に入り・シェア・その他機能
+// ==========================================
 function toggleFav(imgUrl, btn) {
     if (favorites.includes(imgUrl)) favorites = favorites.filter(u => u !== imgUrl);
     else favorites.push(imgUrl);
@@ -531,6 +559,9 @@ window.onscroll = function() {
     }
 };
 
+// ==========================================
+//  ストーリーズ機能
+// ==========================================
 function generateStories() {
     const today = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     let seed = parseInt(today);
@@ -679,6 +710,4 @@ function closeCosplayerList() {
     const modal = document.getElementById('list-modal');
     if(modal) modal.classList.remove('open');
     if(!document.getElementById('modal').classList.contains('open')) { document.body.classList.remove('modal-open'); }
-    // ▼▼▼ これを一番下に追加して保存！ ▼▼▼
-alert("新しいコードが読み込まれました！推し色機能、準備OKです！");
 }
