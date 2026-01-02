@@ -105,6 +105,9 @@ window.onload = function() {
                     let unitName = item["ユニット"] || item["Unit"] || item["unit"] || "";
                     item._unitName = unitName.trim();
 
+                    // おすすめ機能のためにタグを配列化して保持
+                    item._tagsArray = rawTags.split(',').map(t => t.trim().toLowerCase());
+
                     item._searchKey = (
                         item.member + 
                         (memberReadings[item.member] || "") + 
@@ -214,7 +217,6 @@ function createCardHTML(item) {
         unitHtml = `<span class="card-unit" onclick="event.stopPropagation(); filterByText('${item._unitName}')">${item._unitName}</span>`;
     }
     
-    // ★変更：画像が読み込まれたらフワッと表示させる (onloadを追加)
     return `
     <div class="card" onclick="openModal('${item.image}')">
         ${isNew ? '<div class="card-new">NEW</div>' : ''}
@@ -301,7 +303,7 @@ function filterByMember(name, el) {
 }
 
 // ==========================================
-//  モーダル (画像拡大) ＆ タグ生成
+//  モーダル (画像拡大) ＆ ★レコメンド機能★
 // ==========================================
 function prepareSlideshowList() {
     if (currentMode === 'favorite') slideshowList = allData.filter(item => favorites.includes(item.image));
@@ -310,12 +312,22 @@ function prepareSlideshowList() {
 
 function openModal(url) {
     if(autoPlayInterval) clearInterval(autoPlayInterval);
-    const idx = slideshowList.findIndex(d => d.image === url);
-    if (idx !== -1) currentImageIndex = idx;
-    updateModal();
-    const modal = document.getElementById('modal');
-    if(modal) modal.classList.add('open');
-    document.body.classList.add('modal-open');
+    // 現在のリスト内から探す
+    let idx = slideshowList.findIndex(d => d.image === url);
+    
+    // なければ全体から探してリストを切り替える（レコメンド経由で飛んだ場合など）
+    if (idx === -1) {
+        slideshowList = allData;
+        idx = allData.findIndex(d => d.image === url);
+    }
+    
+    if (idx !== -1) {
+        currentImageIndex = idx;
+        updateModal();
+        const modal = document.getElementById('modal');
+        if(modal) modal.classList.add('open');
+        document.body.classList.add('modal-open');
+    }
 }
 
 function updateModal() {
@@ -324,6 +336,7 @@ function updateModal() {
     document.getElementById('m-img').src = item.image;
     document.getElementById('m-link').href = item.link; 
     
+    // 1. タグ生成
     const tagsContainer = document.getElementById('m-tags');
     if (tagsContainer) {
         tagsContainer.innerHTML = ''; 
@@ -340,6 +353,51 @@ function updateModal() {
             if (tagMapping[tag]) displayText = tagMapping[tag].split(" ")[0]; 
             if (displayText) tagsContainer.innerHTML += `<span class="modal-tag-chip" onclick="filterByText('${displayText}')">${displayText}</span>`;
         });
+    }
+
+    // ★2. AI風レコメンド（おすすめ画像）生成
+    const recContainer = document.getElementById('m-recommend');
+    const recLabel = document.getElementById('rec-label');
+    if (recContainer && recLabel) {
+        recContainer.innerHTML = '';
+        
+        // 自分以外のデータをスコアリングして並び替え
+        const candidates = allData.filter(d => d.image !== item.image).map(other => {
+            let score = 0;
+            // 同じメンバーなら +3点
+            if (other.member === item.member) score += 3;
+            // 同じユニットなら +5点
+            if (item._unitName && other._unitName === item._unitName) score += 5;
+            // 同じレイヤーさんなら +2点
+            if (other.cosplayer === item.cosplayer) score += 2;
+            
+            // 共通するタグが多ければ加点
+            const commonTags = other._tagsArray.filter(t => item._tagsArray.includes(t));
+            const validCommon = commonTags.filter(t => !["best quality", "high quality", "absurdres", "1girl", "cosplay"].includes(t));
+            score += validCommon.length * 1.5;
+
+            return { item: other, score: score };
+        });
+
+        // スコアが高い順に上位4つを取得
+        candidates.sort((a, b) => b.score - a.score);
+        const topPicks = candidates.slice(0, 4);
+
+        if (topPicks.length > 0) {
+            recLabel.style.display = 'block';
+            topPicks.forEach(pick => {
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'recommend-card';
+                imgDiv.innerHTML = `<img src="${pick.item.image}">`;
+                imgDiv.onclick = (e) => {
+                    e.stopPropagation();
+                    openModal(pick.item.image); // おすすめ画像へジャンプ！
+                };
+                recContainer.appendChild(imgDiv);
+            });
+        } else {
+            recLabel.style.display = 'none';
+        }
     }
 }
 
