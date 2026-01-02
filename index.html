@@ -20,24 +20,24 @@
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
 
     <style>
-        /* --- リセット & 基本設定 --- */
+        /* --- 基本設定 --- */
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         :root { 
             --primary: #5c6ac4; /* デフォルト */
             --bg: #f4f6f8; --text: #333; --heart: #ff4757; 
             --glass-bg: rgba(92, 106, 196, 0.95);
-            --nav-height: 60px;
+            --nav-height: 70px;
         }
 
-        /* ▼▼▼ テーマカラー定義 (data-theme属性で管理) ▼▼▼ */
+        /* テーマカラー定義 */
         body[data-theme="花芽すみれ"] { --primary: #b0c4de; --glass-bg: rgba(176, 196, 222, 0.95); }
         body[data-theme="花芽なずな"] { --primary: #fabedc; --glass-bg: rgba(250, 190, 220, 0.95); }
         body[data-theme="小雀とと"]   { --primary: #f5eb4a; --glass-bg: rgba(245, 235, 74, 0.95); }
         body[data-theme="一ノ瀬うるは"] { --primary: #4182fa; --glass-bg: rgba(65, 130, 250, 0.95); }
         body[data-theme="胡桃のあ"]   { --primary: #ffdbfe; --glass-bg: rgba(255, 219, 254, 0.95); }
         body[data-theme="兎咲ミミ"]   { --primary: #c7b2d6; --glass-bg: rgba(199, 178, 214, 0.95); }
-        body[data-theme="空澄セナ"]   { --primary: #b0b0b0; --glass-bg: rgba(200, 200, 200, 0.95); } /* 白すぎ回避 */
+        body[data-theme="空澄セナ"]   { --primary: #b0b0b0; --glass-bg: rgba(200, 200, 200, 0.95); }
         body[data-theme="橘ひなの"]   { --primary: #fa96c8; --glass-bg: rgba(250, 150, 200, 0.95); }
         body[data-theme="英リサ"]     { --primary: #d1de79; --glass-bg: rgba(209, 222, 121, 0.95); }
         body[data-theme="如月れん"]   { --primary: #be2152; --glass-bg: rgba(190, 33, 82, 0.95); }
@@ -82,8 +82,9 @@
         /* ストーリーズ */
         .stories-container { display: flex; gap: 12px; overflow-x: auto; padding: 5px 0 10px; scrollbar-width: none; }
         .stories-container::-webkit-scrollbar { display: none; }
-        .story-item { width: 68px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-        .story-ring { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: linear-gradient(45deg, #f09433, #bc1888); }
+        .story-item { width: 68px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; }
+        .story-item:active { transform: scale(0.95); }
+        .story-ring { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: linear-gradient(45deg, #f09433, #dc2743, #bc1888); }
         .story-ring.seen { background: #ccc; }
         .story-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid #fff; object-fit: cover; }
         .story-name { font-size: 0.65rem; margin-top: 4px; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
@@ -103,10 +104,10 @@
         .member-chip { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 20px; margin-right: 6px; cursor: pointer; font-size: 1.1rem; transition: 0.2s; border: 1px solid transparent; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
         .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; transform: scale(1.1); text-shadow: none; }
 
-        /* ナビゲーション (スマホ:下 / PC:上) */
+        /* ナビゲーション */
         nav { 
             position: fixed; bottom: 0; left: 0; width: 100%; 
-            background: rgba(255,255,255,0.95); backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px);
             z-index: 1000; display: flex; justify-content: space-around; align-items: center;
             padding: 8px 0; padding-bottom: max(8px, env(safe-area-inset-bottom));
             border-top: 1px solid rgba(0,0,0,0.1); box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
@@ -148,14 +149,14 @@
         .pop-heart { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); color: var(--heart); font-size: 4rem; z-index: 20; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); animation: popHeart 0.6s ease-out forwards; }
         @keyframes popHeart { 50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
 
-        /* モーダル系 */
+        /* モーダル */
         .modal, .list-modal, .story-viewer { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 2000; justify-content: center; align-items: center; backdrop-filter: blur(8px); }
         .modal.open, .list-modal.open { display: flex; animation: fadeIn 0.2s; }
         .story-viewer.active { display: flex; animation: fadeIn 0.2s; }
-        .modal img { max-height: 80vh; max-width: 95%; border-radius: 8px; object-fit: contain; }
+        .modal img { max-height: 80vh; max-width: 95%; border-radius: 8px; box-shadow: 0 0 30px rgba(0,0,0,0.5); object-fit: contain; }
         .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.2); color: #fff; border: none; padding: 20px; border-radius: 50%; width: 60px; height: 60px; cursor: pointer; font-size: 1.5rem; }
         .prev-btn { left: 20px; } .next-btn { right: 20px; }
-        .modal-close { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 2.5rem; cursor: pointer; }
+        .modal-close { position: absolute; top: 20px; right: 20px; color: #fff; font-size: 2.5rem; cursor: pointer; z-index: 2010; }
         
         .share-area { position: absolute; bottom: 30px; display: flex; gap: 10px; justify-content: center; width: 100%; flex-wrap: wrap; }
         .share-btn { border: none; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: bold; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 6px; }
@@ -176,22 +177,14 @@
         .profile-back { margin-top: 15px; font-size: 0.85rem; color: var(--primary); cursor: pointer; text-decoration: underline; background: none; border: none; }
 
         /* 共通 */
-        .fab { position: fixed; bottom: 90px; right: 20px; width: 50px; height: 50px; background: var(--primary); color: #fff; border-radius: 50%; display: none; align-items: center; justify-content: center; font-size: 1.3rem; cursor: pointer; z-index: 900; border: none; transition: 0.3s; }
+        .fab { position: fixed; bottom: 90px; right: 20px; width: 50px; height: 50px; background: var(--primary); color: #fff; border-radius: 50%; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: none; align-items: center; justify-content: center; font-size: 1.3rem; cursor: pointer; z-index: 900; border: none; transition: 0.3s; }
         footer { color: #888; text-align: center; padding: 40px 20px; font-size: 0.8rem; border-top: 1px solid rgba(0,0,0,0.1); }
         .footer-link { color: var(--text); }
         
         #loading-sentinel { text-align: center; padding: 40px; color: var(--primary); }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         
-        /* レコメンドなど */
-        .recommend-area { position: absolute; bottom: 85px; width: 100%; text-align: center; display: flex; justify-content: center; gap: 10px; pointer-events: none; }
-        .recommend-card { width: 70px; height: 70px; border-radius: 8px; overflow: hidden; border: 2px solid rgba(255,255,255,0.5); cursor: pointer; position: relative; background: #000; pointer-events: auto; }
-        .recommend-card img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
-        .recommend-label { position: absolute; bottom: 165px; width: 100%; text-align: center; color: rgba(255,255,255,0.7); font-size: 0.75rem; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.8); pointer-events: none; }
-        .modal-tags { position: absolute; bottom: 180px; width: 100%; text-align: center; pointer-events: auto; display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; }
-        .modal-tag-chip { background: rgba(0,0,0,0.6); color: #fff; border: 1px solid rgba(255,255,255,0.4); padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; }
-
-        /* ストーリー */
+        /* ストーリービューアー (全画面) */
         .story-content { position: relative; width: 100%; height: 100%; max-width: 450px; max-height: 900px; display: flex; flex-direction: column; background: #111; }
         .story-img-main { flex: 1; width: 100%; object-fit: contain; }
         .story-bars { position: absolute; top: 10px; left: 0; width: 100%; display: flex; gap: 4px; padding: 0 5px; z-index: 10; }
@@ -247,7 +240,7 @@
 </footer>
 
 <button class="fab" id="scrollTopBtn" onclick="window.scrollTo({top:0, behavior:'smooth'})"><i class="fas fa-arrow-up"></i></button>
-<div id="toast" style="visibility:hidden;">メッセージ</div>
+<div id="toast" style="visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 2000; left: 50%; bottom: 100px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: 0.5s;">メッセージ</div>
 
 <div id="modal" class="modal" onclick="closeModal()">
     <span class="modal-close">&times;</span>
@@ -284,7 +277,6 @@
 </div>
 
 <script>
-    // ▼ データ定義
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
     const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog";
 
@@ -655,22 +647,112 @@
     function closeCosplayerList() { document.getElementById('list-modal').classList.remove('open'); }
     function clearSearch() { document.getElementById('searchInput').value = ""; handleSearch(); }
 
+    // ▼ ストーリー機能：タップで全画面ビューアー起動
     function generateStories() {
         const c = document.getElementById('stories-container');
         c.innerHTML = "";
-        const picks = [];
+        storiesData = [];
+        const seed = new Date().getDate(); // 日替わりランダム
+        function seededRandom(s) { var x = Math.sin(s++) * 10000; return x - Math.floor(x); }
+
         Object.keys(memberIcons).forEach(m => {
             const items = allData.filter(d => d.member === m);
-            if(items.length > 0) picks.push({ name: m, img: items[Math.floor(Math.random() * items.length)].image });
+            if(items.length > 0) {
+                // ランダムに5枚ピックアップ
+                const temp = [...items];
+                for (let i = temp.length - 1; i > 0; i--) {
+                    const r = Math.floor(seededRandom(seed + i + m.length) * (i + 1));
+                    [temp[i], temp[r]] = [temp[r], temp[i]];
+                }
+                const picks = temp.slice(0, 5);
+                storiesData.push({ name: m, icon: picks[0].image, images: picks });
+            }
         });
-        picks.sort(() => Math.random() - 0.5);
-        picks.forEach(p => {
+
+        storiesData.forEach((s, idx) => {
             const el = document.createElement('div');
             el.className = 'story-item';
-            el.innerHTML = `<div class="story-ring"><img class="story-img" src="${p.img}"></div><div class="story-name">${p.name}</div>`;
-            el.onclick = () => { filterByMember(p.name); };
+            el.innerHTML = `<div class="story-ring" id="ring-${idx}"><img class="story-img" src="${s.icon}"></div><div class="story-name">${memberIcons[s.name] || s.name}</div>`;
+            el.onclick = () => openStory(idx); // ★クリックで全画面ストーリー起動
             c.appendChild(el);
         });
+    }
+
+    function openStory(idx) {
+        currentStoryMemberIndex = idx;
+        currentStorySlideIndex = 0;
+        document.getElementById(`ring-${idx}`).classList.add('seen');
+        document.getElementById('story-viewer').classList.add('active');
+        // ストーリーを開いた瞬間、そのメンバーの色に変える
+        setTheme(storiesData[idx].name);
+        renderStorySlide();
+    }
+
+    function renderStorySlide() {
+        const story = storiesData[currentStoryMemberIndex];
+        const img = story.images[currentStorySlideIndex];
+        document.getElementById('story-icon').src = story.icon;
+        document.getElementById('story-user').innerText = story.name;
+        document.getElementById('story-main').src = img.image;
+        
+        const bars = document.getElementById('story-bars');
+        bars.innerHTML = '';
+        story.images.forEach((_, i) => {
+            const bar = document.createElement('div');
+            bar.className = 'story-bar';
+            const fill = document.createElement('div');
+            fill.className = 'story-fill';
+            if (i < currentStorySlideIndex) fill.style.width = '100%';
+            else if (i === currentStorySlideIndex) fill.id = 'current-fill';
+            bar.appendChild(fill);
+            bars.appendChild(bar);
+        });
+        startStoryTimer();
+    }
+
+    function startStoryTimer() {
+        if(storyTimer) clearTimeout(storyTimer);
+        const fill = document.getElementById('current-fill');
+        if(fill) {
+            setTimeout(() => { fill.style.transition = 'width 4s linear'; fill.style.width = '100%'; }, 10);
+        }
+        storyTimer = setTimeout(nextStory, 4000);
+    }
+
+    function nextStory() {
+        const story = storiesData[currentStoryMemberIndex];
+        if (currentStorySlideIndex < story.images.length - 1) {
+            currentStorySlideIndex++;
+            renderStorySlide();
+        } else {
+            if (currentStoryMemberIndex < storiesData.length - 1) {
+                currentStoryMemberIndex++;
+                currentStorySlideIndex = 0;
+                // 次のメンバーへ行くときも色を変える
+                setTheme(storiesData[currentStoryMemberIndex].name);
+                renderStorySlide();
+            } else {
+                closeStory();
+            }
+        }
+    }
+
+    function prevStory() {
+        if (currentStorySlideIndex > 0) {
+            currentStorySlideIndex--;
+            renderStorySlide();
+        } else if (currentStoryMemberIndex > 0) {
+            currentStoryMemberIndex--;
+            currentStorySlideIndex = storiesData[currentStoryMemberIndex].images.length - 1;
+            setTheme(storiesData[currentStoryMemberIndex].name);
+            renderStorySlide();
+        }
+    }
+
+    function closeStory() {
+        if(storyTimer) clearTimeout(storyTimer);
+        document.getElementById('story-viewer').classList.remove('active');
+        // 閉じたら色はそのままにするか、戻すか（現状はそのまま＝余韻を楽しめる）
     }
 </script>
 </body>
