@@ -70,6 +70,10 @@ let storyTimer = null;
 window.onload = function() {
     const contactLink = document.getElementById('contact-link');
     if (FORM_URL && contactLink) { contactLink.href = FORM_URL; }
+    
+    // ★追加：フッターの削除依頼リンクにも同じURLを設定
+    const removeLink = document.getElementById('remove-link');
+    if (FORM_URL && removeLink) { removeLink.href = FORM_URL; }
 
     generateMemberTags();
     renderUnitButtons();
@@ -147,7 +151,6 @@ function render() {
     const sentinel = document.getElementById('loading-sentinel');
     if(sentinel) sentinel.style.display = 'block';
 
-    // ★0件時のコンシェルジュ表示
     if (slideshowList.length === 0) {
         app.innerHTML = `
             <div class="empty-guide">
@@ -343,6 +346,21 @@ function updateModal() {
     document.getElementById('m-img').src = item.image;
     document.getElementById('m-link').href = item.link; 
     
+    // ★追加：プロフィールへGOボタンの生成
+    const btnProfile = document.getElementById('btn-profile');
+    if (btnProfile && item.link) {
+        // ツイートURLからユーザー名を抽出 (例: https://twitter.com/user/status/123 -> user)
+        const match = item.link.match(/https?:\/\/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/);
+        if (match && match[1]) {
+            btnProfile.style.display = 'flex';
+            btnProfile.href = `https://twitter.com/${match[1]}`;
+        } else {
+            btnProfile.style.display = 'none';
+        }
+    } else if (btnProfile) {
+        btnProfile.style.display = 'none';
+    }
+
     const tagsContainer = document.getElementById('m-tags');
     if (tagsContainer) {
         tagsContainer.innerHTML = ''; 
