@@ -25,36 +25,14 @@
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         :root { 
-            --primary: #5c6ac4; /* デフォルト色 */
-            --bg: #f4f6f8; --text: #333; --heart: #ff4757; 
+            /* ★色はここで固定！目に優しい青紫系 */
+            --primary: #5c6ac4; 
+            --bg: #f4f6f8; 
+            --text: #333; 
+            --heart: #ff4757; 
             --glass-bg: rgba(92, 106, 196, 0.95);
             --nav-height: 70px;
         }
-
-        /* ▼ テーマカラー定義 (data-theme属性で管理) ▼ */
-        body[data-theme="花芽すみれ"] { --primary: #b0c4de; --glass-bg: rgba(176,196,222,0.95); }
-        body[data-theme="花芽なずな"] { --primary: #fabedc; --glass-bg: rgba(250,190,220,0.95); }
-        body[data-theme="小雀とと"]   { --primary: #f5eb4a; --glass-bg: rgba(245,235,74,0.95); }
-        body[data-theme="一ノ瀬うるは"] { --primary: #4182fa; --glass-bg: rgba(65,130,250,0.95); }
-        body[data-theme="胡桃のあ"]   { --primary: #ffdbfe; --glass-bg: rgba(255,219,254,0.95); }
-        body[data-theme="兎咲ミミ"]   { --primary: #c7b2d6; --glass-bg: rgba(199,178,214,0.95); }
-        body[data-theme="空澄セナ"]   { --primary: #b0b0b0; --glass-bg: rgba(200,200,200,0.95); }
-        body[data-theme="橘ひなの"]   { --primary: #fa96c8; --glass-bg: rgba(250,150,200,0.95); }
-        body[data-theme="英リサ"]     { --primary: #d1de79; --glass-bg: rgba(209,222,121,0.95); }
-        body[data-theme="如月れん"]   { --primary: #be2152; --glass-bg: rgba(190,33,82,0.95); }
-        body[data-theme="神成きゅぴ"] { --primary: #ffd23c; --glass-bg: rgba(255,210,60,0.95); }
-        body[data-theme="八雲べに"]   { --primary: #85cab3; --glass-bg: rgba(133,202,179,0.95); }
-        body[data-theme="藍沢エマ"]   { --primary: #b4f1f9; --glass-bg: rgba(180,241,249,0.95); }
-        body[data-theme="紫宮るな"]   { --primary: #d6adff; --glass-bg: rgba(214,173,255,0.95); }
-        body[data-theme="猫汰つな"]   { --primary: #ff3652; --glass-bg: rgba(255,54,82,0.95); }
-        body[data-theme="白波らむね"] { --primary: #8eced9; --glass-bg: rgba(142,206,217,0.95); }
-        body[data-theme="小森めと"]   { --primary: #fba03f; --glass-bg: rgba(251,160,63,0.95); }
-        body[data-theme="夢野あかり"] { --primary: #ff998d; --glass-bg: rgba(255,153,141,0.95); }
-        body[data-theme="夜乃くろむ"] { --primary: #909ec8; --glass-bg: rgba(144,158,200,0.95); }
-        body[data-theme="紡木こかげ"] { --primary: #5195e1; --glass-bg: rgba(81,149,225,0.95); }
-        body[data-theme="千燈ゆうひ"] { --primary: #ed784a; --glass-bg: rgba(237,120,74,0.95); }
-        body[data-theme="蝶屋はなび"] { --primary: #ea5506; --glass-bg: rgba(234,85,6,0.95); }
-        body[data-theme="甘結もか"]   { --primary: #eca0aa; --glass-bg: rgba(236,160,170,0.95); }
 
         body.dark-mode { --bg: #111; --text: #eee; --glass-bg: rgba(20, 20, 30, 0.95); }
         
@@ -68,12 +46,12 @@
 
         /* ヘッダー */
         header { 
-            background: var(--primary); color: #fff; 
-            padding: 15px 15px 5px; position: sticky; top: 0; z-index: 100; 
+            background: var(--glass-bg); /* ガラス効果 */
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+            color: #fff; padding: 15px 15px 5px; position: sticky; top: 0; z-index: 100; 
             box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
             padding-top: max(15px, env(safe-area-inset-top)); 
-            transition: background 0.5s;
-            text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         .header-top { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
         .title-area h1 { margin: 0; font-size: 1.2rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -95,13 +73,14 @@
         .tools::-webkit-scrollbar { display: none; }
         input { padding: 8px 15px; border-radius: 20px; border: none; min-width: 150px; font-size: 0.9rem; background: rgba(255,255,255,0.9); }
         .tool-btn { background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-        .tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; text-shadow: none; }
+        .tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; text-shadow: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
         /* メンバーチップ */
         #unit-buttons-container { padding: 5px 10px; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
         .member-scroll-container { overflow-x: auto; white-space: nowrap; padding: 8px 0 10px; scrollbar-width: none; }
+        .member-scroll-container::-webkit-scrollbar { display: none; }
         .member-chip { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 6px 12px; border-radius: 20px; margin-right: 6px; cursor: pointer; font-size: 1.1rem; transition: 0.2s; border: 1px solid transparent; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
-        .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; transform: scale(1.1); text-shadow: none; }
+        .member-chip.active { background: #fff; color: var(--primary); font-weight: bold; transform: scale(1.1); text-shadow: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
         /* ナビゲーション */
         nav { 
@@ -118,7 +97,7 @@
 
         @media (min-width: 768px) {
             body { padding-bottom: 0; }
-            nav { position: sticky; top: 0; margin-top: 0; background: var(--primary); border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); justify-content: center; gap: 20px; padding: 10px 0; }
+            nav { position: sticky; top: 0; margin-top: 0; background: var(--glass-bg); border: none; box-shadow: 0 5px 15px rgba(0,0,0,0.1); justify-content: center; gap: 20px; padding: 10px 0; color: #fff; }
             .view-btn { flex-direction: row; font-size: 0.9rem; color: rgba(255,255,255,0.7); background: rgba(0,0,0,0.2); padding: 8px 25px; border-radius: 25px; flex: 0 0 auto; }
             .view-btn.active { background: #fff; color: var(--primary); transform: scale(1.05); }
             .view-btn:hover { background: rgba(255,255,255,0.1); color: #fff; }
@@ -131,11 +110,10 @@
         @media (min-width: 900px) { .masonry-grid { column-count: 4; column-gap: 20px; } }
         @media (min-width: 1400px) { .masonry-grid { column-count: 5; } }
 
-        /* カード修正：画像の透明化(opacity:0)を削除し、確実に表示する */
         .card { break-inside: avoid; margin-bottom: 10px; border-radius: 12px; overflow: hidden; position: relative; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; }
-        .card img { width: 100%; height: auto; display: block; opacity: 1; } /* opacity:1 に強制 */
+        .card img { width: 100%; height: auto; display: block; opacity: 1; } /* 画像は常に表示 */
         .card-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 40px 10px 10px; color: #fff; pointer-events: none; }
-        .card-tag { font-size: 0.7rem; background: var(--primary); padding: 2px 6px; border-radius: 4px; margin-right: 5px; transition: background 0.5s; }
+        .card-tag { font-size: 0.7rem; background: var(--primary); padding: 2px 6px; border-radius: 4px; margin-right: 5px; }
         .card-name { font-size: 0.85rem; font-weight: bold; display: block; margin-top: 4px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
         .card-fav { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.4); color: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; border: none; font-size: 1rem; cursor: pointer; z-index: 10; backdrop-filter: blur(4px); }
         .card-fav.active { color: var(--heart); background: rgba(255,255,255,0.9); }
@@ -165,7 +143,7 @@
         body.dark-mode .list-item:hover { background: var(--primary); color: #fff; }
 
         /* プロフヘッダー */
-        .profile-header { text-align: center; padding: 20px; margin-bottom: 10px; background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.2)); border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); border-left: 5px solid var(--primary); transition: border-color 0.5s; position: relative; }
+        .profile-header { text-align: center; padding: 20px; margin-bottom: 10px; background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.2)); border-radius: 12px; border: 1px solid rgba(255,255,255,0.2); border-left: 5px solid var(--primary); position: relative; }
         .profile-close { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.1); color: var(--text); border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; }
         .profile-name { font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; }
         .profile-link-btn { display: inline-flex; align-items: center; gap: 8px; background: #000; color: #fff; padding: 8px 20px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 0.9rem; }
@@ -272,23 +250,19 @@
 </div>
 
 <script>
-    // ▼ 設定エリア
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
     const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog";
 
-    // ▼ データ定義
     const tagMapping = { "school_uniform": "制服", "maid": "メイド", "gym_uniform": "ジャージ", "swimsuit": "水着", "bikini": "ビキニ", "santa_costume": "サンタ", "kimono": "着物", "yukata": "浴衣", "dress": "ドレス", "china_dress": "チャイナ", "hoodie": "パーカー", "jacket": "ジャケット", "nurse": "ナース", "police": "ポリス", "idol": "アイドル", "bunny": "バニー", "miko": "巫女", "waitress": "ウェイトレス", "pajamas": "パジャマ", "glasses": "眼鏡", "animal_ears": "ケモミミ", "cat_ears": "猫耳", "rabbit_ears": "うさ耳", "fox_ears": "狐耳", "dog_ears": "犬耳", "headphones": "ヘッドホン", "mask": "マスク", "twintails": "ツインテ", "ponytail": "ポニテ", "short_hair": "ショート", "long_hair": "ロング", "braid": "三つ編み" };
     const memberReadings = { "花芽すみれ": "かがすみれ", "花芽なずな": "かがなずな", "小雀とと": "こがらとと", "一ノ瀬うるは": "いちのせうるは", "胡桃のあ": "くるみのあ", "橘ひなの": "たちばなひなの", "如月れん": "きさらぎれん", "英リサ": "はなぶさりさ", "空澄セナ": "あすみせな", "兎咲ミミ": "とさきみみ", "神成きゅぴ": "かみなりきゅぴ", "八雲べに": "やくもべに", "藍沢エマ": "あいざわえま", "紫宮るな": "しのみやるな", "猫汰つな": "ねこたつな", "白波らむね": "しらなみらむね", "小森めと": "こもりめと", "夢野あかり": "ゆめのあかり", "夜乃くろむ": "やのくろむ", "紡木こかげ": "つむぎこかげ", "千燈ゆうひ": "せんどうゆうひ", "蝶屋はなび": "ちょうやはなび", "甘結もか": "あまゆいもか" };
     const memberIcons = { "花芽すみれ": "👾💤", "花芽なずな": "🍣", "小雀とと": "🔫🐥", "一ノ瀬うるは": "🌠", "胡桃のあ": "🧸♔", "橘ひなの": "🍫💘", "如月れん": "⏰", "英リサ": "💐", "空澄セナ": "🗝♠︎", "兎咲ミミ": "🐰🍭", "神成きゅぴ": "🌩", "八雲べに": "💄💚", "藍沢エマ": "🥞💫", "紫宮るな": "☪🐾", "猫汰つな": "🍒✨", "白波らむね": "🐻‍❄️🏖", "小森めと": "🪐", "夢野あかり": "🍼", "夜乃くろむ": "💀⛓", "紡木こかげ": "📘💧", "千燈ゆうひ": "🫠", "蝶屋はなび": "🦋🎆", "甘結もか": "🕹🔖" };
 
-    // ▼ 変数
     let allData = [], filteredData = [], currentMode = 'member', currentSort = 'new';
     let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
     let history = JSON.parse(localStorage.getItem('vspo_history')) || [];
     let slideshowList = [], currentImageIndex = 0, displayLimit = 40;
     let storiesData = [], currentStoryMemberIndex = 0, currentStorySlideIndex = 0, storyTimer = null;
 
-    // ▼ 初期化
     window.onload = function() {
         if(document.getElementById('contact-link')) document.getElementById('contact-link').href = FORM_URL;
         if(document.getElementById('remove-link')) document.getElementById('remove-link').href = FORM_URL;
@@ -307,12 +281,10 @@
             if (e.key === 'Escape') closeModal();
         });
 
-        // データ読み込み（強力なロジック）
         Papa.parse(CSV_URL, {
             download: true, header: true, skipEmptyLines: true,
             complete: function(results) {
                 if (!results.data || results.data.length === 0) return;
-                // ヘッダーゆらぎ吸収
                 const keys = Object.keys(results.data[0]);
                 const findKey = (candidates) => keys.find(k => candidates.some(c => k.toLowerCase().includes(c)));
                 const kMem = findKey(['member', 'メンバー', '名前']) || 'member';
@@ -350,17 +322,11 @@
         });
     };
 
-    // ▼ 機能関数
-    function setTheme(memberName) {
-        if (memberName && memberReadings[memberName]) document.body.setAttribute('data-theme', memberName);
-        else document.body.removeAttribute('data-theme');
-    }
-
     function filterByMember(name, el) {
         document.querySelectorAll('.member-chip').forEach(c=>c.classList.remove('active'));
         if(el) el.classList.add('active');
-        if(name==='all') { filteredData = [...allData]; setTheme(null); }
-        else { filteredData = allData.filter(d=>d.member===name); setTheme(name); }
+        if(name==='all') filteredData = [...allData];
+        else filteredData = allData.filter(d=>d.member===name);
         setMode('member'); applySort();
     }
 
@@ -376,15 +342,9 @@
             return;
         }
 
-        const uMem = [...new Set(slideshowList.map(d => d.member))];
         const uCos = [...new Set(slideshowList.map(d => d.cosplayer))];
         const sInput = document.getElementById('searchInput');
 
-        if (uMem.length === 1 && currentMode !== 'favorite' && currentMode !== 'history') {
-            if(!document.body.getAttribute('data-theme')) setTheme(uMem[0]);
-        }
-
-        // プロフヘッダー
         if (uCos.length === 1 && sInput.value.trim() !== "" && currentMode !== 'favorite' && currentMode !== 'history') {
             const targetName = uCos[0];
             const firstItem = slideshowList[0];
@@ -463,8 +423,6 @@
         const v = document.getElementById('searchInput').value.toLowerCase();
         const ks = v.split(/\s+/).filter(k=>k);
         filteredData = allData.filter(d => ks.every(k => d._searchKey.includes(k)));
-        const m = Object.keys(memberReadings).find(k => k === document.getElementById('searchInput').value.trim());
-        setTheme(m || null);
         applySort();
     }
 
@@ -488,7 +446,6 @@
         currentMode = mode;
         document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('nav-'+mode).classList.add('active');
-        setTheme(null);
         render();
     }
 
@@ -653,7 +610,6 @@
         currentStorySlideIndex = 0;
         document.getElementById(`ring-${idx}`).classList.add('seen');
         document.getElementById('story-viewer').classList.add('active');
-        setTheme(storiesData[idx].name);
         renderStorySlide();
     }
 
@@ -663,6 +619,7 @@
         document.getElementById('story-icon').src = story.icon;
         document.getElementById('story-user').innerText = story.name;
         document.getElementById('story-main').src = img.image;
+        
         const bars = document.getElementById('story-bars');
         bars.innerHTML = '';
         story.images.forEach((_, i) => {
@@ -694,7 +651,6 @@
             if (currentStoryMemberIndex < storiesData.length - 1) {
                 currentStoryMemberIndex++;
                 currentStorySlideIndex = 0;
-                setTheme(storiesData[currentStoryMemberIndex].name);
                 renderStorySlide();
             } else { closeStory(); }
         }
@@ -707,7 +663,6 @@
         } else if (currentStoryMemberIndex > 0) {
             currentStoryMemberIndex--;
             currentStorySlideIndex = storiesData[currentStoryMemberIndex].images.length - 1;
-            setTheme(storiesData[currentStoryMemberIndex].name);
             renderStorySlide();
         }
     }
