@@ -185,13 +185,14 @@
 
     <div class="stories-container" id="stories-container"></div>
 
-    <div class="tools">
+   <div class="tools">
         <input type="text" id="searchInput" placeholder="検索 (例: うるは)" oninput="handleSearch()">
         <button class="tool-btn active" id="btn-new" onclick="setSort('new')">新着順</button>
         <button class="tool-btn" id="btn-orig" onclick="setSort('original')">登録順</button>
         <button class="tool-btn" id="btn-shuf" onclick="setSort('shuffle')">シャッフル</button>
         <button class="tool-btn" onclick="openCosplayerList()" style="background:var(--primary); color:#fff;">レイヤー一覧</button>
-    </div>
+        <button class="tool-btn" onclick="location.href='photographers.html'" style="background:#333; color:#fff;">📷 カメラマン</button>
+        </div>
 
     <div id="unit-buttons-container"></div>
     <div class="member-scroll-container" id="memberBar"></div>
@@ -674,4 +675,5 @@
 </script>
 </body>
 </html>
+
 
