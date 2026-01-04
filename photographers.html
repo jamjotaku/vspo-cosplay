@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photographers - ぶいすぽっ！コスプレアーカイブ</title>
+    <style>
+        body { font-family: "Helvetica Neue", Arial, sans-serif; background: #f4f5f7; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        h1 { text-align: center; color: #5c6ac4; margin-bottom: 30px; font-size: 24px; }
+        p.desc { text-align: center; margin-bottom: 40px; color: #666; line-height: 1.6; }
+        
+        .photographer-list { list-style: none; padding: 0; }
+        .photographer-item { display: flex; align-items: center; justify-content: space-between; padding: 15px 20px; border-bottom: 1px solid #eee; transition: background 0.2s; }
+        .photographer-item:hover { background-color: #f9f9ff; }
+        .photographer-name { font-weight: bold; font-size: 16px; }
+        .x-link { text-decoration: none; color: white; background: #000; padding: 6px 15px; border-radius: 20px; font-size: 12px; display: flex; align-items: center; gap: 5px; }
+        .x-link:hover { background: #333; }
+        
+        .back-btn { display: block; width: fit-content; margin: 30px auto 0; color: #5c6ac4; text-decoration: none; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>📷 Special Thanks Photographers</h1>
+        <p class="desc">
+            ぶいすぽっ！コスプレアーカイブに掲載されているお写真を撮影された<br>
+            カメラマンの皆様をご紹介いたします。（順不同）
+        </p>
+
+        <ul id="list" class="photographer-list">
+            <li>読み込み中...</li>
+        </ul>
+
+        <a href="index.html" class="back-btn">← トップページに戻る</a>
+    </div>
+
+    <script>
+        // ▼▼▼ あなたのGASのURL ▼▼▼
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbwVOXeAag8jo_slfZDSwAYxPw549qRZkYNpEB3hn6XM4iDSAK63Ip7CraDE7Q--hWE_/exec"; 
+
+        fetch(GAS_URL + "?mode=photographers")
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('list');
+                list.innerHTML = ""; 
+
+                if (data.length === 0) {
+                    list.innerHTML = "<li style='text-align:center;'>現在登録中のカメラマン様はいません。</li>";
+                    return;
+                }
+
+                data.forEach(p => {
+                    const li = document.createElement('li');
+                    li.className = 'photographer-item';
+                    li.innerHTML = `
+                        <span class="photographer-name">${p.name}</span>
+                        <a href="${p.url}" target="_blank" class="x-link">
+                            𝕏 Profile
+                        </a>
+                    `;
+                    list.appendChild(li);
+                });
+            })
+            .catch(err => {
+                document.getElementById('list').innerHTML = "読み込みエラーが発生しました。";
+            });
+    </script>
+
+</body>
+</html>
