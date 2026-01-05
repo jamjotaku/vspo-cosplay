@@ -9,129 +9,45 @@
     
     <style>
         /* --- 基本設定 --- */
-        :root {
-            --primary: #5c6ac4;
-            --bg: #f4f6f8;
-            --text: #333;
-            --card-bg: #fff;
-            --accent: #ff9f43;
-        }
-        body {
-            font-family: "M PLUS Rounded 1c", sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 10px;
-        }
+        :root { --primary: #5c6ac4; --bg: #f4f6f8; --text: #333; --card-bg: #fff; --accent: #ff9f43; }
+        body { font-family: "M PLUS Rounded 1c", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 10px; }
 
         /* --- ヘッダー周り --- */
         header { text-align: center; margin: 20px 0 30px; }
         h1 { font-size: 1.5rem; color: var(--primary); margin: 10px 0; }
-        
-        .nav-btn {
-            display: inline-block;
-            padding: 8px 16px;
-            background: #fff;
-            color: #666;
-            text-decoration: none;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.9rem;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            margin-bottom: 20px;
-        }
+        .nav-btn { display: inline-block; padding: 8px 16px; background: #fff; color: #666; text-decoration: none; border-radius: 20px; font-weight: bold; font-size: 0.9rem; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 20px; }
 
         /* 検索・タグエリア */
         .search-area { max-width: 800px; margin: 0 auto; padding: 0 10px; }
-        #searchInput {
-            width: 100%; max-width: 400px;
-            padding: 12px; border-radius: 25px;
-            border: 2px solid #ddd; outline: none;
-            font-size: 1rem; margin-bottom: 15px;
-        }
-
+        #searchInput { width: 100%; max-width: 400px; padding: 12px; border-radius: 25px; border: 2px solid #ddd; outline: none; font-size: 1rem; margin-bottom: 15px; }
         .tag-cloud { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
-        .tag-chip {
-            background: #fff; color: var(--primary);
-            padding: 6px 12px; border-radius: 15px;
-            font-size: 0.85rem; cursor: pointer;
-            border: 1px solid var(--primary); transition: 0.2s;
-        }
+        .tag-chip { background: #fff; color: var(--primary); padding: 6px 12px; border-radius: 15px; font-size: 0.85rem; cursor: pointer; border: 1px solid var(--primary); transition: 0.2s; }
         .tag-chip:hover, .tag-chip.active { background: var(--primary); color: #fff; }
 
-        /* --- ✨ Pinterest風 Masonryレイアウト ✨ --- */
-        .masonry {
-            column-count: 5; /* PC大画面なら5列 */
-            column-gap: 15px;
-            max-width: 1600px;
-            margin: 20px auto;
-        }
+        /* --- Masonryレイアウト --- */
+        .masonry { column-count: 5; column-gap: 15px; max-width: 1600px; margin: 20px auto; }
         @media (max-width: 1200px) { .masonry { column-count: 4; } }
         @media (max-width: 900px)  { .masonry { column-count: 3; } }
         @media (max-width: 600px)  { .masonry { column-count: 2; column-gap: 10px; } }
 
         /* --- カードデザイン --- */
-        .card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 15px; /* 下のカードとの隙間 */
-            break-inside: avoid; /* 列の途中でカードが千切れないようにする */
-            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-            transition: transform 0.2s;
-            position: relative;
-            display: inline-block; /* 表示崩れ防止 */
-            width: 100%;
-        }
+        .card { background: var(--card-bg); border-radius: 12px; overflow: hidden; margin-bottom: 15px; break-inside: avoid; box-shadow: 0 4px 10px rgba(0,0,0,0.08); transition: transform 0.2s; position: relative; display: inline-block; width: 100%; }
         .card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
-
-        .card img {
-            width: 100%;
-            height: auto; /* ★重要：高さを自動にして比率を保つ */
-            display: block;
-            cursor: pointer;
-        }
+        .card img { width: 100%; height: auto; display: block; cursor: pointer; }
 
         .card-content { padding: 10px; }
-        
-        .event-badge {
-            background: var(--accent); color: #fff;
-            font-size: 0.75rem; padding: 3px 8px; border-radius: 4px;
-            display: inline-block; margin-bottom: 6px; font-weight: bold;
-        }
+        .event-badge { background: var(--accent); color: #fff; font-size: 0.75rem; padding: 3px 8px; border-radius: 4px; display: inline-block; margin-bottom: 6px; font-weight: bold; }
         .member-text { font-weight: bold; font-size: 0.95rem; line-height: 1.4; color: #333; }
         .layer-text { font-size: 0.8rem; color: #888; margin-top: 3px; display: block; }
 
-        .tw-link {
-            position: absolute; top: 8px; right: 8px;
-            background: rgba(0,0,0,0.6); color: #fff;
-            width: 30px; height: 30px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center;
-            text-decoration: none; backdrop-filter: blur(2px);
-            opacity: 0.8;
-        }
+        .tw-link { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: #fff; width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-decoration: none; backdrop-filter: blur(2px); opacity: 0.8; }
         .tw-link:hover { opacity: 1; background: #1da1f2; }
 
         /* --- モーダル --- */
-        .modal {
-            display: none; position: fixed; z-index: 999;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            justify-content: center; align-items: center;
-            padding: 10px;
-        }
+        .modal { display: none; position: fixed; z-index: 999; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); justify-content: center; align-items: center; padding: 10px; }
         .modal.open { display: flex; }
-        .modal img {
-            max-width: 100%; max-height: 95vh;
-            border-radius: 4px; box-shadow: 0 0 20px rgba(0,0,0,0.5);
-            object-fit: contain;
-        }
-        .close-modal {
-            position: absolute; top: 20px; right: 20px;
-            color: white; font-size: 30px; cursor: pointer;
-            text-shadow: 0 0 5px #000;
-        }
-        
+        .modal img { max-width: 100%; max-height: 95vh; border-radius: 4px; box-shadow: 0 0 20px rgba(0,0,0,0.5); object-fit: contain; }
+        .close-modal { position: absolute; top: 20px; right: 20px; color: white; font-size: 30px; cursor: pointer; text-shadow: 0 0 5px #000; }
         #loading { text-align: center; margin-top: 50px; color: #666; }
     </style>
 </head>
@@ -140,7 +56,6 @@
 <header>
     <a href="index.html" class="nav-btn"><i class="fas fa-arrow-left"></i> トップに戻る</a>
     <h1>🎪 大型併せアーカイブ</h1>
-
     <div class="search-area">
         <input type="text" id="searchInput" placeholder="メンバー名やイベント名で検索..." oninput="filterData()">
         <div class="tag-cloud" id="tagCloud"></div>
@@ -148,7 +63,6 @@
 </header>
 
 <div id="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
-
 <div class="masonry" id="grid"></div>
 
 <div id="modal" class="modal" onclick="document.getElementById('modal').classList.remove('open')">
@@ -160,6 +74,16 @@
     /* ▼ GASのURLをここに貼り付けてください ▼ */
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwVOXeAag8jo_slfZDSwAYxPw549qRZkYNpEB3hn6XM4iDSAK63Ip7CraDE7Q--hWE_/exec"; 
 
+    // ★ 並び替えのルール（集合を先頭に、あとはデビュー順）
+    const MEMBER_ORDER = [
+      '集合', 
+      '花芽すみれ', '花芽なずな', '小雀とと', '一ノ瀬うるは', '胡桃のあ',
+      '兎咲ミミ', '空澄セナ', '橘ひなの', '英リサ', '如月れん',
+      '神成きゅぴ', '八雲べに', '藍沢エマ', '紫宮るな', '猫汰つな',
+      '白波らむね', '小森めと', '夢野あかり', '夜乃くろむ', '紡木こかげ',
+      '千燈ゆうひ', '蝶屋はなび', '甘結もか'
+    ];
+
     let allData = [];
 
     window.onload = async function() {
@@ -168,8 +92,8 @@
             allData = await res.json();
             document.getElementById('loading').style.display = 'none';
             
-            // 新しい順に並び替え（スプレッドシートの下の行＝最新とする場合）
-            allData.reverse(); 
+            // ★ ここで並び替えを実行
+            sortDataByMember();
 
             generateTags(allData);
             render(allData);
@@ -178,6 +102,24 @@
             console.error(e);
         }
     };
+
+    // ★ メンバー順に並び替える関数
+    function sortDataByMember() {
+        allData.sort((a, b) => {
+            // "メンバー名 / レイヤー名" からメンバー名だけを取り出す
+            const memA = a.members.split(" / ")[0].trim();
+            const memB = b.members.split(" / ")[0].trim();
+
+            let idxA = MEMBER_ORDER.indexOf(memA);
+            let idxB = MEMBER_ORDER.indexOf(memB);
+
+            // リストにない名前（Unknown等）は一番後ろにする
+            if (idxA === -1) idxA = 9999;
+            if (idxB === -1) idxB = 9999;
+
+            return idxA - idxB;
+        });
+    }
 
     function render(data) {
         const grid = document.getElementById('grid');
@@ -189,7 +131,6 @@
         }
 
         data.forEach(item => {
-            // item.members = "メンバー / レイヤー"
             const parts = item.members.split(" / ");
             const mem = parts[0] || "";
             const lay = parts[1] ? `@${parts[1]}` : "";
@@ -230,14 +171,38 @@
         el.classList.add('active');
         document.getElementById('searchInput').value = "";
         
-        if(tag === 'ALL') render(allData);
-        else render(allData.filter(d => d.title === tag));
+        if(tag === 'ALL') {
+            // "全て"のときはメンバー順に戻す
+            sortDataByMember();
+            render(allData);
+        } else {
+            const filtered = allData.filter(d => d.title === tag);
+            // 絞り込んだ中もメンバー順にする
+            filtered.sort((a,b) => {
+                 const mA = a.members.split(" / ")[0];
+                 const mB = b.members.split(" / ")[0];
+                 let iA = MEMBER_ORDER.indexOf(mA); if(iA===-1)iA=9999;
+                 let iB = MEMBER_ORDER.indexOf(mB); if(iB===-1)iB=9999;
+                 return iA - iB;
+            });
+            render(filtered);
+        }
     }
 
     function filterData() {
         document.querySelectorAll('.tag-chip').forEach(e => e.classList.remove('active'));
         const val = document.getElementById('searchInput').value.toLowerCase();
-        render(allData.filter(d => (d.title+d.members).toLowerCase().includes(val)));
+        
+        // 検索結果もメンバー順にする
+        const filtered = allData.filter(d => (d.title+d.members).toLowerCase().includes(val));
+        filtered.sort((a,b) => {
+             const mA = a.members.split(" / ")[0];
+             const mB = b.members.split(" / ")[0];
+             let iA = MEMBER_ORDER.indexOf(mA); if(iA===-1)iA=9999;
+             let iB = MEMBER_ORDER.indexOf(mB); if(iB===-1)iB=9999;
+             return iA - iB;
+        });
+        render(filtered);
     }
 
     function openModal(src) {
