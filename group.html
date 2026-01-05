@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>大型併せアーカイブ | ぶいすぽっ！</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- 基本設定 --- */
+        :root {
+            --primary: #5c6ac4;
+            --bg: #f4f6f8;
+            --text: #333;
+            --card-bg: #fff;
+            --accent: #ff9f43;
+        }
+        body {
+            font-family: "M PLUS Rounded 1c", sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* --- ヘッダー & ナビ --- */
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        h1 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin: 10px 0;
+        }
+        .nav-link {
+            display: inline-block;
+            margin-bottom: 15px;
+            color: #666;
+            text-decoration: none;
+            font-weight: bold;
+            background: #fff;
+            padding: 8px 16px;
+            border-radius: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: 0.2s;
+        }
+        .nav-link:hover { transform: translateY(-2px); color: var(--primary); }
+
+        /* --- 検索 & タグエリア --- */
+        .search-container {
+            max-width: 800px;
+            margin: 0 auto 30px;
+            text-align: center;
+        }
+        #searchInput {
+            width: 80%;
+            max-width: 400px;
+            padding: 12px;
+            border-radius: 25px;
+            border: 2px solid #ddd;
+            font-size: 1rem;
+            outline: none;
+            transition: 0.3s;
+        }
+        #searchInput:focus { border-color: var(--primary); }
+
+        /* 自動生成されるタグボタン */
+        .tag-cloud {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .tag-chip {
+            background: #fff;
+            color: var(--primary);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            border: 1px solid var(--primary);
+            transition: 0.2s;
+        }
+        .tag-chip:hover, .tag-chip.active {
+            background: var(--primary);
+            color: #fff;
+        }
+
+        /* --- グリッドレイアウト --- */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* --- カードデザイン --- */
+        .card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            transition: transform 0.2s;
+            position: relative;
+        }
+        .card:hover { transform: translateY(-5px); }
+
+        .card-img-wrapper {
+            width: 100%;
+            height: 220px;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: 0.3s;
+        }
+        .card:hover img { transform: scale(1.05); }
+
+        /* 元ツイートリンクボタン */
+        .twitter-link {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            backdrop-filter: blur(4px);
+            z-index: 10;
+        }
+        .twitter-link:hover { background: #1da1f2; }
+
+        .card-content { padding: 15px; }
+        
+        /* イベントタグ（タイトル） */
+        .event-tag {
+            background: var(--accent);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        /* メンバー名表示 */
+        .member-names {
+            font-weight: bold;
+            font-size: 1rem;
+            margin-bottom: 5px;
+            color: #444;
+        }
+        .cosplayer-name {
+            font-size: 0.85rem;
+            color: #888;
+            display: block;
+        }
+
+        /* ローディング */
+        #loading { text-align: center; margin-top: 50px; font-weight: bold; color: #666; }
+
+        /* --- モーダル（画像拡大） --- */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal.open { display: flex; }
+        .modal img {
+            max-width: 100%;
+            max-height: 90vh;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .modal-close {
+            position: absolute;
+            top: 20px; right: 30px;
+            color: #fff;
+            font-size: 2.5rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <a href="index.html" class="nav-link"><i class="fas fa-arrow-left"></i> トップに戻る</a>
+    <h1>🎪 大型併せアーカイブ</h1>
+    
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="メンバー名やタグで検索..." oninput="filterData()">
+        <div class="tag-cloud" id="tagCloud"></div>
+    </div>
+</header>
+
+<div id="loading"><i class="fas fa-spinner fa-spin"></i> データを読み込んでいます...</div>
+<main class="grid" id="grid"></main>
+
+<div id="modal" class="modal" onclick="closeModal()">
+    <span class="modal-close">&times;</span>
+    <img id="modalImg" src="" onclick="event.stopPropagation()"> </div>
+
+<script>
+    /* ==================================================
+       ★設定：ここにあなたのGASのURLを貼ってください
+       (末尾が /exec のもの)
+    ================================================== */
+    const GAS_API_URL = "https://script.google.com/macros/s/xxxxxxxxxxxxxxxxx/exec"; 
+
+    let allData = []; // 全データをここに保持
+
+    // ページ読み込み時に実行
+    window.onload = async function() {
+        try {
+            // ?mode=group を指定して大型併せデータを取得
+            const response = await fetch(GAS_API_URL + "?mode=group");
+            const data = await response.json();
+            
+            allData = data;
+            document.getElementById('loading').style.display = 'none';
+            
+            generateTagButtons(data); // タグボタンを作る
+            renderGrid(data);         // 写真を表示する
+
+        } catch (error) {
+            console.error(error);
+            document.getElementById('loading').innerText = "データの読み込みに失敗しました。";
+        }
+    };
+
+    // グリッドを表示する関数
+    function renderGrid(data) {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = ""; // クリア
+
+        if (data.length === 0) {
+            grid.innerHTML = "<p style='text-align:center; width:100%; color:#888;'>該当する写真がありません</p>";
+            return;
+        }
+
+        data.forEach(item => {
+            // item.members には "メンバー / レイヤー" の形で入っている想定
+            const nameParts = item.members.split(" / ");
+            const memberName = nameParts[0] || "Unknown";
+            const layerName = nameParts[1] || "";
+
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `
+                <div class="card-img-wrapper" onclick="openModal('${item.image}')">
+                    <img src="${item.image}" loading="lazy" alt="${item.title}">
+                </div>
+                ${item.link ? `<a href="${item.link}" target="_blank" class="twitter-link"><i class="fab fa-twitter"></i></a>` : ''}
+                
+                <div class="card-content">
+                    <span class="event-tag">${item.title}</span>
+                    <div class="member-names">${memberName}</div>
+                    <span class="cosplayer-name">${layerName}</span>
+                </div>
+            `;
+            grid.appendChild(card);
+        });
+    }
+
+    // タグボタン（#ぶいすぽ文化祭 etc）を自動生成する関数
+    function generateTagButtons(data) {
+        const tagCounts = {};
+        
+        // 全データのタグ（title）を集計
+        data.forEach(item => {
+            const tag = item.title; 
+            if(tag) {
+                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
+            }
+        });
+
+        // HTMLにボタンを追加
+        const container = document.getElementById('tagCloud');
+        container.innerHTML = `<span class="tag-chip active" onclick="filterByTag('ALL', this)">全て</span>`; // 全てボタン
+
+        Object.keys(tagCounts).forEach(tag => {
+            const btn = document.createElement('span');
+            btn.className = 'tag-chip';
+            btn.innerText = `${tag} (${tagCounts[tag]})`;
+            btn.onclick = function() { filterByTag(tag, this); }; // クリック時の動作
+            container.appendChild(btn);
+        });
+    }
+
+    // タグボタンを押した時の絞り込み処理
+    function filterByTag(tag, element) {
+        // ボタンの色を切り替え
+        document.querySelectorAll('.tag-chip').forEach(el => el.classList.remove('active'));
+        element.classList.add('active');
+
+        // 検索ボックスをリセット
+        document.getElementById('searchInput').value = "";
+
+        if (tag === 'ALL') {
+            renderGrid(allData);
+        } else {
+            // タイトル（タグ）が一致するものだけ表示
+            const filtered = allData.filter(item => item.title === tag);
+            renderGrid(filtered);
+        }
+    }
+
+    // 検索ボックスでの絞り込み処理
+    function filterData() {
+        const keyword = document.getElementById('searchInput').value.toLowerCase();
+        
+        // タグボタンの選択を解除
+        document.querySelectorAll('.tag-chip').forEach(el => el.classList.remove('active'));
+
+        const filtered = allData.filter(item => {
+            const text = (item.title + item.members).toLowerCase();
+            return text.includes(keyword);
+        });
+        renderGrid(filtered);
+    }
+
+    // --- モーダル制御 ---
+    function openModal(src) {
+        document.getElementById('modalImg').src = src;
+        document.getElementById('modal').classList.add('open');
+    }
+    function closeModal() {
+        document.getElementById('modal').classList.remove('open');
+    }
+</script>
+
+</body>
+</html>
