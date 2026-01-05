@@ -21,333 +21,230 @@
             background: var(--bg);
             color: var(--text);
             margin: 0;
-            padding: 20px;
+            padding: 10px;
         }
 
-        /* --- ヘッダー & ナビ --- */
-        header {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        h1 {
-            font-size: 1.8rem;
-            color: var(--primary);
-            margin: 10px 0;
-        }
-        .nav-link {
+        /* --- ヘッダー周り --- */
+        header { text-align: center; margin: 20px 0 30px; }
+        h1 { font-size: 1.5rem; color: var(--primary); margin: 10px 0; }
+        
+        .nav-btn {
             display: inline-block;
-            margin-bottom: 15px;
+            padding: 8px 16px;
+            background: #fff;
             color: #666;
             text-decoration: none;
+            border-radius: 20px;
             font-weight: bold;
-            background: #fff;
-            padding: 8px 16px;
-            border-radius: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-            transition: 0.2s;
-        }
-        .nav-link:hover { transform: translateY(-2px); color: var(--primary); }
-
-        /* --- 検索 & タグエリア --- */
-        .search-container {
-            max-width: 800px;
-            margin: 0 auto 30px;
-            text-align: center;
-        }
-        #searchInput {
-            width: 80%;
-            max-width: 400px;
-            padding: 12px;
-            border-radius: 25px;
-            border: 2px solid #ddd;
-            font-size: 1rem;
-            outline: none;
-            transition: 0.3s;
-        }
-        #searchInput:focus { border-color: var(--primary); }
-
-        /* 自動生成されるタグボタン */
-        .tag-cloud {
-            display: flex;
-            flex-wrap: wrap;
-            justify-content: center;
-            gap: 10px;
-            margin-top: 15px;
-        }
-        .tag-chip {
-            background: #fff;
-            color: var(--primary);
-            padding: 6px 14px;
-            border-radius: 20px;
             font-size: 0.9rem;
-            cursor: pointer;
-            border: 1px solid var(--primary);
-            transition: 0.2s;
-        }
-        .tag-chip:hover, .tag-chip.active {
-            background: var(--primary);
-            color: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
 
-        /* --- グリッドレイアウト --- */
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-            gap: 25px;
-            max-width: 1200px;
-            margin: 0 auto;
+        /* 検索・タグエリア */
+        .search-area { max-width: 800px; margin: 0 auto; padding: 0 10px; }
+        #searchInput {
+            width: 100%; max-width: 400px;
+            padding: 12px; border-radius: 25px;
+            border: 2px solid #ddd; outline: none;
+            font-size: 1rem; margin-bottom: 15px;
         }
+
+        .tag-cloud { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+        .tag-chip {
+            background: #fff; color: var(--primary);
+            padding: 6px 12px; border-radius: 15px;
+            font-size: 0.85rem; cursor: pointer;
+            border: 1px solid var(--primary); transition: 0.2s;
+        }
+        .tag-chip:hover, .tag-chip.active { background: var(--primary); color: #fff; }
+
+        /* --- ✨ Pinterest風 Masonryレイアウト ✨ --- */
+        .masonry {
+            column-count: 5; /* PC大画面なら5列 */
+            column-gap: 15px;
+            max-width: 1600px;
+            margin: 20px auto;
+        }
+        @media (max-width: 1200px) { .masonry { column-count: 4; } }
+        @media (max-width: 900px)  { .masonry { column-count: 3; } }
+        @media (max-width: 600px)  { .masonry { column-count: 2; column-gap: 10px; } }
 
         /* --- カードデザイン --- */
         .card {
             background: var(--card-bg);
-            border-radius: 15px;
+            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            margin-bottom: 15px; /* 下のカードとの隙間 */
+            break-inside: avoid; /* 列の途中でカードが千切れないようにする */
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
             transition: transform 0.2s;
             position: relative;
-        }
-        .card:hover { transform: translateY(-5px); }
-
-        .card-img-wrapper {
+            display: inline-block; /* 表示崩れ防止 */
             width: 100%;
-            height: 220px;
-            overflow: hidden;
-            position: relative;
-            cursor: pointer;
         }
+        .card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+
         .card img {
             width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: 0.3s;
-        }
-        .card:hover img { transform: scale(1.05); }
-
-        /* 元ツイートリンクボタン */
-        .twitter-link {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: rgba(0,0,0,0.6);
-            color: #fff;
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            backdrop-filter: blur(4px);
-            z-index: 10;
-        }
-        .twitter-link:hover { background: #1da1f2; }
-
-        .card-content { padding: 15px; }
-        
-        /* イベントタグ（タイトル） */
-        .event-tag {
-            background: var(--accent);
-            color: #fff;
-            padding: 4px 10px;
-            border-radius: 6px;
-            font-size: 0.8rem;
-            display: inline-block;
-            margin-bottom: 8px;
-            font-weight: bold;
-        }
-
-        /* メンバー名表示 */
-        .member-names {
-            font-weight: bold;
-            font-size: 1rem;
-            margin-bottom: 5px;
-            color: #444;
-        }
-        .cosplayer-name {
-            font-size: 0.85rem;
-            color: #888;
+            height: auto; /* ★重要：高さを自動にして比率を保つ */
             display: block;
+            cursor: pointer;
         }
 
-        /* ローディング */
-        #loading { text-align: center; margin-top: 50px; font-weight: bold; color: #666; }
+        .card-content { padding: 10px; }
+        
+        .event-badge {
+            background: var(--accent); color: #fff;
+            font-size: 0.75rem; padding: 3px 8px; border-radius: 4px;
+            display: inline-block; margin-bottom: 6px; font-weight: bold;
+        }
+        .member-text { font-weight: bold; font-size: 0.95rem; line-height: 1.4; color: #333; }
+        .layer-text { font-size: 0.8rem; color: #888; margin-top: 3px; display: block; }
 
-        /* --- モーダル（画像拡大） --- */
+        .tw-link {
+            position: absolute; top: 8px; right: 8px;
+            background: rgba(0,0,0,0.6); color: #fff;
+            width: 30px; height: 30px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            text-decoration: none; backdrop-filter: blur(2px);
+            opacity: 0.8;
+        }
+        .tw-link:hover { opacity: 1; background: #1da1f2; }
+
+        /* --- モーダル --- */
         .modal {
-            display: none;
-            position: fixed;
+            display: none; position: fixed; z-index: 999;
             top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.9);
-            z-index: 2000;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+            justify-content: center; align-items: center;
+            padding: 10px;
         }
         .modal.open { display: flex; }
         .modal img {
-            max-width: 100%;
-            max-height: 90vh;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            max-width: 100%; max-height: 95vh;
+            border-radius: 4px; box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            object-fit: contain;
         }
-        .modal-close {
-            position: absolute;
-            top: 20px; right: 30px;
-            color: #fff;
-            font-size: 2.5rem;
-            cursor: pointer;
+        .close-modal {
+            position: absolute; top: 20px; right: 20px;
+            color: white; font-size: 30px; cursor: pointer;
+            text-shadow: 0 0 5px #000;
         }
+        
+        #loading { text-align: center; margin-top: 50px; color: #666; }
     </style>
 </head>
 <body>
 
 <header>
-    <a href="index.html" class="nav-link"><i class="fas fa-arrow-left"></i> トップに戻る</a>
+    <a href="index.html" class="nav-btn"><i class="fas fa-arrow-left"></i> トップに戻る</a>
     <h1>🎪 大型併せアーカイブ</h1>
-    
-    <div class="search-container">
-        <input type="text" id="searchInput" placeholder="メンバー名やタグで検索..." oninput="filterData()">
+
+    <div class="search-area">
+        <input type="text" id="searchInput" placeholder="メンバー名やイベント名で検索..." oninput="filterData()">
         <div class="tag-cloud" id="tagCloud"></div>
     </div>
 </header>
 
-<div id="loading"><i class="fas fa-spinner fa-spin"></i> データを読み込んでいます...</div>
-<main class="grid" id="grid"></main>
+<div id="loading"><i class="fas fa-spinner fa-spin"></i> Loading...</div>
 
-<div id="modal" class="modal" onclick="closeModal()">
-    <span class="modal-close">&times;</span>
-    <img id="modalImg" src="" onclick="event.stopPropagation()"> </div>
+<div class="masonry" id="grid"></div>
+
+<div id="modal" class="modal" onclick="document.getElementById('modal').classList.remove('open')">
+    <span class="close-modal">&times;</span>
+    <img id="modalImg" src="" onclick="event.stopPropagation()">
+</div>
 
 <script>
-    /* ==================================================
-       ★設定：ここにあなたのGASのURLを貼ってください
-       (末尾が /exec のもの)
-    ================================================== */
+    /* ▼ GASのURLをここに貼り付けてください ▼ */
     const GAS_API_URL = "https://script.google.com/macros/s/AKfycbwVOXeAag8jo_slfZDSwAYxPw549qRZkYNpEB3hn6XM4iDSAK63Ip7CraDE7Q--hWE_/exec"; 
 
-    let allData = []; // 全データをここに保持
+    let allData = [];
 
-    // ページ読み込み時に実行
     window.onload = async function() {
         try {
-            // ?mode=group を指定して大型併せデータを取得
-            const response = await fetch(GAS_API_URL + "?mode=group");
-            const data = await response.json();
-            
-            allData = data;
+            const res = await fetch(GAS_API_URL + "?mode=group");
+            allData = await res.json();
             document.getElementById('loading').style.display = 'none';
             
-            generateTagButtons(data); // タグボタンを作る
-            renderGrid(data);         // 写真を表示する
+            // 新しい順に並び替え（スプレッドシートの下の行＝最新とする場合）
+            allData.reverse(); 
 
-        } catch (error) {
-            console.error(error);
-            document.getElementById('loading').innerText = "データの読み込みに失敗しました。";
+            generateTags(allData);
+            render(allData);
+        } catch(e) {
+            document.getElementById('loading').innerText = "エラーが発生しました";
+            console.error(e);
         }
     };
 
-    // グリッドを表示する関数
-    function renderGrid(data) {
+    function render(data) {
         const grid = document.getElementById('grid');
-        grid.innerHTML = ""; // クリア
-
-        if (data.length === 0) {
-            grid.innerHTML = "<p style='text-align:center; width:100%; color:#888;'>該当する写真がありません</p>";
+        grid.innerHTML = "";
+        
+        if(data.length === 0) {
+            grid.innerHTML = "<p style='text-align:center; width:100%; margin-top:20px;'>見つかりませんでした</p>";
             return;
         }
 
         data.forEach(item => {
-            // item.members には "メンバー / レイヤー" の形で入っている想定
-            const nameParts = item.members.split(" / ");
-            const memberName = nameParts[0] || "Unknown";
-            const layerName = nameParts[1] || "";
+            // item.members = "メンバー / レイヤー"
+            const parts = item.members.split(" / ");
+            const mem = parts[0] || "";
+            const lay = parts[1] ? `@${parts[1]}` : "";
 
-            const card = document.createElement('div');
-            card.className = 'card';
-            card.innerHTML = `
-                <div class="card-img-wrapper" onclick="openModal('${item.image}')">
-                    <img src="${item.image}" loading="lazy" alt="${item.title}">
-                </div>
-                ${item.link ? `<a href="${item.link}" target="_blank" class="twitter-link"><i class="fab fa-twitter"></i></a>` : ''}
-                
+            const div = document.createElement('div');
+            div.className = 'card';
+            div.innerHTML = `
+                <img src="${item.image}" loading="lazy" onclick="openModal('${item.image}')">
+                ${item.link ? `<a href="${item.link}" target="_blank" class="tw-link"><i class="fab fa-twitter"></i></a>` : ''}
                 <div class="card-content">
-                    <span class="event-tag">${item.title}</span>
-                    <div class="member-names">${memberName}</div>
-                    <span class="cosplayer-name">${layerName}</span>
+                    <span class="event-badge">${item.title}</span>
+                    <div class="member-text">${mem}</div>
+                    ${lay ? `<span class="layer-text">${lay}</span>` : ''}
                 </div>
             `;
-            grid.appendChild(card);
+            grid.appendChild(div);
         });
     }
 
-    // タグボタン（#ぶいすぽ文化祭 etc）を自動生成する関数
-    function generateTagButtons(data) {
-        const tagCounts = {};
+    function generateTags(data) {
+        const counts = {};
+        data.forEach(d => { if(d.title) counts[d.title] = (counts[d.title]||0)+1; });
         
-        // 全データのタグ（title）を集計
-        data.forEach(item => {
-            const tag = item.title; 
-            if(tag) {
-                tagCounts[tag] = (tagCounts[tag] || 0) + 1;
-            }
-        });
-
-        // HTMLにボタンを追加
         const container = document.getElementById('tagCloud');
-        container.innerHTML = `<span class="tag-chip active" onclick="filterByTag('ALL', this)">全て</span>`; // 全てボタン
-
-        Object.keys(tagCounts).forEach(tag => {
+        container.innerHTML = `<span class="tag-chip active" onclick="filterByTag('ALL', this)">全て</span>`;
+        
+        Object.keys(counts).forEach(tag => {
             const btn = document.createElement('span');
             btn.className = 'tag-chip';
-            btn.innerText = `${tag} (${tagCounts[tag]})`;
-            btn.onclick = function() { filterByTag(tag, this); }; // クリック時の動作
+            btn.innerText = `${tag} (${counts[tag]})`;
+            btn.onclick = function() { filterByTag(tag, this); };
             container.appendChild(btn);
         });
     }
 
-    // タグボタンを押した時の絞り込み処理
-    function filterByTag(tag, element) {
-        // ボタンの色を切り替え
-        document.querySelectorAll('.tag-chip').forEach(el => el.classList.remove('active'));
-        element.classList.add('active');
-
-        // 検索ボックスをリセット
+    function filterByTag(tag, el) {
+        document.querySelectorAll('.tag-chip').forEach(e => e.classList.remove('active'));
+        el.classList.add('active');
         document.getElementById('searchInput').value = "";
-
-        if (tag === 'ALL') {
-            renderGrid(allData);
-        } else {
-            // タイトル（タグ）が一致するものだけ表示
-            const filtered = allData.filter(item => item.title === tag);
-            renderGrid(filtered);
-        }
-    }
-
-    // 検索ボックスでの絞り込み処理
-    function filterData() {
-        const keyword = document.getElementById('searchInput').value.toLowerCase();
         
-        // タグボタンの選択を解除
-        document.querySelectorAll('.tag-chip').forEach(el => el.classList.remove('active'));
-
-        const filtered = allData.filter(item => {
-            const text = (item.title + item.members).toLowerCase();
-            return text.includes(keyword);
-        });
-        renderGrid(filtered);
+        if(tag === 'ALL') render(allData);
+        else render(allData.filter(d => d.title === tag));
     }
 
-    // --- モーダル制御 ---
+    function filterData() {
+        document.querySelectorAll('.tag-chip').forEach(e => e.classList.remove('active'));
+        const val = document.getElementById('searchInput').value.toLowerCase();
+        render(allData.filter(d => (d.title+d.members).toLowerCase().includes(val)));
+    }
+
     function openModal(src) {
         document.getElementById('modalImg').src = src;
         document.getElementById('modal').classList.add('open');
     }
-    function closeModal() {
-        document.getElementById('modal').classList.remove('open');
-    }
 </script>
 
 </body>
-
 </html>
