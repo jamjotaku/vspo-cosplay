@@ -379,6 +379,14 @@
     const tagMapping = { "school_uniform": "制服", "maid": "メイド", "gym_uniform": "ジャージ", "swimsuit": "水着", "bikini": "ビキニ", "santa_costume": "サンタ", "kimono": "着物", "yukata": "浴衣", "dress": "ドレス", "china_dress": "チャイナ", "hoodie": "パーカー", "jacket": "ジャケット", "nurse": "ナース", "police": "ポリス", "idol": "アイドル", "bunny": "バニー", "miko": "巫女", "waitress": "ウェイトレス", "pajamas": "パジャマ", "glasses": "眼鏡", "animal_ears": "ケモミミ", "cat_ears": "猫耳", "rabbit_ears": "うさ耳", "fox_ears": "狐耳", "dog_ears": "犬耳", "headphones": "ヘッドホン", "mask": "マスク", "twintails": "ツインテ", "ponytail": "ポニテ", "short_hair": "ショート", "long_hair": "ロング", "braid": "三つ編み" };
     const memberReadings = { "花芽すみれ": "かがすみれ", "花芽なずな": "かがなずな", "小雀とと": "こがらとと", "一ノ瀬うるは": "いちのせうるは", "胡桃のあ": "くるみのあ", "橘ひなの": "たちばなひなの", "如月れん": "きさらぎれん", "英リサ": "はなぶさりさ", "空澄セナ": "あすみせな", "兎咲ミミ": "とさきみみ", "神成きゅぴ": "かみなりきゅぴ", "八雲べに": "やくもべに", "藍沢エマ": "あいざわえま", "紫宮るな": "しのみやるな", "猫汰つな": "ねこたつな", "白波らむね": "しらなみらむね", "小森めと": "こもりめと", "夢野あかり": "ゆめのあかり", "夜乃くろむ": "やのくろむ", "紡木こかげ": "つむぎこかげ", "千燈ゆうひ": "せんどうゆうひ", "蝶屋はなび": "ちょうやはなび", "甘結もか": "あまゆいもか" };
     
+    // ★ メンバーリスト（順番修正：公式デビュー順/ユーザー指定） ★
+    const memberOrder = [
+        "花芽すみれ", "花芽なずな", "小雀とと", "一ノ瀬うるは",
+        "胡桃のあ", "兎咲ミミ", "空澄セナ", "橘ひなの", "英リサ", "如月れん",
+        "神成きゅぴ", "八雲べに", "藍沢エマ", "紫宮るな", "猫汰つな", "白波らむね", "小森めと",
+        "夢野あかり", "夜乃くろむ", "紡木こかげ", "千燈ゆうひ", "蝶屋はなび", "甘結もか"
+    ];
+
     const memberIcons = { 
         "花芽すみれ": "👾💤", "花芽なずな": "🍣", "小雀とと": "🔫🐥", "一ノ瀬うるは": "🌠", 
         "胡桃のあ": "🧸♔", "橘ひなの": "🍫💘", "如月れん": "⏰", "英リサ": "💐", 
@@ -422,6 +430,7 @@
     let slideshowList = [], currentImageIndex = 0, displayLimit = 40;
     let storiesData = [], currentStoryMemberIndex = 0, currentStorySlideIndex = 0, storyTimer = null;
 
+    // ★ 診断機能用の変数 ★
     let diagSelectedMember = "";
     let diagSelectedVibe = "";
     const vibeKeywords = {
@@ -590,8 +599,8 @@
     function generateMemberTags() {
         const box = document.getElementById('memberBar');
         box.innerHTML = `<span class="member-chip active" onclick="filterByMember('all', this)">🏠</span>`;
-        // 指定された順番(memberColorsのキー順)で生成する
-        Object.keys(memberColors).forEach(k => {
+        // ★修正: 配列の順番通りにループする
+        memberOrder.forEach(k => {
             box.innerHTML += `<span class="member-chip" onclick="filterByMember('${k}', this)">${memberIcons[k] || '✨'}</span>`;
         });
     }
@@ -892,11 +901,10 @@
         document.getElementById('diag-modal').classList.add('open');
         setDiagStep(1);
         
-        // メンバー選択ボタン生成（指定順序通り）
         const grid = document.getElementById('diag-member-grid');
         grid.innerHTML = "";
-        // memberColorsのキー順（＝ユーザー指定順）でボタンを作る
-        Object.keys(memberColors).forEach(m => {
+        // ★修正: memberOrderを使って順番通りにボタン生成
+        memberOrder.forEach(m => {
             const btn = document.createElement('button');
             btn.className = "diag-btn";
             btn.innerHTML = `<span style="font-size:1.5rem;">${memberIcons[m] || '✨'}</span><span style="font-size:0.7rem;">${m}</span>`;
