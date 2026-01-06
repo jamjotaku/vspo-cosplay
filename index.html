@@ -71,7 +71,8 @@
         /* ツールバー */
         .tools { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .tools::-webkit-scrollbar { display: none; }
-        input { padding: 8px 15px; border-radius: 20px; border: none; min-width: 150px; font-size: 0.9rem; background: rgba(255,255,255,0.9); }
+        /* 【改善1】フォントサイズを16pxにしてiOSでのズーム防止 */
+        input { padding: 8px 15px; border-radius: 20px; border: none; min-width: 150px; font-size: 16px; background: rgba(255,255,255,0.9); }
         .tool-btn { background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
         .tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; text-shadow: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
 
@@ -105,12 +106,23 @@
 
         /* メインコンテンツ */
         main { padding: 10px; max-width: 1600px; margin: 0 auto; width: 100%; min-height: 50vh; }
-        .masonry-grid { column-count: 2; column-gap: 10px; }
+        
+        /* 【改善3】グリッドのフェードインアニメーション */
+        .masonry-grid { 
+            column-count: 2; column-gap: 10px; 
+            animation: fadeInGrid 0.5s ease-out;
+        }
+        @keyframes fadeInGrid { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
         @media (min-width: 600px) { .masonry-grid { column-count: 3; column-gap: 15px; } }
         @media (min-width: 900px) { .masonry-grid { column-count: 4; column-gap: 20px; } }
         @media (min-width: 1400px) { .masonry-grid { column-count: 5; } }
 
-        .card { break-inside: avoid; margin-bottom: 10px; border-radius: 12px; overflow: hidden; position: relative; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; }
+        /* 【改善2】Masonryレイアウトのバグ防止 (display: inline-block) */
+        .card { 
+            display: inline-block; width: 100%; /* これで表示崩れを防ぐ */
+            break-inside: avoid; margin-bottom: 10px; border-radius: 12px; overflow: hidden; position: relative; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; 
+        }
         .card img { width: 100%; height: auto; display: block; opacity: 1; } /* 画像は常に表示 */
         .card-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 40px 10px 10px; color: #fff; pointer-events: none; }
         .card-tag { font-size: 0.7rem; background: var(--primary); padding: 2px 6px; border-radius: 4px; margin-right: 5px; }
@@ -211,12 +223,12 @@
 <div id="loading-sentinel">読み込み中...</div>
 
 <footer>
-    <p>本サイトは非公式ファンサイトです。<br>画像の肖像権は各権利所有者に帰属します。</p>
+    <p>本サイトは非公式ファンサイトです.<br>画像の肖像権は各権利所有者に帰属します.</p>
     <p style="margin-top:10px;"><a id="remove-link" href="#" target="_blank" class="footer-link">掲載削除依頼はこちら</a></p>
 </footer>
 
 <button class="fab" id="scrollTopBtn" onclick="window.scrollTo({top:0, behavior:'smooth'})"><i class="fas fa-arrow-up"></i></button>
-<div id="toast" style="visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 2000; left: 50%; bottom: 100px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: 0.5s;">メッセージ</div>
+<div id="toast" style="visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 3000; left: 50%; bottom: 100px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: 0.5s;">メッセージ</div>
 
 <div id="modal" class="modal" onclick="closeModal()">
     <span class="modal-close">&times;</span>
@@ -438,10 +450,53 @@
         applySort();
     }
 
+    /* ▼▼▼ 追加機能：スマートシャッフル ▼▼▼ */
+    function smartShuffle(data) {
+        // 1. レイヤーさん(またはメンバー)ごとにグループ分け
+        const groups = {};
+        data.forEach(item => {
+            const key = item.cosplayer || item.member || "unknown";
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(item);
+        });
+
+        // 2. 各グループの中身もシャッフル (毎回同じ写真が最初に来ないように)
+        Object.keys(groups).forEach(key => {
+            groups[key].sort(() => Math.random() - 0.5);
+        });
+
+        // 3. トランプ配りの要領で1枚ずつ取り出す
+        const result = [];
+        let keys = Object.keys(groups); 
+
+        while (keys.length > 0) {
+            // グループの順番自体も毎回シャッフル
+            keys.sort(() => Math.random() - 0.5);
+
+            const nextKeys = [];
+            keys.forEach(key => {
+                if (groups[key].length > 0) {
+                    result.push(groups[key].pop());
+                    if (groups[key].length > 0) {
+                        nextKeys.push(key);
+                    }
+                }
+            });
+            keys = nextKeys;
+        }
+        return result;
+    }
+    /* ▲▲▲ ここまで ▲▲▲ */
+
     function applySort() {
         if(currentSort==='new') filteredData.sort((a,b)=>b._originalIndex - a._originalIndex);
         if(currentSort==='original') filteredData.sort((a,b)=>a._originalIndex - b._originalIndex);
-        if(currentSort==='shuffle') filteredData.sort(()=>Math.random()-0.5);
+        
+        // ★ シャッフル時は「スマートシャッフル」を使用する
+        if(currentSort==='shuffle') {
+            filteredData = smartShuffle([...filteredData]); // 元の配列を壊さないようコピーを渡す
+        }
+        
         render();
     }
 
@@ -677,6 +732,3 @@
 </script>
 </body>
 </html>
-
-
-
