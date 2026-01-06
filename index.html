@@ -24,20 +24,17 @@
     <style>
         /* --- 👾 Esports Neon Design Definitions --- */
         :root {
-            /* ベースカラー */
             --bg-color: #0b1120;
             --card-bg: #1e293b;
             --text-color: #f8fafc;
             
-            /* ★ 初期カラー（ぶいすぽ全体イメージ） ★ */
+            /* 初期カラー（デフォルト） */
             --primary-color: #3b82f6; 
             --accent-color: #d946ef;  
-            
-            /* グラデーション */
             --neon-grad: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
             
             --heart: #ff4757; 
-            --glass-bg: rgba(15, 23, 42, 0.85);
+            --glass-bg: rgba(15, 23, 42, 0.9);
             --border-color: rgba(255, 255, 255, 0.1);
         }
 
@@ -47,7 +44,6 @@
         body { 
             font-family: "M PLUS Rounded 1c", sans-serif;
             background-color: var(--bg-color);
-            /* 背景のサイバーグリッド */
             background-image: 
                 linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
@@ -88,7 +84,7 @@
         .stories-container::-webkit-scrollbar { display: none; }
         .story-item { width: 68px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; }
         .story-item:active { transform: scale(0.95); }
-        .story-ring { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: var(--neon-grad); box-shadow: 0 0 10px var(--primary-color); transition: 0.5s; }
+        .story-ring { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: var(--neon-grad); box-shadow: 0 0 10px var(--accent-color); transition: 0.5s; }
         .story-ring.seen { background: #334155; box-shadow: none; }
         .story-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--bg-color); object-fit: cover; }
         .story-name { font-size: 0.65rem; margin-top: 4px; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #cbd5e1; }
@@ -111,7 +107,7 @@
         }
         .tool-btn.active { 
             background: var(--neon-grad); color: #fff; border: none; 
-            box-shadow: 0 0 15px var(--primary-color);
+            box-shadow: 0 0 15px var(--accent-color);
         }
 
         /* メンバーチップ等 */
@@ -149,7 +145,6 @@
         
         .card:hover { 
             transform: translateY(-5px); 
-            /* ホバー時の発光も動的に */
             box-shadow: 0 8px 20px var(--primary-color); 
             border-color: var(--primary-color);
         }
@@ -383,21 +378,28 @@
 
     const tagMapping = { "school_uniform": "制服", "maid": "メイド", "gym_uniform": "ジャージ", "swimsuit": "水着", "bikini": "ビキニ", "santa_costume": "サンタ", "kimono": "着物", "yukata": "浴衣", "dress": "ドレス", "china_dress": "チャイナ", "hoodie": "パーカー", "jacket": "ジャケット", "nurse": "ナース", "police": "ポリス", "idol": "アイドル", "bunny": "バニー", "miko": "巫女", "waitress": "ウェイトレス", "pajamas": "パジャマ", "glasses": "眼鏡", "animal_ears": "ケモミミ", "cat_ears": "猫耳", "rabbit_ears": "うさ耳", "fox_ears": "狐耳", "dog_ears": "犬耳", "headphones": "ヘッドホン", "mask": "マスク", "twintails": "ツインテ", "ponytail": "ポニテ", "short_hair": "ショート", "long_hair": "ロング", "braid": "三つ編み" };
     const memberReadings = { "花芽すみれ": "かがすみれ", "花芽なずな": "かがなずな", "小雀とと": "こがらとと", "一ノ瀬うるは": "いちのせうるは", "胡桃のあ": "くるみのあ", "橘ひなの": "たちばなひなの", "如月れん": "きさらぎれん", "英リサ": "はなぶさりさ", "空澄セナ": "あすみせな", "兎咲ミミ": "とさきみみ", "神成きゅぴ": "かみなりきゅぴ", "八雲べに": "やくもべに", "藍沢エマ": "あいざわえま", "紫宮るな": "しのみやるな", "猫汰つな": "ねこたつな", "白波らむね": "しらなみらむね", "小森めと": "こもりめと", "夢野あかり": "ゆめのあかり", "夜乃くろむ": "やのくろむ", "紡木こかげ": "つむぎこかげ", "千燈ゆうひ": "せんどうゆうひ", "蝶屋はなび": "ちょうやはなび", "甘結もか": "あまゆいもか" };
-    const memberIcons = { "花芽すみれ": "👾💤", "花芽なずな": "🍣", "小雀とと": "🔫🐥", "一ノ瀬うるは": "🌠", "胡桃のあ": "🧸♔", "橘ひなの": "🍫💘", "如月れん": "⏰", "英リサ": "💐", "空澄セナ": "🗝♠︎", "兎咲ミミ": "🐰🍭", "神成きゅぴ": "🌩", "八雲べに": "💄💚", "藍沢エマ": "🥞💫", "紫宮るな": "☪🐾", "猫汰つな": "🍒✨", "白波らむね": "🐻‍❄️🏖", "小森めと": "🪐", "夢野あかり": "🍼", "夜乃くろむ": "💀⛓", "紡木こかげ": "📘💧", "千燈ゆうひ": "🫠", "蝶屋はなび": "🦋🎆", "甘結もか": "🕹🔖" };
+    
+    const memberIcons = { 
+        "花芽すみれ": "👾💤", "花芽なずな": "🍣", "小雀とと": "🔫🐥", "一ノ瀬うるは": "🌠", 
+        "胡桃のあ": "🧸♔", "橘ひなの": "🍫💘", "如月れん": "⏰", "英リサ": "💐", 
+        "空澄セナ": "🗝♠︎", "兎咲ミミ": "🐰🍭", "神成きゅぴ": "🌩", "八雲べに": "💄💚", 
+        "藍沢エマ": "🥞💫", "紫宮るな": "☪🐾", "猫汰つな": "🍒✨", "白波らむね": "🐻‍❄️🏖", "小森めと": "🪐", 
+        "夢野あかり": "🍼", "夜乃くろむ": "💀⛓", "紡木こかげ": "📘💧", 
+        "千燈ゆうひ": "🫠", "蝶屋はなび": "🦋🎆", "甘結もか": "🕹🔖" 
+    };
 
-    /* ▼▼▼ メンバーカラー定義 (推し色ジャック用) ▼▼▼ */
-    /* [MainColor(User), SubColor(Generated)] */
+    /* ▼▼▼ メンバーカラー定義（指定色 ＋ 発光用サブカラー） ▼▼▼ */
     const memberColors = {
         "花芽すみれ": ["#b0c4de", "#7788aa"],
         "花芽なずな": ["#fabedc", "#ff69b4"],
-        "小雀とと": ["#f5eb4a", "#ffae00"],
+        "小雀とと": ["#f5eb4a", "#ffcc00"],
         "一ノ瀬うるは": ["#4182fa", "#00ffff"],
         "胡桃のあ": ["#ffdbfe", "#ff66cc"],
-        "橘ひなの": ["#fa96c8", "#ff1493"],
-        "如月れん": ["#be2152", "#ff0000"],
-        "英リサ": ["#d1de79", "#adff2f"],
-        "空澄セナ": ["#ffffff", "#00bfff"],
         "兎咲ミミ": ["#c7b2d6", "#9400d3"],
+        "空澄セナ": ["#ffffff", "#00bfff"],
+        "橘ひなの": ["#fa96c8", "#ff1493"],
+        "英リサ": ["#d1de79", "#adff2f"],
+        "如月れん": ["#be2152", "#ff0000"],
         "神成きゅぴ": ["#ffd23c", "#ffff00"],
         "八雲べに": ["#85cab3", "#00fa9a"],
         "藍沢エマ": ["#b4f1f9", "#00bfff"],
@@ -412,7 +414,7 @@
         "蝶屋はなび": ["#ea5506", "#ff00ff"],
         "甘結もか": ["#eca0aa", "#db7093"]
     };
-    const defaultColor = ["#3b82f6", "#d946ef"]; // デフォルト
+    const defaultColor = ["#3b82f6", "#d946ef"]; 
 
     let allData = [], filteredData = [], currentMode = 'member', currentSort = 'new';
     let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
@@ -420,7 +422,6 @@
     let slideshowList = [], currentImageIndex = 0, displayLimit = 40;
     let storiesData = [], currentStoryMemberIndex = 0, currentStorySlideIndex = 0, storyTimer = null;
 
-    // ★ 診断機能用の変数 ★
     let diagSelectedMember = "";
     let diagSelectedVibe = "";
     const vibeKeywords = {
@@ -489,16 +490,13 @@
         });
     };
 
-    /* ▼▼▼ テーマカラー変更ロジック ▼▼▼ */
     function setThemeColor(member) {
         const root = document.documentElement;
         let c1 = defaultColor[0], c2 = defaultColor[1];
-        
         if (memberColors[member]) {
             c1 = memberColors[member][0];
             c2 = memberColors[member][1];
         }
-        
         root.style.setProperty('--primary-color', c1);
         root.style.setProperty('--accent-color', c2);
     }
@@ -509,12 +507,11 @@
         
         if(name==='all') {
             filteredData = [...allData];
-            setThemeColor('all'); // デフォルト色に戻す
+            setThemeColor('all');
         } else {
             filteredData = allData.filter(d=>d.member===name);
-            setThemeColor(name); // 推し色に変更
+            setThemeColor(name);
         }
-        
         setMode('member'); applySort();
     }
 
@@ -570,10 +567,8 @@
                     <span class="card-tag">${item.member}</span>
                     <div class="card-name">${item.cosplayer}</div>
                 </div>`;
-            
             grid.appendChild(card);
         });
-
         document.getElementById('loading-sentinel').style.display = (displayLimit >= slideshowList.length) ? 'none' : 'block';
     }
 
@@ -595,8 +590,9 @@
     function generateMemberTags() {
         const box = document.getElementById('memberBar');
         box.innerHTML = `<span class="member-chip active" onclick="filterByMember('all', this)">🏠</span>`;
-        Object.keys(memberIcons).forEach(k => {
-            box.innerHTML += `<span class="member-chip" onclick="filterByMember('${k}', this)">${memberIcons[k]}</span>`;
+        // 指定された順番(memberColorsのキー順)で生成する
+        Object.keys(memberColors).forEach(k => {
+            box.innerHTML += `<span class="member-chip" onclick="filterByMember('${k}', this)">${memberIcons[k] || '✨'}</span>`;
         });
     }
 
@@ -728,7 +724,7 @@
             return {i:d, s:s};
         });
         
-        cands.sort((a,b)=>b.s-a.s).slice(0,10).forEach(c=>{ // 少し多めに10件表示
+        cands.sort((a,b)=>b.s-a.s).slice(0,10).forEach(c=>{ 
             const d = document.createElement('div');
             d.className='recommend-card';
             d.innerHTML=`<img src="${c.i.image}">`;
@@ -889,6 +885,76 @@
     function closeStory() {
         if(storyTimer) clearTimeout(storyTimer);
         document.getElementById('story-viewer').classList.remove('active');
+    }
+
+    /* ▼▼▼ 診断機能ロジック ▼▼▼ */
+    function openDiagnosis() {
+        document.getElementById('diag-modal').classList.add('open');
+        setDiagStep(1);
+        
+        // メンバー選択ボタン生成（指定順序通り）
+        const grid = document.getElementById('diag-member-grid');
+        grid.innerHTML = "";
+        // memberColorsのキー順（＝ユーザー指定順）でボタンを作る
+        Object.keys(memberColors).forEach(m => {
+            const btn = document.createElement('button');
+            btn.className = "diag-btn";
+            btn.innerHTML = `<span style="font-size:1.5rem;">${memberIcons[m] || '✨'}</span><span style="font-size:0.7rem;">${m}</span>`;
+            btn.onclick = () => selectDiagMember(m);
+            grid.appendChild(btn);
+        });
+    }
+
+    function closeDiagnosis() {
+        document.getElementById('diag-modal').classList.remove('open');
+    }
+
+    function setDiagStep(step) {
+        document.querySelectorAll('.diag-step').forEach(el => el.classList.remove('active'));
+        document.getElementById(`diag-step-${step}`).classList.add('active');
+    }
+
+    function selectDiagMember(member) {
+        diagSelectedMember = member;
+        setDiagStep(2);
+    }
+
+    function selectDiagVibe(vibe) {
+        diagSelectedVibe = vibe;
+        setDiagStep(3);
+    }
+
+    function runDiagnosis(mood) {
+        let candidates = allData.filter(d => d.member === diagSelectedMember);
+
+        if (diagSelectedVibe !== 'all') {
+            const keywords = vibeKeywords[diagSelectedVibe];
+            const filtered = candidates.filter(d => 
+                keywords.some(k => d._tagsArray.some(t => t.includes(k)))
+            );
+            if (filtered.length > 0) candidates = filtered;
+        }
+
+        if (mood === 'new') {
+            candidates.sort((a,b) => b._originalIndex - a._originalIndex);
+        } else if (mood === 'old') {
+            candidates.sort((a,b) => a._originalIndex - b._originalIndex);
+        } else {
+            candidates.sort(() => Math.random() - 0.5);
+        }
+
+        if (candidates.length > 0) {
+            const top5 = candidates.slice(0, 5);
+            const winner = top5[Math.floor(Math.random() * top5.length)];
+            
+            document.getElementById('diag-res-img').src = winner.image;
+            document.getElementById('diag-res-name').innerText = `${winner.member} / ${winner.cosplayer}`;
+            
+            document.querySelectorAll('.diag-step').forEach(el => el.classList.remove('active'));
+            document.getElementById('diag-result').classList.add('active');
+        } else {
+            alert("条件に合う写真が見つかりませんでした…別の条件で試してみて！");
+        }
     }
 </script>
 </body>
