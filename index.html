@@ -24,18 +24,19 @@
     <style>
         /* --- 👾 Esports Neon Design Definitions --- */
         :root {
-            /* 背景：深いネイビーブラック */
+            /* ベースカラー */
             --bg-color: #0b1120;
-            /* カード背景：少し明るいネイビー */
             --card-bg: #1e293b;
-            /* テキスト：発光するような白 */
             --text-color: #f8fafc;
-            /* VSPO! カラーグラデーション（青〜ピンク） */
-            --neon-grad: linear-gradient(135deg, #3b82f6 0%, #d946ef 100%);
-            /* アクセント色 */
-            --accent: #d946ef;
-            --heart: #ff4757; 
             
+            /* ★ 初期カラー（ぶいすぽ全体イメージ） ★ */
+            --primary-color: #3b82f6; 
+            --accent-color: #d946ef;  
+            
+            /* グラデーション */
+            --neon-grad: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            
+            --heart: #ff4757; 
             --glass-bg: rgba(15, 23, 42, 0.85);
             --border-color: rgba(255, 255, 255, 0.1);
         }
@@ -46,7 +47,7 @@
         body { 
             font-family: "M PLUS Rounded 1c", sans-serif;
             background-color: var(--bg-color);
-            /* 背景にうっすらサイバーなグリッドを入れる演出 */
+            /* 背景のサイバーグリッド */
             background-image: 
                 linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
@@ -55,6 +56,7 @@
             margin: 0; padding: 0; 
             min-height: 100vh;
             padding-bottom: 100px;
+            transition: background-color 0.5s;
         }
 
         /* --- ヘッダー --- */
@@ -65,26 +67,28 @@
             padding: 15px 15px 10px; 
             position: sticky; top: 0; z-index: 100; 
             box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+            transition: border-color 0.5s;
         }
         
         .header-top { display: flex; justify-content: space-between; gap: 10px; margin-bottom: 15px; }
         .title-area h1 { 
             margin: 0; font-size: 1.3rem; font-weight: 800; 
-            /* タイトルをグラデーションで光らせる */
             background: var(--neon-grad);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 5px rgba(59, 130, 246, 0.5));
+            filter: drop-shadow(0 0 5px var(--primary-color));
+            transition: filter 0.5s;
         }
         .total-count { font-size: 0.75rem; color: #94a3b8; font-weight: bold; }
-        .icon-btn { background: rgba(255,255,255,0.1); border: 1px solid var(--border-color); color: #fff; width: 40px; height: 40px; border-radius: 12px; cursor: pointer; display:flex; align-items:center; justify-content:center; }
+        .icon-btn { background: rgba(255,255,255,0.1); border: 1px solid var(--border-color); color: #fff; width: 40px; height: 40px; border-radius: 12px; cursor: pointer; display:flex; align-items:center; justify-content:center; transition: 0.3s; }
+        .icon-btn:hover { background: var(--primary-color); border-color: var(--primary-color); box-shadow: 0 0 10px var(--primary-color); }
 
         /* --- ストーリーズ --- */
         .stories-container { display: flex; gap: 12px; overflow-x: auto; padding: 5px 0 10px; scrollbar-width: none; }
         .stories-container::-webkit-scrollbar { display: none; }
         .story-item { width: 68px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: transform 0.2s; }
         .story-item:active { transform: scale(0.95); }
-        .story-ring { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: var(--neon-grad); box-shadow: 0 0 10px rgba(217, 70, 239, 0.4); }
+        .story-ring { width: 64px; height: 64px; border-radius: 50%; padding: 2px; background: var(--neon-grad); box-shadow: 0 0 10px var(--primary-color); transition: 0.5s; }
         .story-ring.seen { background: #334155; box-shadow: none; }
         .story-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--bg-color); object-fit: cover; }
         .story-name { font-size: 0.65rem; margin-top: 4px; width: 100%; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #cbd5e1; }
@@ -95,18 +99,19 @@
         input { 
             padding: 10px 15px; border-radius: 8px; border: 1px solid var(--border-color); 
             min-width: 150px; font-size: 16px; 
-            background: rgba(0,0,0,0.3); color: #fff; outline: none;
+            background: rgba(0,0,0,0.3); color: #fff; outline: none; transition: 0.3s;
         }
-        input:focus { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
+        input:focus { border-color: var(--primary-color); box-shadow: 0 0 10px var(--primary-color); }
         
         .tool-btn { 
             background: rgba(30, 41, 59, 0.8); border: 1px solid var(--border-color); 
             color: #94a3b8; padding: 8px 14px; border-radius: 8px; 
             font-size: 0.85rem; cursor: pointer; white-space: nowrap; font-weight: bold;
+            transition: 0.3s;
         }
         .tool-btn.active { 
             background: var(--neon-grad); color: #fff; border: none; 
-            box-shadow: 0 0 15px rgba(217, 70, 239, 0.4);
+            box-shadow: 0 0 15px var(--primary-color);
         }
 
         /* メンバーチップ等 */
@@ -114,11 +119,12 @@
         .member-chip { 
             background: #1e293b; color: #cbd5e1; padding: 6px 12px; 
             border-radius: 8px; cursor: pointer; font-size: 1.1rem; 
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--border-color); transition: 0.3s;
         }
         .member-chip.active { 
-            background: #fff; color: #000; border-color: #fff; 
-            box-shadow: 0 0 10px rgba(255,255,255,0.5); 
+            background: #fff; color: var(--primary-color); border-color: #fff; 
+            box-shadow: 0 0 15px var(--primary-color); 
+            font-weight: bold; transform: scale(1.1);
         }
 
         /* --- メインコンテンツ --- */
@@ -129,25 +135,23 @@
         @media (min-width: 900px) { .masonry-grid { column-count: 4; column-gap: 20px; } }
         @media (min-width: 1400px) { .masonry-grid { column-count: 5; } }
 
-        /* ▼▼▼ 【ネオン・サイバー風】カードデザイン ▼▼▼ */
+        /* カードデザイン (Esports Style) */
         .card { 
             display: inline-block; width: 100%; margin-bottom: 15px; 
-            /* 角は少しシャープに */
             border-radius: 12px; 
             overflow: hidden; position: relative; 
             background: #1e293b;
-            /* 枠線をうっすら光らせる */
             border: 1px solid rgba(255,255,255,0.05);
             box-shadow: 0 4px 6px rgba(0,0,0,0.3); 
             cursor: pointer; 
             transition: all 0.3s ease;
         }
         
-        /* ホバー時の「発光」演出 */
         .card:hover { 
             transform: translateY(-5px); 
-            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.25); /* 青いグロー */
-            border-color: rgba(59, 130, 246, 0.5);
+            /* ホバー時の発光も動的に */
+            box-shadow: 0 8px 20px var(--primary-color); 
+            border-color: var(--primary-color);
         }
 
         .card img { 
@@ -159,22 +163,19 @@
         .card:hover img { transform: scale(1.05); }
         @keyframes fadeInImg { from { opacity: 0; } to { opacity: 1; } }
 
-        /* 情報エリア：黒グラデーションで視認性確保 */
         .card-overlay { 
             position: absolute; bottom: 0; left: 0; width: 100%; 
-            /* 上に向かって消える濃い黒 */
             background: linear-gradient(to top, rgba(2, 6, 23, 0.95) 0%, rgba(2, 6, 23, 0.6) 50%, transparent 100%); 
             padding: 40px 10px 10px; 
             pointer-events: none; 
         }
 
         .card-tag { 
-            /* タグをネオンバッジ風に */
             font-size: 0.65rem; 
-            background: linear-gradient(90deg, #3b82f6, #8b5cf6); /* 青〜紫 */
+            background: var(--neon-grad); 
             color: #fff; padding: 2px 8px; border-radius: 4px; 
             margin-right: 5px; font-weight: bold;
-            box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 5px var(--primary-color);
         }
         
         .card-name { 
@@ -194,24 +195,21 @@
             font-size: 1rem; cursor: pointer; z-index: 10; 
         }
         .card-fav.active { color: var(--heart); background: rgba(255,255,255,0.9); box-shadow: 0 0 10px var(--heart); }
-        
         .card-new { 
             position: absolute; top: 8px; left: 8px; 
             background: #ef4444; color: #fff; font-size: 0.65rem; 
             font-weight: bold; padding: 3px 8px; border-radius: 4px; z-index: 5; 
             box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
-        /* ▲▲▲ ここまで ▲▲▲ */
 
         .pop-heart { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); color: var(--heart); font-size: 4rem; z-index: 20; filter: drop-shadow(0 0 15px var(--heart)); animation: popHeart 0.6s ease-out forwards; }
         @keyframes popHeart { 50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
 
-        /* --- モーダル --- */
+        /* モーダル & おすすめ */
         .modal, .list-modal, .story-viewer, .diag-modal { background: rgba(0,0,0,0.9); backdrop-filter: blur(8px); }
         .modal img { max-height: 80vh; max-width: 95%; border-radius: 12px; box-shadow: 0 0 40px rgba(0,0,0,0.8); }
         .slide-btn { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
         
-        /* おすすめエリア */
         .recommend-label { font-size: 0.9rem; font-weight: bold; margin: 15px 0 8px; color: #94a3b8; text-align: left; width: 95%; }
         .recommend-area { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; width: 100%; scrollbar-width: none; }
         .recommend-card { flex: 0 0 100px; height: 140px; border-radius: 8px; overflow: hidden; background: #000; border: 1px solid #334155; position: relative; }
@@ -219,16 +217,16 @@
         .modal-tags { margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; width: 95%; }
         .modal-tag-chip { background: rgba(255,255,255,0.1); color: #cbd5e1; padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; border: 1px solid rgba(255,255,255,0.1); }
 
-        /* --- ナビゲーション --- */
+        /* ナビゲーション */
         nav { 
             position: fixed; bottom: 0; left: 0; width: 100%; 
             background: rgba(15, 23, 42, 0.9); backdrop-filter: blur(10px);
             z-index: 1000; display: flex; justify-content: space-around; align-items: center;
             padding: 10px 0; border-top: 1px solid var(--border-color);
         }
-        .view-btn { background: none; border: none; color: #64748b; font-size: 0.65rem; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; cursor: pointer; }
+        .view-btn { background: none; border: none; color: #64748b; font-size: 0.65rem; font-weight: bold; display: flex; flex-direction: column; align-items: center; gap: 4px; flex: 1; cursor: pointer; transition: 0.3s; }
         .view-btn.active { color: #fff; text-shadow: 0 0 8px rgba(255,255,255,0.5); }
-        .view-btn.active i { color: #d946ef; filter: drop-shadow(0 0 5px #d946ef); transform: translateY(-3px); }
+        .view-btn.active i { color: var(--accent-color); filter: drop-shadow(0 0 5px var(--accent-color)); transform: translateY(-3px); }
 
         @media (min-width: 768px) {
             nav { position: sticky; top: 0; margin-top: 0; background: var(--glass-bg); padding: 15px 0; gap: 20px; justify-content: center; }
@@ -241,11 +239,11 @@
         .list-item { background: #0f172a; border: 1px solid #334155; color: #cbd5e1; }
         .list-item:hover { background: var(--neon-grad); color: #fff; border-color: transparent; }
         .diag-btn { background: #334155; color: #e2e8f0; border: 1px solid #475569; }
-        .diag-btn:hover { border-color: #d946ef; box-shadow: 0 0 10px rgba(217, 70, 239, 0.3); color: #fff; }
+        .diag-btn:hover { border-color: var(--accent-color); box-shadow: 0 0 10px var(--accent-color); color: #fff; }
         
-        .fab { background: var(--accent); box-shadow: 0 0 15px rgba(217, 70, 239, 0.6); }
+        .fab { background: var(--accent-color); box-shadow: 0 0 15px var(--accent-color); }
         footer { border-top: 1px solid var(--border-color); color: #64748b; }
-        #loading-sentinel { color: #3b82f6; }
+        #loading-sentinel { color: var(--primary-color); }
     </style>
 </head>
 <body>
@@ -258,7 +256,6 @@
         </div>
         <div class="header-controls">
             <a id="contact-link" href="#" target="_blank" class="icon-btn"><i class="far fa-envelope"></i></a>
-            <button class="icon-btn" onclick="document.body.classList.toggle('dark-mode')"><i class="fas fa-moon"></i></button>
         </div>
     </div>
 
@@ -271,7 +268,7 @@
     <button class="tool-btn active" id="btn-new" onclick="setSort('new')">新着順</button>
     <button class="tool-btn" id="btn-orig" onclick="setSort('original')">登録順</button>
     <button class="tool-btn" id="btn-shuf" onclick="setSort('shuffle')">シャッフル</button>
-    <button class="tool-btn" onclick="openCosplayerList()" style="background: #3b82f6; color:#fff; border:none;">レイヤー一覧</button>
+    <button class="tool-btn" onclick="openCosplayerList()" style="background: #334155; color:#fff; border:none;">レイヤー一覧</button>
     <button class="tool-btn" onclick="location.href='photographers.html'" style="background:#334155; color:#fff;">📷 カメラマン</button>
     <button class="tool-btn" onclick="location.href='group.html'" style="background:#f59e0b; color:#fff;">🎪 大型併せ</button>
     </div>
@@ -388,6 +385,35 @@
     const memberReadings = { "花芽すみれ": "かがすみれ", "花芽なずな": "かがなずな", "小雀とと": "こがらとと", "一ノ瀬うるは": "いちのせうるは", "胡桃のあ": "くるみのあ", "橘ひなの": "たちばなひなの", "如月れん": "きさらぎれん", "英リサ": "はなぶさりさ", "空澄セナ": "あすみせな", "兎咲ミミ": "とさきみみ", "神成きゅぴ": "かみなりきゅぴ", "八雲べに": "やくもべに", "藍沢エマ": "あいざわえま", "紫宮るな": "しのみやるな", "猫汰つな": "ねこたつな", "白波らむね": "しらなみらむね", "小森めと": "こもりめと", "夢野あかり": "ゆめのあかり", "夜乃くろむ": "やのくろむ", "紡木こかげ": "つむぎこかげ", "千燈ゆうひ": "せんどうゆうひ", "蝶屋はなび": "ちょうやはなび", "甘結もか": "あまゆいもか" };
     const memberIcons = { "花芽すみれ": "👾💤", "花芽なずな": "🍣", "小雀とと": "🔫🐥", "一ノ瀬うるは": "🌠", "胡桃のあ": "🧸♔", "橘ひなの": "🍫💘", "如月れん": "⏰", "英リサ": "💐", "空澄セナ": "🗝♠︎", "兎咲ミミ": "🐰🍭", "神成きゅぴ": "🌩", "八雲べに": "💄💚", "藍沢エマ": "🥞💫", "紫宮るな": "☪🐾", "猫汰つな": "🍒✨", "白波らむね": "🐻‍❄️🏖", "小森めと": "🪐", "夢野あかり": "🍼", "夜乃くろむ": "💀⛓", "紡木こかげ": "📘💧", "千燈ゆうひ": "🫠", "蝶屋はなび": "🦋🎆", "甘結もか": "🕹🔖" };
 
+    /* ▼▼▼ メンバーカラー定義 (推し色ジャック用) ▼▼▼ */
+    /* [MainColor(User), SubColor(Generated)] */
+    const memberColors = {
+        "花芽すみれ": ["#b0c4de", "#7788aa"],
+        "花芽なずな": ["#fabedc", "#ff69b4"],
+        "小雀とと": ["#f5eb4a", "#ffae00"],
+        "一ノ瀬うるは": ["#4182fa", "#00ffff"],
+        "胡桃のあ": ["#ffdbfe", "#ff66cc"],
+        "橘ひなの": ["#fa96c8", "#ff1493"],
+        "如月れん": ["#be2152", "#ff0000"],
+        "英リサ": ["#d1de79", "#adff2f"],
+        "空澄セナ": ["#ffffff", "#00bfff"],
+        "兎咲ミミ": ["#c7b2d6", "#9400d3"],
+        "神成きゅぴ": ["#ffd23c", "#ffff00"],
+        "八雲べに": ["#85cab3", "#00fa9a"],
+        "藍沢エマ": ["#b4f1f9", "#00bfff"],
+        "紫宮るな": ["#d6adff", "#8a2be2"],
+        "猫汰つな": ["#ff3652", "#ff69b4"],
+        "白波らむね": ["#8eced9", "#00bfff"],
+        "小森めと": ["#fba03f", "#ff4500"],
+        "夢野あかり": ["#ff998d", "#ff4500"],
+        "夜乃くろむ": ["#909ec8", "#483d8b"],
+        "紡木こかげ": ["#5195e1", "#1e90ff"],
+        "千燈ゆうひ": ["#ed784a", "#ff8c00"],
+        "蝶屋はなび": ["#ea5506", "#ff00ff"],
+        "甘結もか": ["#eca0aa", "#db7093"]
+    };
+    const defaultColor = ["#3b82f6", "#d946ef"]; // デフォルト
+
     let allData = [], filteredData = [], currentMode = 'member', currentSort = 'new';
     let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
     let history = JSON.parse(localStorage.getItem('vspo_history')) || [];
@@ -463,11 +489,32 @@
         });
     };
 
+    /* ▼▼▼ テーマカラー変更ロジック ▼▼▼ */
+    function setThemeColor(member) {
+        const root = document.documentElement;
+        let c1 = defaultColor[0], c2 = defaultColor[1];
+        
+        if (memberColors[member]) {
+            c1 = memberColors[member][0];
+            c2 = memberColors[member][1];
+        }
+        
+        root.style.setProperty('--primary-color', c1);
+        root.style.setProperty('--accent-color', c2);
+    }
+
     function filterByMember(name, el) {
         document.querySelectorAll('.member-chip').forEach(c=>c.classList.remove('active'));
         if(el) el.classList.add('active');
-        if(name==='all') filteredData = [...allData];
-        else filteredData = allData.filter(d=>d.member===name);
+        
+        if(name==='all') {
+            filteredData = [...allData];
+            setThemeColor('all'); // デフォルト色に戻す
+        } else {
+            filteredData = allData.filter(d=>d.member===name);
+            setThemeColor(name); // 推し色に変更
+        }
+        
         setMode('member'); applySort();
     }
 
@@ -681,7 +728,6 @@
             return {i:d, s:s};
         });
         
-        // ★ おすすめ画像の生成（カルーセル対応） ★
         cands.sort((a,b)=>b.s-a.s).slice(0,10).forEach(c=>{ // 少し多めに10件表示
             const d = document.createElement('div');
             d.className='recommend-card';
