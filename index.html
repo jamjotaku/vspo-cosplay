@@ -17,7 +17,6 @@
     <title>ぶいすぽっ！コスプレアーカイブ</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/smartcrop/2.0.3/smartcrop.min.js"></script>
     
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
@@ -107,11 +106,12 @@
         /* メインコンテンツ */
         main { padding: 10px; max-width: 1600px; margin: 0 auto; width: 100%; min-height: 50vh; }
         
+        /* アニメーションをシンプルに */
         .masonry-grid { 
             column-count: 2; column-gap: 10px; 
-            animation: fadeInGrid 0.5s ease-out;
+            animation: fadeInGrid 0.3s ease-out;
         }
-        @keyframes fadeInGrid { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInGrid { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
         @media (min-width: 600px) { .masonry-grid { column-count: 3; column-gap: 15px; } }
         @media (min-width: 900px) { .masonry-grid { column-count: 4; column-gap: 20px; } }
@@ -121,12 +121,14 @@
             display: inline-block; width: 100%;
             break-inside: avoid; margin-bottom: 10px; border-radius: 12px; overflow: hidden; position: relative; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; 
         }
-        /* transitionを長めに設定して、解析後の位置調整をゆっくり見せる */
+        
+        /* ★ 画像表示：軽量化のため単純なフェードインのみ ★ */
         .card img { 
-            width: 100%; height: auto; display: block; opacity: 0;
-            transition: opacity 0.5s, object-position 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+            width: 100%; height: auto; display: block; 
+            animation: fadeInImg 0.3s ease-out;
             object-fit: cover;
         } 
+        @keyframes fadeInImg { from { opacity: 0; } to { opacity: 1; } }
         
         .card-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 40px 10px 10px; color: #fff; pointer-events: none; }
         .card-tag { font-size: 0.7rem; background: var(--primary); padding: 2px 6px; border-radius: 4px; margin-right: 5px; }
@@ -282,98 +284,6 @@
     let slideshowList = [], currentImageIndex = 0, displayLimit = 40;
     let storiesData = [], currentStoryMemberIndex = 0, currentStorySlideIndex = 0, storyTimer = null;
 
-    /* --- ▼ 軽量化されたAI顔認識処理 ▼ --- */
-    
-    // 処理待ちキュー
-    const analysisQueue = [];
-    let isProcessing = false;
-    let isScrolling = false;
-    let scrollTimeout = null;
-
-    // スクロール検知：スクロール中は処理を止める
-    window.addEventListener('scroll', () => {
-        isScrolling = true;
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => {
-            isScrolling = false;
-            processQueue(); // スクロール停止後に処理再開
-        }, 200);
-    });
-
-    const focusObserver = new IntersectionObserver((entries, obs) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const img = entry.target;
-                if(img.dataset.analyzed) return;
-                
-                // キューに追加
-                analysisQueue.push(img);
-                processQueue();
-                
-                obs.unobserve(img);
-            }
-        });
-    }, { rootMargin: "200px" });
-
-    function processQueue() {
-        if (isProcessing || isScrolling || analysisQueue.length === 0) return;
-
-        isProcessing = true;
-        const img = analysisQueue.shift();
-
-        if (img.complete) {
-            runSmartCrop(img);
-        } else {
-            img.onload = () => runSmartCrop(img);
-            // 画像ロードエラー時はスキップして次へ
-            img.onerror = () => {
-                isProcessing = false;
-                processQueue();
-            };
-        }
-    }
-
-    function runSmartCrop(img) {
-        // 既に処理済みならスキップ
-        if (img.dataset.analyzed) {
-            isProcessing = false;
-            processQueue();
-            return;
-        }
-
-        try {
-            // 解像度を落として高速解析 (width: 32pxくらいで十分)
-            smartcrop.crop(img, { width: 32, height: 32 }).then(result => {
-                const crop = result.topCrop;
-                const centerW = (crop.x + crop.width / 2) / img.naturalWidth * 100;
-                const centerH = (crop.y + crop.height / 2) / img.naturalHeight * 100;
-                
-                img.style.objectPosition = `${centerW}% ${centerH}%`;
-                img.style.opacity = 1;
-                img.dataset.analyzed = "true";
-
-                // 次の処理まで少し待つ（CPU負荷軽減）
-                setTimeout(() => {
-                    isProcessing = false;
-                    processQueue();
-                }, 50);
-
-            }).catch(() => {
-                // 失敗時
-                img.style.opacity = 1;
-                img.dataset.analyzed = "true";
-                isProcessing = false;
-                processQueue();
-            });
-        } catch(e) {
-            img.style.opacity = 1;
-            img.dataset.analyzed = "true";
-            isProcessing = false;
-            processQueue();
-        }
-    }
-    /* --- ▲ AI顔認識ここまで ▲ --- */
-
     window.onload = function() {
         if(document.getElementById('contact-link')) document.getElementById('contact-link').href = FORM_URL;
         if(document.getElementById('remove-link')) document.getElementById('remove-link').href = FORM_URL;
@@ -480,6 +390,7 @@
             const isFav = favorites.includes(item.image);
             const isNew = item._originalIndex >= (allData.length - 5);
             
+            // カード作成（AI解析ロジックを削除してシンプルに）
             const card = document.createElement('div');
             card.className = 'card';
             card.onclick = () => openModal(item.image);
@@ -488,17 +399,13 @@
             card.innerHTML = `
                 ${isNew ? '<div class="card-new">NEW</div>' : ''}
                 <button class="card-fav ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav('${item.image}', this)"><i class="fas fa-heart"></i></button>
-                <img src="${item.image}" loading="lazy" alt="${item.member}" crossorigin="anonymous">
+                <img src="${item.image}" loading="lazy" alt="${item.member}">
                 <div class="card-overlay">
                     <span class="card-tag">${item.member}</span>
                     <div class="card-name">${item.cosplayer}</div>
                 </div>`;
             
             grid.appendChild(card);
-            
-            // ★ キューに追加して順番待ちさせる
-            const img = card.querySelector('img');
-            focusObserver.observe(img);
         });
 
         document.getElementById('loading-sentinel').style.display = (displayLimit >= slideshowList.length) ? 'none' : 'block';
