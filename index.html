@@ -105,20 +105,92 @@
 
         /* メインコンテンツ */
         main { padding: 10px; max-width: 1600px; margin: 0 auto; width: 100%; min-height: 50vh; }
-        .masonry-grid { column-count: 2; column-gap: 10px; animation: fadeInGrid 0.3s ease-out; }
+        
+        .masonry-grid { 
+            column-count: 2; column-gap: 15px; /* 隙間を少し広げた */
+            animation: fadeInGrid 0.3s ease-out;
+        }
         @keyframes fadeInGrid { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-        @media (min-width: 600px) { .masonry-grid { column-count: 3; column-gap: 15px; } }
+
+        @media (min-width: 600px) { .masonry-grid { column-count: 3; } }
         @media (min-width: 900px) { .masonry-grid { column-count: 4; column-gap: 20px; } }
         @media (min-width: 1400px) { .masonry-grid { column-count: 5; } }
-        .card { display: inline-block; width: 100%; break-inside: avoid; margin-bottom: 10px; border-radius: 12px; overflow: hidden; position: relative; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; }
-        .card img { width: 100%; height: auto; display: block; animation: fadeInImg 0.3s ease-out; object-fit: cover; } 
+
+        /* ▼▼▼ 【パターンB】グラスモーフィズム・カードデザイン ▼▼▼ */
+        .card { 
+            display: inline-block; width: 100%; 
+            margin-bottom: 15px; 
+            border-radius: 16px; /* 角丸を強めに */
+            overflow: hidden; 
+            position: relative; 
+            background: transparent; /* 背景なし */
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); /* 影は薄く */
+            cursor: pointer; 
+            transition: transform 0.2s;
+        }
+        .card:active { transform: scale(0.98); }
+
+        .card img { 
+            width: 100%; height: auto; display: block; 
+            animation: fadeInImg 0.3s ease-out;
+            object-fit: cover;
+            border-radius: 16px; /* 画像自体も丸める */
+        } 
         @keyframes fadeInImg { from { opacity: 0; } to { opacity: 1; } }
-        .card-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 40px 10px 10px; color: #fff; pointer-events: none; }
-        .card-tag { font-size: 0.7rem; background: var(--primary); padding: 2px 6px; border-radius: 4px; margin-right: 5px; }
-        .card-name { font-size: 0.85rem; font-weight: bold; display: block; margin-top: 4px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
-        .card-fav { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; background: rgba(0,0,0,0.4); color: rgba(255,255,255,0.7); display: flex; align-items: center; justify-content: center; border: none; font-size: 1rem; cursor: pointer; z-index: 10; backdrop-filter: blur(4px); }
+        
+        /* 浮遊するすりガラスプレート */
+        .card-overlay { 
+            position: absolute; 
+            bottom: 8px; left: 8px; right: 8px; /* 端から少し浮かせる */
+            width: auto;
+            /* 濃いめのすりガラス */
+            background: rgba(30, 32, 40, 0.75); 
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            padding: 10px 12px; 
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.15); /* 薄い枠線で境界強調 */
+            pointer-events: none; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            display: flex; flex-direction: column; justify-content: center;
+        }
+
+        .card-tag { 
+            font-size: 0.65rem; 
+            color: #cbd5e1; /* 薄いグレー */
+            margin-bottom: 2px;
+            background: transparent; 
+            padding: 0;
+            font-weight: normal;
+        }
+        
+        .card-name { 
+            font-size: 0.9rem; 
+            font-weight: bold; 
+            color: #fff; 
+            display: block; 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        
+        /* ハートボタンも少し浮かせる */
+        .card-fav { 
+            position: absolute; top: 10px; right: 10px; 
+            width: 36px; height: 36px; border-radius: 50%; 
+            background: rgba(0,0,0,0.3); backdrop-filter: blur(4px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: rgba(255,255,255,0.8); 
+            display: flex; align-items: center; justify-content: center; 
+            border: none; font-size: 1.1rem; cursor: pointer; z-index: 10; 
+        }
         .card-fav.active { color: var(--heart); background: rgba(255,255,255,0.9); }
-        .card-new { position: absolute; top: 8px; left: 8px; background: #ff4757; color: #fff; font-size: 0.65rem; font-weight: bold; padding: 3px 8px; border-radius: 4px; z-index: 5; }
+        
+        .card-new { 
+            position: absolute; top: 10px; left: 10px; 
+            background: #ff4757; color: #fff; font-size: 0.65rem; 
+            font-weight: bold; padding: 4px 10px; border-radius: 20px; 
+            z-index: 5; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        /* ▲▲▲ ここまで ▲▲▲ */
+
         .pop-heart { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0); color: var(--heart); font-size: 4rem; z-index: 20; filter: drop-shadow(0 0 10px rgba(0,0,0,0.5)); animation: popHeart 0.6s ease-out forwards; }
         @keyframes popHeart { 50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
 
@@ -134,23 +206,23 @@
         .share-btn { border: none; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: bold; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 6px; }
         .btn-x { background: #000; } .btn-link { background: #1da1f2; } .btn-copy { background: #5865F2; } .btn-profile { background: #333; }
         
-        /* --- ★ 修正箇所：おすすめエリア（横スクロール化） --- */
+        /* おすすめエリア */
         .recommend-label { font-size: 0.9rem; font-weight: bold; margin: 10px 0 5px; color: #aaa; text-align: left; width: 95%; }
         .recommend-area {
             display: flex;
             gap: 10px;
-            overflow-x: auto; /* 横スクロール許可 */
+            overflow-x: auto; 
             padding-bottom: 10px;
             width: 100%;
             justify-content: flex-start;
-            scroll-snap-type: x mandatory; /* スナップ */
-            scrollbar-width: none; /* Firefoxスクロールバー隠し */
+            scroll-snap-type: x mandatory; 
+            scrollbar-width: none; 
         }
-        .recommend-area::-webkit-scrollbar { display: none; } /* Chrome隠し */
+        .recommend-area::-webkit-scrollbar { display: none; } 
 
         .recommend-card {
-            flex: 0 0 100px; /* 幅100px固定・縮小しない */
-            height: 140px;   /* 高さ固定 */
+            flex: 0 0 100px; 
+            height: 140px;   
             border-radius: 8px;
             overflow: hidden;
             scroll-snap-align: start;
@@ -162,12 +234,11 @@
         .recommend-card img {
             width: 100%;
             height: 100%;
-            object-fit: cover; /* 枠いっぱいにトリミング */
+            object-fit: cover; 
             display: block;
         }
         .modal-tags { margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; width: 95%; }
         .modal-tag-chip { background: rgba(255,255,255,0.1); color: #fff; padding: 4px 10px; border-radius: 15px; font-size: 0.75rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
-        /* --- 修正ここまで --- */
 
         /* レイヤー名鑑 */
         .list-container { width: 100%; max-width: 600px; background: var(--bg); border-radius: 12px; padding: 20px; position: relative; color: var(--text); height: 80%; overflow-y: auto; }
@@ -182,6 +253,7 @@
         .profile-close { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.1); color: var(--text); border: none; border-radius: 50%; width: 30px; height: 30px; cursor: pointer; }
         .profile-name { font-size: 1.4rem; font-weight: bold; margin-bottom: 10px; }
         .profile-link-btn { display: inline-flex; align-items: center; gap: 8px; background: #000; color: #fff; padding: 8px 20px; border-radius: 25px; text-decoration: none; font-weight: bold; font-size: 0.9rem; }
+        .profile-tag-chip { display: inline-block; background: rgba(255,255,255,0.5); color: var(--primary); padding: 3px 10px; border-radius: 15px; font-size: 0.8rem; margin: 2px; font-weight: bold; }
         .profile-back { margin-top: 15px; font-size: 0.85rem; color: var(--primary); cursor: pointer; text-decoration: underline; background: none; border: none; }
 
         /* ★ 新機能：推しフォト診断モーダル ★ */
@@ -320,10 +392,8 @@
     
     <div style="display:flex; flex-direction:column; align-items:center; width:100%;">
         <img id="m-img" onclick="event.stopPropagation()">
-        
         <div id="rec-label" class="recommend-label" style="display:none;">✨ こちらもおすすめ</div>
         <div id="m-recommend" class="recommend-area" onclick="event.stopPropagation()"></div>
-        
         <div id="m-tags" class="modal-tags" onclick="event.stopPropagation()"></div>
     </div>
 
