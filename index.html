@@ -17,6 +17,8 @@
     <title>ぶいすぽっ！コスプレアーカイブ</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/smartcrop/2.0.3/smartcrop.min.js"></script>
+    
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700&display=swap" rel="stylesheet">
 
@@ -25,7 +27,6 @@
         *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         
         :root { 
-            /* ★色はここで固定！目に優しい青紫系 */
             --primary: #5c6ac4; 
             --bg: #f4f6f8; 
             --text: #333; 
@@ -46,7 +47,7 @@
 
         /* ヘッダー */
         header { 
-            background: var(--glass-bg); /* ガラス効果 */
+            background: var(--glass-bg);
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
             color: #fff; padding: 15px 15px 5px; position: sticky; top: 0; z-index: 100; 
             box-shadow: 0 4px 20px rgba(0,0,0,0.15); 
@@ -71,7 +72,6 @@
         /* ツールバー */
         .tools { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; scrollbar-width: none; }
         .tools::-webkit-scrollbar { display: none; }
-        /* 【改善1】フォントサイズを16pxにしてiOSでのズーム防止 */
         input { padding: 8px 15px; border-radius: 20px; border: none; min-width: 150px; font-size: 16px; background: rgba(255,255,255,0.9); }
         .tool-btn { background: rgba(255,255,255,0.25); border: none; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.3); }
         .tool-btn.active { background: #fff; color: var(--primary); font-weight: bold; text-shadow: none; box-shadow: 0 2px 8px rgba(0,0,0,0.2); }
@@ -107,7 +107,6 @@
         /* メインコンテンツ */
         main { padding: 10px; max-width: 1600px; margin: 0 auto; width: 100%; min-height: 50vh; }
         
-        /* 【改善3】グリッドのフェードインアニメーション */
         .masonry-grid { 
             column-count: 2; column-gap: 10px; 
             animation: fadeInGrid 0.5s ease-out;
@@ -118,12 +117,16 @@
         @media (min-width: 900px) { .masonry-grid { column-count: 4; column-gap: 20px; } }
         @media (min-width: 1400px) { .masonry-grid { column-count: 5; } }
 
-        /* 【改善2】Masonryレイアウトのバグ防止 (display: inline-block) */
         .card { 
-            display: inline-block; width: 100%; /* これで表示崩れを防ぐ */
+            display: inline-block; width: 100%;
             break-inside: avoid; margin-bottom: 10px; border-radius: 12px; overflow: hidden; position: relative; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; 
         }
-        .card img { width: 100%; height: auto; display: block; opacity: 1; } /* 画像は常に表示 */
+        .card img { 
+            width: 100%; height: auto; display: block; opacity: 0; /* 最初は隠す */
+            transition: opacity 0.5s, transform 0.3s, object-position 0.8s cubic-bezier(0.22, 1, 0.36, 1); /* AIによる位置調整をヌルっと動かす */
+            object-fit: cover; /* 重要：トリミング可能にする */
+        } 
+        
         .card-overlay { position: absolute; bottom: 0; left: 0; width: 100%; background: linear-gradient(to top, rgba(0,0,0,0.8), transparent); padding: 40px 10px 10px; color: #fff; pointer-events: none; }
         .card-tag { font-size: 0.7rem; background: var(--primary); padding: 2px 6px; border-radius: 4px; margin-right: 5px; }
         .card-name { font-size: 0.85rem; font-weight: bold; display: block; margin-top: 4px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); }
@@ -278,6 +281,56 @@
     let slideshowList = [], currentImageIndex = 0, displayLimit = 40;
     let storiesData = [], currentStoryMemberIndex = 0, currentStorySlideIndex = 0, storyTimer = null;
 
+    /* --- ▼ AI顔認識用Observerの作成 --- */
+    const focusObserver = new IntersectionObserver((entries, obs) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                const img = entry.target;
+                if(img.dataset.analyzed) return; // 既に解析済みならスキップ
+                
+                // 画像がロード済みなら即解析、まだならロード後に解析
+                if (img.complete) {
+                    applySmartFocus(img);
+                } else {
+                    img.onload = () => applySmartFocus(img);
+                }
+                obs.unobserve(img); // 一度監視したら終了
+            }
+        });
+    }, { rootMargin: "200px" }); // 画面に入る200px手前から解析開始
+
+    /* --- AI解析実行関数 --- */
+    function applySmartFocus(img) {
+        if(img.dataset.analyzed) return;
+        
+        // クロスオリジンエラー対策 (try-catch)
+        try {
+            // SmartCropを実行 (画像から重要領域を抽出)
+            smartcrop.crop(img, { width: 100, height: 100 }).then(result => {
+                const crop = result.topCrop;
+                // 中心座標を計算 (%)
+                const centerW = (crop.x + crop.width / 2) / img.naturalWidth * 100;
+                const centerH = (crop.y + crop.height / 2) / img.naturalHeight * 100;
+                
+                // CSSに反映 (顔の位置にフォーカス)
+                img.style.objectPosition = `${centerW}% ${centerH}%`;
+                
+                // ふわっと表示
+                img.style.opacity = 1;
+                img.dataset.analyzed = "true";
+            }).catch(() => {
+                // 解析失敗時は通常のセンター表示でフェードイン
+                img.style.opacity = 1;
+                img.dataset.analyzed = "true";
+            });
+        } catch(e) {
+            // セキュリティエラー等が出た場合も通常の表示
+            img.style.opacity = 1;
+            img.dataset.analyzed = "true";
+        }
+    }
+    /* --- ▲ AI顔認識ここまで --- */
+
     window.onload = function() {
         if(document.getElementById('contact-link')) document.getElementById('contact-link').href = FORM_URL;
         if(document.getElementById('remove-link')) document.getElementById('remove-link').href = FORM_URL;
@@ -379,22 +432,34 @@
         app.appendChild(grid);
 
         const targetData = slideshowList.slice(0, displayLimit);
-        let html = '';
+        
         targetData.forEach(item => {
             const isFav = favorites.includes(item.image);
             const isNew = item._originalIndex >= (allData.length - 5);
-            html += `
-            <div class="card" onclick="openModal('${item.image}')" ondblclick="event.stopPropagation(); playHeart(this); toggleFav('${item.image}', this.querySelector('.card-fav'))">
+            
+            // カード作成
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.onclick = () => openModal(item.image);
+            card.ondblclick = (e) => { e.stopPropagation(); playHeart(card); toggleFav(item.image, card.querySelector('.card-fav')); };
+            
+            // ※重要：crossorigin="anonymous" をつけてAI解析時のCORS汚染を防ぐ
+            card.innerHTML = `
                 ${isNew ? '<div class="card-new">NEW</div>' : ''}
                 <button class="card-fav ${isFav ? 'active' : ''}" onclick="event.stopPropagation(); toggleFav('${item.image}', this)"><i class="fas fa-heart"></i></button>
-                <img src="${item.image}" loading="lazy" alt="${item.member}">
+                <img src="${item.image}" loading="lazy" alt="${item.member}" crossorigin="anonymous">
                 <div class="card-overlay">
                     <span class="card-tag">${item.member}</span>
                     <div class="card-name">${item.cosplayer}</div>
-                </div>
-            </div>`;
+                </div>`;
+            
+            grid.appendChild(card);
+            
+            // ★ AI Observerにこの画像を監視させる
+            const img = card.querySelector('img');
+            focusObserver.observe(img);
         });
-        grid.innerHTML = html;
+
         document.getElementById('loading-sentinel').style.display = (displayLimit >= slideshowList.length) ? 'none' : 'block';
     }
 
@@ -450,53 +515,34 @@
         applySort();
     }
 
-    /* ▼▼▼ 追加機能：スマートシャッフル ▼▼▼ */
     function smartShuffle(data) {
-        // 1. レイヤーさん(またはメンバー)ごとにグループ分け
         const groups = {};
         data.forEach(item => {
             const key = item.cosplayer || item.member || "unknown";
             if (!groups[key]) groups[key] = [];
             groups[key].push(item);
         });
-
-        // 2. 各グループの中身もシャッフル (毎回同じ写真が最初に来ないように)
-        Object.keys(groups).forEach(key => {
-            groups[key].sort(() => Math.random() - 0.5);
-        });
-
-        // 3. トランプ配りの要領で1枚ずつ取り出す
+        Object.keys(groups).forEach(key => { groups[key].sort(() => Math.random() - 0.5); });
         const result = [];
         let keys = Object.keys(groups); 
-
         while (keys.length > 0) {
-            // グループの順番自体も毎回シャッフル
             keys.sort(() => Math.random() - 0.5);
-
             const nextKeys = [];
             keys.forEach(key => {
                 if (groups[key].length > 0) {
                     result.push(groups[key].pop());
-                    if (groups[key].length > 0) {
-                        nextKeys.push(key);
-                    }
+                    if (groups[key].length > 0) nextKeys.push(key);
                 }
             });
             keys = nextKeys;
         }
         return result;
     }
-    /* ▲▲▲ ここまで ▲▲▲ */
 
     function applySort() {
         if(currentSort==='new') filteredData.sort((a,b)=>b._originalIndex - a._originalIndex);
         if(currentSort==='original') filteredData.sort((a,b)=>a._originalIndex - b._originalIndex);
-        
-        // ★ シャッフル時は「スマートシャッフル」を使用する
-        if(currentSort==='shuffle') {
-            filteredData = smartShuffle([...filteredData]); // 元の配列を壊さないようコピーを渡す
-        }
-        
+        if(currentSort==='shuffle') filteredData = smartShuffle([...filteredData]);
         render();
     }
 
