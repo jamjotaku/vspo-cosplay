@@ -134,6 +134,41 @@
         .share-btn { border: none; padding: 10px 20px; border-radius: 30px; font-size: 0.9rem; font-weight: bold; color: #fff; cursor: pointer; display: flex; align-items: center; gap: 6px; }
         .btn-x { background: #000; } .btn-link { background: #1da1f2; } .btn-copy { background: #5865F2; } .btn-profile { background: #333; }
         
+        /* --- ★ 修正箇所：おすすめエリア（横スクロール化） --- */
+        .recommend-label { font-size: 0.9rem; font-weight: bold; margin: 10px 0 5px; color: #aaa; text-align: left; width: 95%; }
+        .recommend-area {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto; /* 横スクロール許可 */
+            padding-bottom: 10px;
+            width: 100%;
+            justify-content: flex-start;
+            scroll-snap-type: x mandatory; /* スナップ */
+            scrollbar-width: none; /* Firefoxスクロールバー隠し */
+        }
+        .recommend-area::-webkit-scrollbar { display: none; } /* Chrome隠し */
+
+        .recommend-card {
+            flex: 0 0 100px; /* 幅100px固定・縮小しない */
+            height: 140px;   /* 高さ固定 */
+            border-radius: 8px;
+            overflow: hidden;
+            scroll-snap-align: start;
+            cursor: pointer;
+            position: relative;
+            border: 1px solid rgba(255,255,255,0.1);
+            background: #000;
+        }
+        .recommend-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* 枠いっぱいにトリミング */
+            display: block;
+        }
+        .modal-tags { margin-bottom: 15px; display: flex; flex-wrap: wrap; gap: 5px; justify-content: center; width: 95%; }
+        .modal-tag-chip { background: rgba(255,255,255,0.1); color: #fff; padding: 4px 10px; border-radius: 15px; font-size: 0.75rem; cursor: pointer; border: 1px solid rgba(255,255,255,0.2); }
+        /* --- 修正ここまで --- */
+
         /* レイヤー名鑑 */
         .list-container { width: 100%; max-width: 600px; background: var(--bg); border-radius: 12px; padding: 20px; position: relative; color: var(--text); height: 80%; overflow-y: auto; }
         .list-ul { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
@@ -282,10 +317,16 @@
     <span class="modal-close">&times;</span>
     <button class="slide-btn prev-btn" onclick="changeImage(-1, event)"><i class="fas fa-chevron-left"></i></button>
     <button class="slide-btn next-btn" onclick="changeImage(1, event)"><i class="fas fa-chevron-right"></i></button>
-    <img id="m-img" onclick="event.stopPropagation()">
-    <div id="rec-label" class="recommend-label" style="display:none;">✨ こちらもおすすめ</div>
-    <div id="m-recommend" class="recommend-area" onclick="event.stopPropagation()"></div>
-    <div id="m-tags" class="modal-tags" onclick="event.stopPropagation()"></div>
+    
+    <div style="display:flex; flex-direction:column; align-items:center; width:100%;">
+        <img id="m-img" onclick="event.stopPropagation()">
+        
+        <div id="rec-label" class="recommend-label" style="display:none;">✨ こちらもおすすめ</div>
+        <div id="m-recommend" class="recommend-area" onclick="event.stopPropagation()"></div>
+        
+        <div id="m-tags" class="modal-tags" onclick="event.stopPropagation()"></div>
+    </div>
+
     <div class="share-area" onclick="event.stopPropagation()">
         <a id="btn-profile" href="#" target="_blank" class="share-btn btn-profile" style="display:none;"><i class="fas fa-user"></i> プロフ</a>
         <button class="share-btn btn-copy" onclick="copyLink()"><i class="fas fa-link"></i> リンク</button>
@@ -329,7 +370,6 @@
     // ★ 診断機能用の変数 ★
     let diagSelectedMember = "";
     let diagSelectedVibe = "";
-    // 衣装カテゴリー定義
     const vibeKeywords = {
         'cute': ['maid', 'idol', 'dress', 'bunny', 'cat_ears', 'waitress'],
         'cool': ['police', 'hoodie', 'jacket', 'headphones', 'mask'],
@@ -613,7 +653,9 @@
             if(d.cosplayer===item.cosplayer) s+=2;
             return {i:d, s:s};
         });
-        cands.sort((a,b)=>b.s-a.s).slice(0,4).forEach(c=>{
+        
+        // ★ おすすめ画像の生成（カルーセル対応） ★
+        cands.sort((a,b)=>b.s-a.s).slice(0,10).forEach(c=>{ // 少し多めに10件表示
             const d = document.createElement('div');
             d.className='recommend-card';
             d.innerHTML=`<img src="${c.i.image}">`;
