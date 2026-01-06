@@ -50,7 +50,7 @@
             padding-top: var(--header-height);
         }
 
-        /* --- 1. Header --- */
+        /* --- Header --- */
         header { 
             position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
             background: rgba(11, 17, 32, 0.9); backdrop-filter: blur(10px);
@@ -75,7 +75,7 @@
         .search-input { background: none; border: none; color: #fff; width: 100%; outline: none; font-size: 0.9rem; }
         .search-icon { color: var(--text-sub); margin-right: 5px; font-size: 0.9rem; }
 
-        /* --- 2. Sidebar --- */
+        /* --- Sidebar --- */
         .sidebar {
             position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
             background: var(--sidebar-bg); z-index: 2000; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -100,10 +100,9 @@
         }
         .overlay.open { opacity: 1; visibility: visible; }
 
-        /* --- 3. Top Areas --- */
+        /* --- Top Areas --- */
         .top-area { background: linear-gradient(to bottom, rgba(11,17,32,1), rgba(11,17,32,0)); padding-bottom: 10px; }
         
-        /* Stories */
         .stories-container { display: flex; gap: 12px; overflow-x: auto; padding: 10px 15px 5px; scrollbar-width: none; }
         .stories-container::-webkit-scrollbar { display: none; }
         .story-item { width: 64px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; }
@@ -113,7 +112,6 @@
         .story-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--bg-color); object-fit: cover; }
         .story-name { font-size: 0.65rem; margin-top: 4px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #d1d5db; }
 
-        /* Chips & Utility */
         .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; }
         .chips-container::-webkit-scrollbar { display: none; }
         .member-chip { 
@@ -137,7 +135,7 @@
             border-radius: 15px; font-size: 0.75rem; text-decoration: none; display: flex; align-items: center; gap: 5px;
         }
 
-        /* --- 4. Main Grid --- */
+        /* --- Main Grid --- */
         main { padding: 0 15px 40px; max-width: 1600px; margin: 0 auto; }
         .masonry-grid { column-count: 2; column-gap: 15px; animation: fadeInGrid 0.4s ease-out; }
         @keyframes fadeInGrid { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -175,14 +173,37 @@
         .ctrl-chip.member-tag:hover { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 10px var(--primary); }
         .ctrl-chip.layer-tag:hover { background: #fff; color: #000; }
 
-        /* --- 5. Story Viewer (Full Screen) --- */
+        /* --- 5. Story Viewer (PC Optimized) --- */
         .story-viewer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: #000; z-index: 5000;
-            display: flex; flex-direction: column;
+            display: flex; align-items: center; justify-content: center; /* 中央寄せ */
             visibility: hidden; opacity: 0; transition: 0.3s;
         }
         .story-viewer.active { visibility: visible; opacity: 1; }
+        
+        /* スマホ画面風フレーム */
+        .story-frame {
+            width: 100%; height: 100%; 
+            position: relative; 
+            background: #000; overflow: hidden;
+        }
+
+        /* PCでのみ適用されるスタイル：サイズ制限と角丸 */
+        @media (min-width: 768px) {
+            .story-frame {
+                max-width: 420px; /* スマホサイズ幅 */
+                height: 90vh; /* 画面内に収める */
+                border-radius: 12px;
+                box-shadow: 0 0 50px rgba(59, 130, 246, 0.2);
+                border: 1px solid #333;
+            }
+            /* PC用の閉じるボタン (フレームの外右上) */
+            .story-pc-close {
+                position: absolute; top: 20px; right: 30px; 
+                color: #fff; font-size: 2rem; cursor: pointer; z-index: 5010;
+            }
+        }
         
         .story-header {
             position: absolute; top: 10px; left: 0; width: 100%; padding: 10px 15px;
@@ -199,14 +220,13 @@
         .story-username { font-size: 0.9rem; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
         .story-close { font-size: 1.5rem; color: #fff; cursor: pointer; padding: 5px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
 
-        .story-content { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; }
-        .story-main-img { width: 100%; height: 100%; object-fit: contain; }
+        .story-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
+        .story-main-img { width: 100%; height: 100%; object-fit: contain; } /* 画像全体を表示 */
         
-        .story-nav { position: absolute; top: 0; width: 50%; height: 100%; z-index: 5; }
+        .story-nav { position: absolute; top: 0; width: 50%; height: 100%; z-index: 5; cursor: pointer; }
         .story-nav.left { left: 0; }
         .story-nav.right { right: 0; }
         
-        /* 押し続けている間は一時停止 */
         .story-viewer:active .story-progress-fill { transition: none !important; }
 
         /* --- Modals --- */
@@ -236,21 +256,25 @@
 </head>
 <body>
 
-<div id="story-viewer" class="story-viewer" onclick="event.stopPropagation()">
-    <div class="story-header">
-        <div id="story-bars" class="story-progress-bar"></div>
-        <div class="story-meta">
-            <div class="story-user-info">
-                <img id="story-u-icon" class="story-avatar">
-                <span id="story-u-name" class="story-username"></span>
+<div id="story-viewer" class="story-viewer" onclick="closeStory()">
+    <div class="story-pc-close" onclick="closeStory()">&times;</div>
+
+    <div class="story-frame" onclick="event.stopPropagation()">
+        <div class="story-header">
+            <div id="story-bars" class="story-progress-bar"></div>
+            <div class="story-meta">
+                <div class="story-user-info">
+                    <img id="story-u-icon" class="story-avatar">
+                    <span id="story-u-name" class="story-username"></span>
+                </div>
+                <div class="story-close" onclick="closeStory()">&times;</div>
             </div>
-            <div class="story-close" onclick="closeStory()">&times;</div>
         </div>
-    </div>
-    <div class="story-content">
-        <img id="story-main-img" class="story-main-img">
-        <div class="story-nav left" onclick="prevStorySlide()"></div>
-        <div class="story-nav right" onclick="nextStorySlide()"></div>
+        <div class="story-content">
+            <img id="story-main-img" class="story-main-img">
+            <div class="story-nav left" onclick="prevStorySlide()"></div>
+            <div class="story-nav right" onclick="nextStorySlide()"></div>
+        </div>
     </div>
 </div>
 
@@ -340,7 +364,8 @@
             <button class="diag-btn" onclick="runDiagnosis('random')">🌙 掘り出し物</button>
             <button class="diag-btn" onclick="runDiagnosis('old')">🕰️ 懐かしの投稿</button>
         </div>
-        <div id="diag-result" class="diag-step">
+        
+        <div id="diag-step-result" class="diag-step">
             <h3 class="diag-title" style="color:#ff4757;">運命の1枚！</h3>
             <img id="diag-res-img" style="width:100%; border-radius:10px; margin-bottom:10px;" onclick="openModal(this.src)">
             <div id="diag-res-name" style="font-weight:bold; margin-bottom:10px;"></div>
@@ -386,11 +411,11 @@
     let history = JSON.parse(localStorage.getItem('vspo_history')) || [];
     let displayLimit = 40;
 
-    // ストーリー用
-    let storiesData = []; // [{ member: '名前', images: [...] }, ...]
+    let storiesData = []; 
     let currentStoryMemberIndex = 0;
     let currentStorySlideIndex = 0;
     let storyTimer = null;
+    let diagSelectedMember = "", diagSelectedVibe = "";
     
     /* === Main Logic === */
     window.onload = function() {
@@ -443,7 +468,7 @@
         document.getElementById('overlay').classList.toggle('open');
     }
 
-    /* === Stories Logic (Pattern B + Variety) === */
+    /* === Stories Logic === */
     function generateStories() {
         const con = document.getElementById('stories-container');
         con.innerHTML = "";
@@ -453,34 +478,26 @@
             const memberPhotos = allData.filter(d => d.member === member);
             if (memberPhotos.length === 0) return;
 
-            // --- レイヤー被りなし・写真被りなしロジック ---
-            // 1. レイヤーごとにグループ化
             const layerGroups = {};
             memberPhotos.forEach(p => {
                 if(!layerGroups[p.cosplayer]) layerGroups[p.cosplayer] = [];
                 layerGroups[p.cosplayer].push(p);
             });
 
-            // 2. レイヤーのリストをシャッフル
             const layers = Object.keys(layerGroups).sort(() => Math.random() - 0.5);
-
-            // 3. 各レイヤーから1枚ずつピックアップ (最大10枚)
             let selectedImages = [];
             for(let layer of layers) {
                 if(selectedImages.length >= 10) break;
                 const pics = layerGroups[layer];
-                // そのレイヤーの写真からランダムに1枚
                 selectedImages.push(pics[Math.floor(Math.random() * pics.length)]);
             }
-            // ----------------------------------------
 
             storiesData.push({
                 member: member,
-                icon: selectedImages[0].image, // アイコンは選抜された1枚目
+                icon: selectedImages[0].image, 
                 images: selectedImages
             });
 
-            // UI生成
             const idx = storiesData.length - 1;
             con.innerHTML += `
                 <div class="story-item" onclick="openStory(${idx})">
@@ -507,12 +524,10 @@
         const story = storiesData[currentStoryMemberIndex];
         const imgData = story.images[currentStorySlideIndex];
 
-        // メタデータ更新
         document.getElementById('story-u-icon').src = story.icon;
         document.getElementById('story-u-name').innerText = story.member + " / " + imgData.cosplayer;
         document.getElementById('story-main-img').src = imgData.image;
 
-        // プログレスバー更新
         const bars = document.getElementById('story-bars');
         bars.innerHTML = '';
         story.images.forEach((_, i) => {
@@ -521,16 +536,14 @@
             const fill = document.createElement('div');
             fill.className = 'story-progress-fill';
             
-            if (i < currentStorySlideIndex) fill.style.width = '100%'; // 既読
-            else if (i === currentStorySlideIndex) fill.id = 'current-fill'; // 今ここ
-            else fill.style.width = '0%'; // 未読
+            if (i < currentStorySlideIndex) fill.style.width = '100%'; 
+            else if (i === currentStorySlideIndex) fill.id = 'current-fill'; 
+            else fill.style.width = '0%'; 
             
             seg.appendChild(fill);
             bars.appendChild(seg);
         });
 
-        // アニメーション開始 (4秒)
-        // 少し遅延させてCSSトランジションを効かせる
         setTimeout(() => {
             const currentFill = document.getElementById('current-fill');
             if(currentFill) {
@@ -548,7 +561,6 @@
             currentStorySlideIndex++;
             renderStory();
         } else {
-            // 次のメンバーへ
             if (currentStoryMemberIndex < storiesData.length - 1) {
                 currentStoryMemberIndex++;
                 currentStorySlideIndex = 0;
@@ -564,7 +576,6 @@
             currentStorySlideIndex--;
             renderStory();
         } else {
-            // 前のメンバーへ
             if (currentStoryMemberIndex > 0) {
                 currentStoryMemberIndex--;
                 currentStorySlideIndex = storiesData[currentStoryMemberIndex].images.length - 1;
@@ -734,7 +745,7 @@
         openModal(currentList[idx].image);
     }
 
-    /* === Diagnosis & List === */
+    /* === Diagnosis === */
     function openDiagnosis() {
         document.getElementById('diag-modal').classList.add('open');
         setDiagStep(1);
@@ -761,8 +772,11 @@
         else if(mode === 'old') list.sort((a,b) => a._id - b._id);
         if(mode === 'random') pick = list[Math.floor(Math.random()*list.length)];
         else pick = list[0]; 
+        
         document.getElementById('diag-res-img').src = pick.image;
         document.getElementById('diag-res-name').innerText = pick.cosplayer;
+        
+        // 【修正】ここを 'result' から 'diag-step-result' のID形式に合わせて修正
         setDiagStep('result');
     }
 
