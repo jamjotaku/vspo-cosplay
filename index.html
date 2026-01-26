@@ -20,7 +20,7 @@
     <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
 
     <style>
-        /* --- 🎨 YouTube-Like Hybrid Design --- */
+        /* --- 🎨 Design System --- */
         :root {
             --bg-color: #0f0f0f;
             --sidebar-bg: #0f0f0f;
@@ -106,7 +106,13 @@
         .top-area { background: var(--bg-color); padding-bottom: 10px; position: sticky; top: var(--header-height); z-index: 900; }
         
         .stories-container { display: flex; gap: 12px; overflow-x: auto; padding: 15px 15px 5px; scrollbar-width: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .stories-container::-webkit-scrollbar { display: none; }
+        
+        /* チップコンテナ共通設定 */
+        .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 8px 15px; scrollbar-width: none; align-items: center; }
+        
+        /* スクロールバー非表示 */
+        .stories-container::-webkit-scrollbar, .chips-container::-webkit-scrollbar { display: none; }
+        
         .story-item { width: 64px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; }
         .story-item:active { transform: scale(0.95); }
         .story-ring { width: 62px; height: 62px; border-radius: 50%; padding: 2px; background: var(--grad-main); box-shadow: 0 0 10px rgba(59,130,246,0.2); position: relative; }
@@ -114,8 +120,6 @@
         .story-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--bg-color); object-fit: cover; }
         .story-name { font-size: 0.65rem; margin-top: 4px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #d1d5db; }
 
-        .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; }
-        .chips-container::-webkit-scrollbar { display: none; }
         .member-chip { 
             background: var(--chip-bg); color: var(--text-color); 
             padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500;
@@ -123,6 +127,14 @@
         }
         .member-chip:hover { background: #3f3f3f; }
         .member-chip.active { background: #f1f1f1; color: #0f0f0f; border-color: #f1f1f1; font-weight: bold; }
+        
+        /* カラーチップ用のスタイル */
+        .color-chip {
+            padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;
+            cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; white-space: nowrap;
+            display: flex; align-items: center; gap: 5px; background: #222;
+        }
+        .color-chip.active { border-color: #fff; background: #444; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
 
         .utility-deck { display: flex; justify-content: space-between; align-items: center; padding: 5px 15px 15px; }
         .sort-group { display: flex; gap: 5px; background: transparent; padding: 4px; }
@@ -300,7 +312,8 @@
 <div class="top-area">
     <div id="stories-container" class="stories-container"></div>
     <div id="chips-container" class="chips-container"></div>
-    <div id="tags-container" class="chips-container" style="padding-top:0; padding-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.05);"></div>
+    <div id="tags-container" class="chips-container" style="padding-top:0; border-bottom:none;"></div>
+    <div id="color-bar-container" class="chips-container" style="padding-top:0; padding-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.05);"></div>
     
     <div class="utility-deck">
         <div class="sort-group">
@@ -324,7 +337,7 @@
     <button class="slide-btn next-btn" onclick="changeImage(1, event)"><i class="fas fa-chevron-right"></i></button>
     <div style="display:flex; flex-direction:column; align-items:center; width:100%;">
         <img id="m-img" onclick="event.stopPropagation()">
-        <div class="recommend-label" style="width:95%; color:#aaa; margin-top:15px;">✨ おすすめ</div>
+        <div class="recommend-label" style="width:95%; color:#aaa; margin-top:15px;">✨ 似ている写真（AI Recommendation）</div>
         <div id="m-recommend" class="recommend-area" onclick="event.stopPropagation()"></div>
         <div style="margin-top:15px; display:flex; gap:10px;">
             <button class="ctrl-chip" onclick="shareX()" style="font-size:0.9rem; padding:8px 16px;"><i class="fab fa-x-twitter"></i> Post</button>
@@ -355,7 +368,6 @@
             <button class="diag-btn" onclick="runDiagnosis('random')">🌙 掘り出し物</button>
             <button class="diag-btn" onclick="runDiagnosis('old')">🕰️ 懐かしの投稿</button>
         </div>
-        
         <div id="diag-step-result" class="diag-step">
             <h3 class="diag-title" style="color:#ff4757;">運命の1枚！</h3>
             <img id="diag-res-img" style="width:100%; border-radius:10px; margin-bottom:10px;" onclick="openModal(this.src)">
@@ -407,18 +419,16 @@
     let storyTimer = null;
     let diagSelectedMember = "", diagSelectedVibe = "";
     
-    // ★追加: フィルタリング状態管理 (AND検索用)
+    // フィルタリング状態管理 (カラー追加)
     let activeFilters = {
         member: null,
         tag: null,
+        color: null, // ★追加
         text: ""
     };
     
     /* === Main Logic === */
     window.onload = function() {
-        // initUIはcomplete内で呼び出すように変更しても良いが、ここでは初期表示枠として先出し
-        // ただしメンバーチップ生成はデータロード後の方が安全な場合もあるが、リストが固定なのでOK
-        
         Papa.parse(CSV_URL, {
             download: true, header: true, skipEmptyLines: true,
             complete: function(results) {
@@ -429,6 +439,9 @@
                 const kCos = keys.find(k=>k.match(/cosplayer|レイヤー/i)) || 'cosplayer';
                 const kTag = keys.find(k=>k.match(/tags|タグ/i)) || 'Tags';
                 const kLink = keys.find(k=>k.match(/link|twitter/i)) || 'link';
+                // ★追加: AIデータの読み込み
+                const kColor = keys.find(k=>k.match(/ColorName|color/i)) || 'ColorName';
+                const kSim = keys.find(k=>k.match(/SimilarImages|similar/i)) || 'SimilarImages';
 
                 allData = results.data.filter(d => d[kMem] && d[kImg]).map((d, i) => ({
                     _id: i, 
@@ -437,20 +450,26 @@
                     cosplayer: d[kCos] || "Unknown",
                     tags: (d[kTag]||"").toLowerCase(),
                     link: d[kLink] || "",
-                    searchKey: (d[kMem] + (d[kCos]||"") + (d[kTag]||"")).toLowerCase()
+                    searchKey: (d[kMem] + (d[kCos]||"") + (d[kTag]||"")).toLowerCase(),
+                    // ★追加
+                    colorName: d[kColor], 
+                    similarImages: d[kSim]
                 }));
 
                 document.getElementById('loading-sentinel').style.display = 'none';
                 
-                // UI構築開始
                 initUI();
                 generateStories();
-                generateTags(allData); // ★追加: データからタグチップを生成
+                generateTags(allData);
+                generateColorBar(); // ★追加
                 
-                // 初期表示 (フィルタなし)
+                // 横スクロール対応
+                addHorizontalScroll("stories-container");
+                addHorizontalScroll("chips-container");
+                addHorizontalScroll("tags-container");
+                addHorizontalScroll("color-bar-container");
+
                 runFilter();
-                
-                // ★追加: URLパラメータチェック (シェア機能)
                 checkUrlParams();
             }
         });
@@ -462,47 +481,63 @@
         });
     };
 
+    // ★追加: 横スクロール関数
+    function addHorizontalScroll(id) {
+        const el = document.getElementById(id);
+        if(el) {
+            el.addEventListener("wheel", (e) => {
+                e.preventDefault();
+                el.scrollLeft += e.deltaY;
+            });
+        }
+    }
+
     function initUI() {
         const box = document.getElementById('chips-container');
-        // ★変更: toggleFilterを使用
         box.innerHTML = `<span class="member-chip active" onclick="toggleFilter('member', null)">🏠 All</span>`;
         memberOrder.forEach(m => {
             box.innerHTML += `<span class="member-chip" onclick="toggleFilter('member', '${m}')">${memberIcons[m]||''} ${m}</span>`;
         });
     }
     
-    // ★追加: タグチップ生成関数
     function generateTags(data) {
         const tagCount = {};
         data.forEach(d => {
             if(!d.tags) return;
             d.tags.split(',').forEach(t => {
                 const tag = t.trim();
-                // 空白や "nan" を除外
                 if(tag && tag !== "nan") tagCount[tag] = (tagCount[tag] || 0) + 1;
             });
         });
-
-        // 出現数が多い順にソートして上位30個を表示
         const sortedTags = Object.keys(tagCount).sort((a,b) => tagCount[b] - tagCount[a]).slice(0, 30);
         const container = document.getElementById('tags-container');
-        
         container.innerHTML = `<span class="member-chip active" id="tag-all" onclick="toggleFilter('tag', null)"># All Tags</span>`;
         sortedTags.forEach(tag => {
             container.innerHTML += `<span class="member-chip" id="tag-${tag}" onclick="toggleFilter('tag', '${tag}')"># ${tag}</span>`;
         });
     }
 
-    // ★追加: URLパラメータによるディープリンク
+    // ★追加: カラーバー生成
+    function generateColorBar() {
+        const colors = {
+            "Red": "🔴", "Blue": "🔵", "Green": "🟢", "Yellow": "🟡", 
+            "Pink": "💖", "Purple": "🟣", "White": "⚪", "Black": "⚫"
+        };
+        const container = document.getElementById('color-bar-container');
+        let html = "";
+        Object.keys(colors).forEach(color => {
+            html += `<span class="color-chip" id="color-${color}" onclick="toggleFilter('color', '${color}')">${colors[color]} ${color}</span>`;
+        });
+        container.innerHTML = html;
+    }
+
     function checkUrlParams() {
         const urlParams = new URLSearchParams(window.location.search);
         const targetImage = urlParams.get('img'); 
         if (targetImage) {
             const decodedUrl = decodeURIComponent(targetImage);
             const exists = allData.find(d => d.image === decodedUrl);
-            if (exists) {
-                openModal(decodedUrl);
-            }
+            if (exists) openModal(decodedUrl);
         }
     }
 
@@ -511,22 +546,16 @@
         document.getElementById('overlay').classList.toggle('open');
     }
 
-    /* === Stories Logic === */
+    /* === Stories (Simplified for brevity, logic remains same) === */
     function generateStories() {
         const con = document.getElementById('stories-container');
         con.innerHTML = "";
         storiesData = [];
-
         memberOrder.forEach(member => {
             const memberPhotos = allData.filter(d => d.member === member);
             if (memberPhotos.length === 0) return;
-
             const layerGroups = {};
-            memberPhotos.forEach(p => {
-                if(!layerGroups[p.cosplayer]) layerGroups[p.cosplayer] = [];
-                layerGroups[p.cosplayer].push(p);
-            });
-
+            memberPhotos.forEach(p => { if(!layerGroups[p.cosplayer]) layerGroups[p.cosplayer] = []; layerGroups[p.cosplayer].push(p); });
             const layers = Object.keys(layerGroups).sort(() => Math.random() - 0.5);
             let selectedImages = [];
             for(let layer of layers) {
@@ -534,32 +563,13 @@
                 const pics = layerGroups[layer];
                 selectedImages.push(pics[Math.floor(Math.random() * pics.length)]);
             }
-
-            storiesData.push({
-                member: member,
-                icon: selectedImages[0].image, 
-                images: selectedImages
-            });
-
+            storiesData.push({ member: member, icon: selectedImages[0].image, images: selectedImages });
             const idx = storiesData.length - 1;
-            con.innerHTML += `
-                <div class="story-item" onclick="openStory(${idx})">
-                    <div class="story-ring"><img class="story-img" src="${selectedImages[0].image}"></div>
-                    <span class="story-name">${member}</span>
-                </div>`;
+            con.innerHTML += `<div class="story-item" onclick="openStory(${idx})"><div class="story-ring"><img class="story-img" src="${selectedImages[0].image}"></div><span class="story-name">${member}</span></div>`;
         });
     }
-
-    function openStory(memberIndex) {
-        currentStoryMemberIndex = memberIndex;
-        currentStorySlideIndex = 0;
-        document.getElementById('story-viewer').classList.add('active');
-        renderStory();
-    }
-    function closeStory() {
-        if(storyTimer) clearTimeout(storyTimer);
-        document.getElementById('story-viewer').classList.remove('active');
-    }
+    function openStory(idx) { currentStoryMemberIndex = idx; currentStorySlideIndex = 0; document.getElementById('story-viewer').classList.add('active'); renderStory(); }
+    function closeStory() { if(storyTimer) clearTimeout(storyTimer); document.getElementById('story-viewer').classList.remove('active'); }
     function renderStory() {
         if(storyTimer) clearTimeout(storyTimer);
         const story = storiesData[currentStoryMemberIndex];
@@ -574,84 +584,70 @@
             seg.className = 'story-progress-segment';
             const fill = document.createElement('div');
             fill.className = 'story-progress-fill';
-            if (i < currentStorySlideIndex) fill.style.width = '100%'; 
-            else if (i === currentStorySlideIndex) fill.id = 'current-fill'; 
-            else fill.style.width = '0%'; 
-            seg.appendChild(fill);
-            bars.appendChild(seg);
+            if (i < currentStorySlideIndex) fill.style.width = '100%'; else if (i === currentStorySlideIndex) fill.id = 'current-fill'; else fill.style.width = '0%'; 
+            seg.appendChild(fill); bars.appendChild(seg);
         });
-        setTimeout(() => {
-            const currentFill = document.getElementById('current-fill');
-            if(currentFill) { currentFill.style.transition = 'width 4s linear'; currentFill.style.width = '100%'; }
-        }, 50);
+        setTimeout(() => { const cf = document.getElementById('current-fill'); if(cf) { cf.style.transition = 'width 4s linear'; cf.style.width = '100%'; } }, 50);
         storyTimer = setTimeout(nextStorySlide, 4000);
     }
     function nextStorySlide() {
-        const story = storiesData[currentStoryMemberIndex];
-        if (currentStorySlideIndex < story.images.length - 1) { currentStorySlideIndex++; renderStory(); } 
-        else {
-            if (currentStoryMemberIndex < storiesData.length - 1) { currentStoryMemberIndex++; currentStorySlideIndex = 0; renderStory(); } 
-            else { closeStory(); }
-        }
+        if (currentStorySlideIndex < storiesData[currentStoryMemberIndex].images.length - 1) { currentStorySlideIndex++; renderStory(); } 
+        else if (currentStoryMemberIndex < storiesData.length - 1) { currentStoryMemberIndex++; currentStorySlideIndex = 0; renderStory(); } 
+        else closeStory();
     }
     function prevStorySlide() {
-        if (currentStorySlideIndex > 0) { currentStorySlideIndex--; renderStory(); } 
-        else {
-            if (currentStoryMemberIndex > 0) { currentStoryMemberIndex--; currentStorySlideIndex = storiesData[currentStoryMemberIndex].images.length - 1; renderStory(); }
-        }
+        if (currentStorySlideIndex > 0) { currentStorySlideIndex--; renderStory(); }
+        else if (currentStoryMemberIndex > 0) { currentStoryMemberIndex--; currentStorySlideIndex = storiesData[currentStoryMemberIndex].images.length - 1; renderStory(); }
     }
 
-    /* === Filter & Sort Logic (Unified) === */
+    /* === Filter & Sort Logic === */
     function resetToHome() {
-        activeFilters = { member: null, tag: null, text: "" };
+        activeFilters = { member: null, tag: null, color: null, text: "" };
         currentSort = 'random';
         document.getElementById('searchInput').value = "";
         runFilter();
     }
 
-    // ★追加: フィルタリング実行関数 (AND検索)
     function runFilter() {
         filteredData = allData.filter(d => {
             const matchMember = !activeFilters.member || d.member === activeFilters.member;
             const matchTag = !activeFilters.tag || (d.tags && d.tags.includes(activeFilters.tag));
+            // ★追加: 色検索ロジック
+            const matchColor = !activeFilters.color || d.colorName === activeFilters.color;
             const matchText = !activeFilters.text || d.searchKey.includes(activeFilters.text);
-            return matchMember && matchTag && matchText;
+            return matchMember && matchTag && matchColor && matchText;
         });
-
         updateSortButtons();
         updateChipStyles();
         render();
     }
 
-    // ★追加: フィルタ切替関数
     function toggleFilter(type, value) {
-        if (activeFilters[type] === value) {
-            activeFilters[type] = null; // 解除
-        } else {
-            activeFilters[type] = value; // セット
-        }
+        if (activeFilters[type] === value) activeFilters[type] = null;
+        else activeFilters[type] = value;
         if (type === 'member' && value) currentSort = 'new';
         runFilter();
     }
     
-    // ★追加: チップのスタイル更新
     function updateChipStyles() {
-        // メンバーチップ
         document.querySelectorAll('#chips-container .member-chip').forEach(el => {
             el.classList.remove('active');
             if (activeFilters.member === null && el.innerText.includes('All')) el.classList.add('active');
             if (activeFilters.member && el.innerText.includes(activeFilters.member)) el.classList.add('active');
         });
-        // タグチップ
         document.querySelectorAll('#tags-container .member-chip').forEach(el => {
             el.classList.remove('active');
             if (activeFilters.tag === null && el.id === 'tag-all') el.classList.add('active');
             if (activeFilters.tag && el.id === `tag-${activeFilters.tag}`) el.classList.add('active');
         });
+        // ★追加: カラーチップのスタイル
+        document.querySelectorAll('#color-bar-container .color-chip').forEach(el => {
+            el.classList.remove('active');
+            if (activeFilters.color && el.id === `color-${activeFilters.color}`) el.classList.add('active');
+        });
     }
 
-    function filterByMember(name, el) { toggleFilter('member', name); } // 互換性のため残す
-    
+    function filterByMember(name, el) { toggleFilter('member', name); }
     function filterByCosplayer(name) {
         document.getElementById('searchInput').value = name;
         activeFilters.text = name.toLowerCase();
@@ -659,38 +655,23 @@
         runFilter();
         window.scrollTo({top:0, behavior:'smooth'});
     }
-
     function setMode(mode) {
-        if(mode === 'favorite') {
-            // お気に入りは特殊モードなので個別処理
-            filteredData = allData.filter(d => favorites.includes(d.image));
-            render();
-        }
+        if(mode === 'favorite') { filteredData = allData.filter(d => favorites.includes(d.image)); render(); }
     }
-
-    function manualSort(type) {
-        currentSort = type;
-        runFilter(); // ソート順を変えて再描画
-    }
-
+    function manualSort(type) { currentSort = type; runFilter(); }
     function updateSortButtons() {
         document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
-        if(document.getElementById('sort-' + currentSort)) {
-            document.getElementById('sort-' + currentSort).classList.add('active');
-        }
+        if(document.getElementById('sort-' + currentSort)) document.getElementById('sort-' + currentSort).classList.add('active');
     }
-
     function applySort() {
         let data = [...filteredData];
         if (currentSort === 'new') data.sort((a,b) => b._id - a._id);
         else if (currentSort === 'old') data.sort((a,b) => a._id - b._id);
-        else if (currentSort === 'random') data.sort(() => Math.random() - 0.5); // 完全ランダム
+        else if (currentSort === 'random') data.sort(() => Math.random() - 0.5);
         return data;
     }
-
     function handleSearch() {
-        const v = document.getElementById('searchInput').value.toLowerCase();
-        activeFilters.text = v;
+        activeFilters.text = document.getElementById('searchInput').value.toLowerCase();
         runFilter();
     }
 
@@ -698,21 +679,17 @@
     function render() {
         const app = document.getElementById('app');
         app.innerHTML = '';
-        
         if(filteredData.length === 0) {
             app.innerHTML = '<div style="text-align:center; padding:80px; color:#666;">No Photos Found</div>';
             return;
         }
-
         const sortedData = applySort();
         const grid = document.createElement('div');
         grid.className = 'masonry-grid';
-        
         sortedData.slice(0, displayLimit).forEach(item => {
             const avatarUrl = item.image; 
             const isFav = favorites.includes(item.image);
             const isNew = item._id > (allData.length - 15);
-
             const card = document.createElement('div');
             card.className = 'card';
             card.innerHTML = `
@@ -723,18 +700,11 @@
                 <div class="card-meta">
                     <img src="${avatarUrl}" class="card-avatar" onclick="filterByCosplayer('${item.cosplayer}'); event.stopPropagation()">
                     <div class="card-texts">
-                        <div class="card-title" onclick="openModal('${item.image}')">
-                            ${item.cosplayer}
-                        </div>
-                        <div class="card-subtitle" onclick="toggleFilter('member', '${item.member}')">
-                            ${memberIcons[item.member] || ''} ${item.member}
-                        </div>
+                        <div class="card-title" onclick="openModal('${item.image}')">${item.cosplayer}</div>
+                        <div class="card-subtitle" onclick="toggleFilter('member', '${item.member}')">${memberIcons[item.member] || ''} ${item.member}</div>
                     </div>
-                    <button class="fav-btn-mini ${isFav?'active':''}" onclick="toggleFav('${item.image}', this)">
-                        <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
-                    </button>
-                </div>
-            `;
+                    <button class="fav-btn-mini ${isFav?'active':''}" onclick="toggleFav('${item.image}', this)"><i class="${isFav ? 'fas' : 'far'} fa-heart"></i></button>
+                </div>`;
             grid.appendChild(card);
         });
         app.appendChild(grid);
@@ -744,13 +714,9 @@
         if(favorites.includes(url)) favorites = favorites.filter(u=>u!==url);
         else favorites.push(url);
         localStorage.setItem('vspo_favs', JSON.stringify(favorites));
-        
         const icon = btn.querySelector('i');
-        if (favorites.includes(url)) {
-            btn.classList.add('active'); icon.classList.remove('far'); icon.classList.add('fas');
-        } else {
-            btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far');
-        }
+        if (favorites.includes(url)) { btn.classList.add('active'); icon.classList.remove('far'); icon.classList.add('fas'); }
+        else { btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far'); }
     }
 
     /* === Modals === */
@@ -766,10 +732,26 @@
         history = [url, ...history.filter(h=>h!==url)].slice(0, 50);
         localStorage.setItem('vspo_history', JSON.stringify(history));
 
+        // ★修正: AI類似画像のレコメンド
         const recBox = document.getElementById('m-recommend');
         recBox.innerHTML = '';
-        const recs = allData.filter(d => d.member === item.member && d.image !== url)
-                            .sort(() => Math.random() - 0.5).slice(0, 10);
+        let recs = [];
+        
+        if (item.similarImages) {
+            // スプレッドシートのインデックス(行番号など)からデータを引く
+            // ※ CSVのIDと行番号のズレに注意。ここでは簡易的に配列インデックスを使用
+            const indices = item.similarImages.split(',');
+            // インデックスがデータ範囲内かチェックしつつマッピング
+            recs = indices.map(idx => allData[parseInt(idx)]).filter(d => d);
+        }
+
+        // AIデータがない、または不足している場合は従来通りランダムで補填
+        if (recs.length < 5) {
+            const randomRecs = allData.filter(d => d.member === item.member && d.image !== url)
+                                      .sort(() => Math.random() - 0.5).slice(0, 10);
+            recs = [...recs, ...randomRecs].slice(0, 10);
+        }
+
         recs.forEach(r => {
             const d = document.createElement('div');
             d.className = 'recommend-card';
@@ -780,22 +762,16 @@
     }
 
     function closeModal() { document.getElementById('modal').classList.remove('open'); }
-    
-    // ★修正: シェアURLにパラメータを付与
     function shareX() {
         const currentImgUrl = document.getElementById('m-img').src;
         const baseUrl = window.location.origin + window.location.pathname;
         const shareUrl = `${baseUrl}?img=${encodeURIComponent(currentImgUrl)}`;
-        const text = "ぶいすぽっ！コスプレアーカイブで見つけた！";
-        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`);
+        window.open(`https://twitter.com/intent/tweet?text=ぶいすぽっ！コスプレアーカイブ&url=${encodeURIComponent(shareUrl)}`);
     }
-    
-    // ★修正: コピーURLにパラメータを付与
     function copyLink() {
         const currentImgUrl = document.getElementById('m-img').src;
         const baseUrl = window.location.origin + window.location.pathname;
         const shareUrl = `${baseUrl}?img=${encodeURIComponent(currentImgUrl)}`;
-
         navigator.clipboard.writeText(shareUrl).then(() => {
             const t = document.getElementById('toast');
             t.innerText = "シェア用URLをコピーしました！"; 
@@ -803,7 +779,6 @@
             setTimeout(()=>{ t.style.opacity=0; t.style.visibility='hidden';}, 2000);
         });
     }
-
     function changeImage(dir, e) {
         if(e) e.stopPropagation();
         const currentUrl = document.getElementById('m-img').src;
@@ -817,15 +792,7 @@
     }
 
     /* === Diagnosis === */
-    function openDiagnosis() {
-        document.getElementById('diag-modal').classList.add('open');
-        setDiagStep(1);
-        const grid = document.getElementById('diag-member-grid');
-        grid.innerHTML = "";
-        memberOrder.forEach(m => {
-            grid.innerHTML += `<button class="diag-btn" style="flex-direction:column; width:auto;" onclick="selectDiagMember('${m}')"><span style="font-size:1.5rem;">${memberIcons[m]}</span><span style="font-size:0.7rem;">${m}</span></button>`;
-        });
-    }
+    function openDiagnosis() { document.getElementById('diag-modal').classList.add('open'); setDiagStep(1); const grid = document.getElementById('diag-member-grid'); grid.innerHTML = ""; memberOrder.forEach(m => { grid.innerHTML += `<button class="diag-btn" style="flex-direction:column; width:auto;" onclick="selectDiagMember('${m}')"><span style="font-size:1.5rem;">${memberIcons[m]}</span><span style="font-size:0.7rem;">${m}</span></button>`; }); }
     function closeDiagnosis() { document.getElementById('diag-modal').classList.remove('open'); }
     function setDiagStep(n) { document.querySelectorAll('.diag-step').forEach(e=>e.classList.remove('active')); document.getElementById('diag-step-'+n).classList.add('active'); }
     function selectDiagMember(m) { diagSelectedMember = m; setDiagStep(2); }
@@ -839,24 +806,18 @@
         }
         if(list.length===0) { alert("見つかりませんでした…"); return; }
         let pick;
-        if(mode === 'new') list.sort((a,b) => b._id - a._id);
-        else if(mode === 'old') list.sort((a,b) => a._id - b._id);
-        if(mode === 'random') pick = list[Math.floor(Math.random()*list.length)];
-        else pick = list[0]; 
-        
+        if(mode === 'new') list.sort((a,b) => b._id - a._id); else if(mode === 'old') list.sort((a,b) => a._id - b._id);
+        if(mode === 'random') pick = list[Math.floor(Math.random()*list.length)]; else pick = list[0]; 
         document.getElementById('diag-res-img').src = pick.image;
         document.getElementById('diag-res-name').innerText = pick.cosplayer;
         setDiagStep('result');
     }
-
     function openCosplayerList() {
         document.getElementById('list-modal').classList.add('open');
         const list = [...new Set(allData.map(d=>d.cosplayer))].sort();
         const box = document.getElementById('cosplayer-list');
         box.innerHTML = "";
-        list.forEach(c => {
-            box.innerHTML += `<span class="member-chip" onclick="filterByCosplayer('${c}');document.getElementById('list-modal').classList.remove('open')">${c}</span>`;
-        });
+        list.forEach(c => { box.innerHTML += `<span class="member-chip" onclick="filterByCosplayer('${c}');document.getElementById('list-modal').classList.remove('open')">${c}</span>`; });
     }
 </script>
 </body>
