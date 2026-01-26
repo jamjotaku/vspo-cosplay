@@ -12,7 +12,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="theme-color" content="#0f0f0f"> <title>ぶいすぽっ！コスプレアーカイブ</title>
+    <meta name="theme-color" content="#0f0f0f">
+    <title>VSPO! COSPLAY ARCHIVE</title>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -21,12 +22,12 @@
     <style>
         /* --- 🎨 YouTube-Like Hybrid Design --- */
         :root {
-            --bg-color: #0f0f0f;        /* YouTube Dark Background */
+            --bg-color: #0f0f0f;
             --sidebar-bg: #0f0f0f;
             --card-bg: transparent;
             --text-color: #f1f1f1;
             --text-sub: #aaaaaa;
-            --primary: #3ea6ff;         /* YouTube Link Blue */
+            --primary: #3ea6ff;
             --accent: #ff0000;
             --grad-main: linear-gradient(135deg, #3b82f6 0%, #d946ef 100%);
             --heart: #ff4757;
@@ -39,7 +40,6 @@
         body { 
             font-family: "M PLUS Rounded 1c", sans-serif;
             background-color: var(--bg-color);
-            /* 背景のグリッド模様はYouTube風にするため削除してシンプルに */
             color: var(--text-color);
             margin: 0; padding: 0; 
             min-height: 100vh;
@@ -50,7 +50,6 @@
         header { 
             position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height);
             background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px);
-            /* border-bottom: 1px solid rgba(255,255,255,0.05); YouTubeはボーダーレスが多い */
             display: flex; align-items: center; justify-content: space-between;
             padding: 0 15px; z-index: 1000;
         }
@@ -58,10 +57,15 @@
         .menu-btn { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; padding: 5px; }
         .site-title { 
             font-size: 1.1rem; font-weight: 800; letter-spacing: 0.05em;
-            color: #fff; cursor: pointer; display: flex; align-items: center; gap: 5px;
+            color: #fff; cursor: pointer; display: flex; align-items: center; gap: 8px;
         }
-        /* ロゴ風アイコン */
-        .site-logo-icon { color: var(--accent); font-size: 1.2rem; }
+        .site-logo-icon { 
+            font-size: 1.3rem; 
+            background: var(--grad-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: var(--primary);
+        }
+        @media (max-width: 480px) {
+            .site-title .title-text { font-size: 0.9rem; white-space: nowrap; }
+        }
 
         .header-right { flex: 1; display: flex; justify-content: flex-end; }
         .search-box { 
@@ -101,7 +105,6 @@
         /* --- Top Areas --- */
         .top-area { background: var(--bg-color); padding-bottom: 10px; position: sticky; top: var(--header-height); z-index: 900; }
         
-        /* Stories */
         .stories-container { display: flex; gap: 12px; overflow-x: auto; padding: 15px 15px 5px; scrollbar-width: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .stories-container::-webkit-scrollbar { display: none; }
         .story-item { width: 64px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; }
@@ -111,7 +114,6 @@
         .story-img { width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--bg-color); object-fit: cover; }
         .story-name { font-size: 0.65rem; margin-top: 4px; text-align: center; width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #d1d5db; }
 
-        /* Chips */
         .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; }
         .chips-container::-webkit-scrollbar { display: none; }
         .member-chip { 
@@ -136,13 +138,10 @@
             border-radius: 18px; font-size: 0.75rem; text-decoration: none; display: flex; align-items: center; gap: 5px;
         }
 
-        /* --- Main Grid (Hybrid: Masonry + YouTube UI) --- */
+        /* --- Main Grid --- */
         main { padding: 0 4px 40px; max-width: 1800px; margin: 0 auto; }
-        
         .masonry-grid { 
-            column-count: 2;          /* スマホは2列 */
-            column-gap: 16px; 
-            padding: 0 8px;
+            column-count: 2; column-gap: 16px; padding: 0 8px;
             animation: fadeInGrid 0.4s ease-out; 
         }
         @keyframes fadeInGrid { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -150,23 +149,17 @@
         @media (min-width: 600px) { .masonry-grid { column-count: 3; } }
         @media (min-width: 1000px) { .masonry-grid { column-count: 4; } }
         @media (min-width: 1400px) { .masonry-grid { column-count: 5; } }
-        @media (max-width: 400px) { .masonry-grid { column-count: 1; } } /* 小さいスマホは1列 */
+        @media (max-width: 400px) { .masonry-grid { column-count: 1; } }
 
         .card { 
-            break-inside: avoid; 
-            margin-bottom: 24px; 
-            background: transparent; 
-            position: relative; 
-            border-radius: 12px;
-            transition: transform 0.2s;
+            break-inside: avoid; margin-bottom: 24px; background: transparent; 
+            position: relative; border-radius: 12px; transition: transform 0.2s;
         }
         .card:hover { transform: translateY(-4px); }
 
         .card-img-area { 
-            width: 100%; height: auto; 
-            border-radius: 12px; overflow: hidden; 
-            cursor: pointer; position: relative; 
-            background: #202020; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            width: 100%; height: auto; border-radius: 12px; overflow: hidden; 
+            cursor: pointer; position: relative; background: #202020; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
         .card-img-area img { width: 100%; height: auto; display: block; transition: transform 0.5s ease; }
         .card-img-area:hover img { transform: scale(1.03); filter: brightness(1.1); }
@@ -175,24 +168,16 @@
             position: absolute; bottom: 8px; right: 8px; 
             background: rgba(0,0,0,0.8); color: #fff; font-size: 0.7rem; 
             padding: 2px 6px; border-radius: 4px; font-weight: bold;
-            top: auto; left: auto; /* Reset old position */
         }
 
-        /* YouTube-like Meta Data */
-        .card-meta {
-            margin-top: 10px; display: flex; gap: 10px; padding: 0 4px;
-        }
-        .card-avatar {
-            width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #333; flex-shrink: 0; cursor: pointer;
-        }
+        .card-meta { margin-top: 10px; display: flex; gap: 10px; padding: 0 4px; }
+        .card-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #333; flex-shrink: 0; cursor: pointer; }
         .card-texts { display: flex; flex-direction: column; overflow: hidden; justify-content: center; }
         .card-title {
             color: #f1f1f1; font-size: 0.95rem; font-weight: 700; line-height: 1.3;
             margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
         }
-        .card-subtitle {
-            color: #aaaaaa; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; cursor: pointer;
-        }
+        .card-subtitle { color: #aaaaaa; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; cursor: pointer; }
         .card-subtitle:hover { color: #fff; }
 
         .fav-btn-mini {
@@ -202,61 +187,35 @@
         .fav-btn-mini:hover { color: var(--heart); transform: scale(1.2); }
         .fav-btn-mini.active { color: var(--heart); }
 
-
-        /* --- 5. Story Viewer (PC Optimized) --- */
+        /* --- Story Viewer --- */
         .story-viewer {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 5000;
-            display: flex; align-items: center; justify-content: center; /* 中央寄せ */
+            background: #000; z-index: 5000; display: flex; align-items: center; justify-content: center;
             visibility: hidden; opacity: 0; transition: 0.3s;
         }
         .story-viewer.active { visibility: visible; opacity: 1; }
-        
-        /* スマホ画面風フレーム */
-        .story-frame {
-            width: 100%; height: 100%; 
-            position: relative; 
-            background: #000; overflow: hidden;
-        }
-
-        /* PCでのみ適用されるスタイル：サイズ制限と角丸 */
+        .story-frame { width: 100%; height: 100%; position: relative; background: #000; overflow: hidden; }
         @media (min-width: 768px) {
-            .story-frame {
-                max-width: 420px; /* スマホサイズ幅 */
-                height: 90vh; /* 画面内に収める */
-                border-radius: 12px;
-                box-shadow: 0 0 50px rgba(59, 130, 246, 0.2);
-                border: 1px solid #333;
-            }
-            /* PC用の閉じるボタン (フレームの外右上) */
-            .story-pc-close {
-                position: absolute; top: 20px; right: 30px; 
-                color: #fff; font-size: 2rem; cursor: pointer; z-index: 5010;
-            }
+            .story-frame { max-width: 420px; height: 90vh; border-radius: 12px; box-shadow: 0 0 50px rgba(59, 130, 246, 0.2); border: 1px solid #333; }
+            .story-pc-close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 2rem; cursor: pointer; z-index: 5010; }
         }
-        
         .story-header {
-            position: absolute; top: 10px; left: 0; width: 100%; padding: 10px 15px;
-            z-index: 10; display: flex; flex-direction: column; gap: 8px;
-            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            position: absolute; top: 10px; left: 0; width: 100%; padding: 10px 15px; z-index: 10;
+            display: flex; flex-direction: column; gap: 8px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
         }
         .story-progress-bar { display: flex; gap: 4px; width: 100%; height: 2px; }
         .story-progress-segment { flex: 1; height: 100%; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
         .story-progress-fill { height: 100%; background: #fff; width: 0%; transition: width 0s linear; }
-        
         .story-meta { display: flex; align-items: center; justify-content: space-between; color: #fff; }
         .story-user-info { display: flex; align-items: center; gap: 10px; }
         .story-avatar { width: 32px; height: 32px; border-radius: 50%; border: 1px solid #fff; }
         .story-username { font-size: 0.9rem; font-weight: bold; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
         .story-close { font-size: 1.5rem; color: #fff; cursor: pointer; padding: 5px; text-shadow: 0 1px 3px rgba(0,0,0,0.5); }
-
         .story-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
-        .story-main-img { width: 100%; height: 100%; object-fit: contain; } /* 画像全体を表示 */
-        
+        .story-main-img { width: 100%; height: 100%; object-fit: contain; }
         .story-nav { position: absolute; top: 0; width: 50%; height: 100%; z-index: 5; cursor: pointer; }
         .story-nav.left { left: 0; }
         .story-nav.right { right: 0; }
-        
         .story-viewer:active .story-progress-fill { transition: none !important; }
 
         /* --- Modals --- */
@@ -265,10 +224,8 @@
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .modal img { max-height: 80vh; max-width: 95%; border-radius: 8px; box-shadow: 0 0 40px rgba(0,0,0,0.8); object-fit: contain; }
         .modal-close { position: absolute; top: 20px; right: 20px; font-size: 2rem; color: #fff; cursor: pointer; }
-
         .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 15px; border-radius: 50%; cursor: pointer; }
         .prev-btn { left: 15px; } .next-btn { right: 15px; }
-
         .recommend-area { display: flex; gap: 10px; overflow-x: auto; width: 100%; padding: 10px 0; scrollbar-width: none; }
         .recommend-card { flex: 0 0 100px; height: 130px; border-radius: 8px; overflow: hidden; cursor: pointer; opacity: 0.7; transition: 0.2s; border: 1px solid #333; }
         .recommend-card:hover { opacity: 1; transform: scale(1.05); border-color: var(--primary); }
@@ -288,7 +245,6 @@
 
 <div id="story-viewer" class="story-viewer" onclick="closeStory()">
     <div class="story-pc-close" onclick="closeStory()">&times;</div>
-
     <div class="story-frame" onclick="event.stopPropagation()">
         <div class="story-header">
             <div id="story-bars" class="story-progress-bar"></div>
@@ -329,8 +285,9 @@
     <div class="header-left">
         <button class="menu-btn" onclick="toggleMenu()"><i class="fas fa-bars"></i></button>
         <div class="site-title" onclick="resetToHome()">
-    <i class="fas fa-camera site-logo-icon"></i>
-    <span class="title-text">VSPO! COSPLAY ARCHIVE</span>
+            <i class="fas fa-camera site-logo-icon"></i>
+            <span class="title-text">VSPO! COSPLAY ARCHIVE</span>
+        </div>
     </div>
     <div class="header-right">
         <div class="search-box">
@@ -343,6 +300,8 @@
 <div class="top-area">
     <div id="stories-container" class="stories-container"></div>
     <div id="chips-container" class="chips-container"></div>
+    <div id="tags-container" class="chips-container" style="padding-top:0; padding-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.05);"></div>
+    
     <div class="utility-deck">
         <div class="sort-group">
             <button id="sort-old" class="sort-btn" onclick="manualSort('old')">⬇️ 登録順</button>
@@ -418,7 +377,6 @@
     /* === Config & Data === */
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
     
-    // 定義されたデビュー順
     const memberOrder = [
         "花芽すみれ", "花芽なずな", "小雀とと", "一ノ瀬うるは", "胡桃のあ", 
         "兎咲ミミ", "空澄セナ", "橘ひなの", "英リサ", "如月れん", 
@@ -449,9 +407,17 @@
     let storyTimer = null;
     let diagSelectedMember = "", diagSelectedVibe = "";
     
+    // ★追加: フィルタリング状態管理 (AND検索用)
+    let activeFilters = {
+        member: null,
+        tag: null,
+        text: ""
+    };
+    
     /* === Main Logic === */
     window.onload = function() {
-        initUI();
+        // initUIはcomplete内で呼び出すように変更しても良いが、ここでは初期表示枠として先出し
+        // ただしメンバーチップ生成はデータロード後の方が安全な場合もあるが、リストが固定なのでOK
         
         Papa.parse(CSV_URL, {
             download: true, header: true, skipEmptyLines: true,
@@ -475,8 +441,17 @@
                 }));
 
                 document.getElementById('loading-sentinel').style.display = 'none';
+                
+                // UI構築開始
+                initUI();
                 generateStories();
-                resetToHome(); 
+                generateTags(allData); // ★追加: データからタグチップを生成
+                
+                // 初期表示 (フィルタなし)
+                runFilter();
+                
+                // ★追加: URLパラメータチェック (シェア機能)
+                checkUrlParams();
             }
         });
 
@@ -489,10 +464,46 @@
 
     function initUI() {
         const box = document.getElementById('chips-container');
-        box.innerHTML = `<span class="member-chip active" onclick="resetToHome()">🏠 All</span>`;
+        // ★変更: toggleFilterを使用
+        box.innerHTML = `<span class="member-chip active" onclick="toggleFilter('member', null)">🏠 All</span>`;
         memberOrder.forEach(m => {
-            box.innerHTML += `<span class="member-chip" onclick="filterByMember('${m}', this)">${memberIcons[m]||''} ${m}</span>`;
+            box.innerHTML += `<span class="member-chip" onclick="toggleFilter('member', '${m}')">${memberIcons[m]||''} ${m}</span>`;
         });
+    }
+    
+    // ★追加: タグチップ生成関数
+    function generateTags(data) {
+        const tagCount = {};
+        data.forEach(d => {
+            if(!d.tags) return;
+            d.tags.split(',').forEach(t => {
+                const tag = t.trim();
+                // 空白や "nan" を除外
+                if(tag && tag !== "nan") tagCount[tag] = (tagCount[tag] || 0) + 1;
+            });
+        });
+
+        // 出現数が多い順にソートして上位30個を表示
+        const sortedTags = Object.keys(tagCount).sort((a,b) => tagCount[b] - tagCount[a]).slice(0, 30);
+        const container = document.getElementById('tags-container');
+        
+        container.innerHTML = `<span class="member-chip active" id="tag-all" onclick="toggleFilter('tag', null)"># All Tags</span>`;
+        sortedTags.forEach(tag => {
+            container.innerHTML += `<span class="member-chip" id="tag-${tag}" onclick="toggleFilter('tag', '${tag}')"># ${tag}</span>`;
+        });
+    }
+
+    // ★追加: URLパラメータによるディープリンク
+    function checkUrlParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const targetImage = urlParams.get('img'); 
+        if (targetImage) {
+            const decodedUrl = decodeURIComponent(targetImage);
+            const exists = allData.find(d => d.image === decodedUrl);
+            if (exists) {
+                openModal(decodedUrl);
+            }
+        }
     }
 
     function toggleMenu() {
@@ -545,21 +556,17 @@
         document.getElementById('story-viewer').classList.add('active');
         renderStory();
     }
-
     function closeStory() {
         if(storyTimer) clearTimeout(storyTimer);
         document.getElementById('story-viewer').classList.remove('active');
     }
-
     function renderStory() {
         if(storyTimer) clearTimeout(storyTimer);
         const story = storiesData[currentStoryMemberIndex];
         const imgData = story.images[currentStorySlideIndex];
-
         document.getElementById('story-u-icon').src = story.icon;
         document.getElementById('story-u-name').innerText = story.member + " / " + imgData.cosplayer;
         document.getElementById('story-main-img').src = imgData.image;
-
         const bars = document.getElementById('story-bars');
         bars.innerHTML = '';
         story.images.forEach((_, i) => {
@@ -567,91 +574,103 @@
             seg.className = 'story-progress-segment';
             const fill = document.createElement('div');
             fill.className = 'story-progress-fill';
-            
             if (i < currentStorySlideIndex) fill.style.width = '100%'; 
             else if (i === currentStorySlideIndex) fill.id = 'current-fill'; 
             else fill.style.width = '0%'; 
-            
             seg.appendChild(fill);
             bars.appendChild(seg);
         });
-
         setTimeout(() => {
             const currentFill = document.getElementById('current-fill');
-            if(currentFill) {
-                currentFill.style.transition = 'width 4s linear';
-                currentFill.style.width = '100%';
-            }
+            if(currentFill) { currentFill.style.transition = 'width 4s linear'; currentFill.style.width = '100%'; }
         }, 50);
-
         storyTimer = setTimeout(nextStorySlide, 4000);
     }
-
     function nextStorySlide() {
         const story = storiesData[currentStoryMemberIndex];
-        if (currentStorySlideIndex < story.images.length - 1) {
-            currentStorySlideIndex++;
-            renderStory();
-        } else {
-            if (currentStoryMemberIndex < storiesData.length - 1) {
-                currentStoryMemberIndex++;
-                currentStorySlideIndex = 0;
-                renderStory();
-            } else {
-                closeStory();
-            }
+        if (currentStorySlideIndex < story.images.length - 1) { currentStorySlideIndex++; renderStory(); } 
+        else {
+            if (currentStoryMemberIndex < storiesData.length - 1) { currentStoryMemberIndex++; currentStorySlideIndex = 0; renderStory(); } 
+            else { closeStory(); }
         }
     }
-
     function prevStorySlide() {
-        if (currentStorySlideIndex > 0) {
-            currentStorySlideIndex--;
-            renderStory();
-        } else {
-            if (currentStoryMemberIndex > 0) {
-                currentStoryMemberIndex--;
-                currentStorySlideIndex = storiesData[currentStoryMemberIndex].images.length - 1;
-                renderStory();
-            }
+        if (currentStorySlideIndex > 0) { currentStorySlideIndex--; renderStory(); } 
+        else {
+            if (currentStoryMemberIndex > 0) { currentStoryMemberIndex--; currentStorySlideIndex = storiesData[currentStoryMemberIndex].images.length - 1; renderStory(); }
         }
     }
 
-
-    /* === Filter & Sort === */
+    /* === Filter & Sort Logic (Unified) === */
     function resetToHome() {
-        filteredData = [...allData];
+        activeFilters = { member: null, tag: null, text: "" };
         currentSort = 'random';
+        document.getElementById('searchInput').value = "";
+        runFilter();
+    }
+
+    // ★追加: フィルタリング実行関数 (AND検索)
+    function runFilter() {
+        filteredData = allData.filter(d => {
+            const matchMember = !activeFilters.member || d.member === activeFilters.member;
+            const matchTag = !activeFilters.tag || (d.tags && d.tags.includes(activeFilters.tag));
+            const matchText = !activeFilters.text || d.searchKey.includes(activeFilters.text);
+            return matchMember && matchTag && matchText;
+        });
+
         updateSortButtons();
-        highlightChip('All');
+        updateChipStyles();
         render();
     }
 
-    function filterByMember(name, el) {
-        if(el) highlightChip(name);
-        filteredData = allData.filter(d => d.member === name);
-        currentSort = 'new';
-        updateSortButtons();
-        render();
+    // ★追加: フィルタ切替関数
+    function toggleFilter(type, value) {
+        if (activeFilters[type] === value) {
+            activeFilters[type] = null; // 解除
+        } else {
+            activeFilters[type] = value; // セット
+        }
+        if (type === 'member' && value) currentSort = 'new';
+        runFilter();
+    }
+    
+    // ★追加: チップのスタイル更新
+    function updateChipStyles() {
+        // メンバーチップ
+        document.querySelectorAll('#chips-container .member-chip').forEach(el => {
+            el.classList.remove('active');
+            if (activeFilters.member === null && el.innerText.includes('All')) el.classList.add('active');
+            if (activeFilters.member && el.innerText.includes(activeFilters.member)) el.classList.add('active');
+        });
+        // タグチップ
+        document.querySelectorAll('#tags-container .member-chip').forEach(el => {
+            el.classList.remove('active');
+            if (activeFilters.tag === null && el.id === 'tag-all') el.classList.add('active');
+            if (activeFilters.tag && el.id === `tag-${activeFilters.tag}`) el.classList.add('active');
+        });
     }
 
+    function filterByMember(name, el) { toggleFilter('member', name); } // 互換性のため残す
+    
     function filterByCosplayer(name) {
         document.getElementById('searchInput').value = name;
-        filteredData = allData.filter(d => d.cosplayer === name);
+        activeFilters.text = name.toLowerCase();
         currentSort = 'old';
-        updateSortButtons();
-        render();
+        runFilter();
         window.scrollTo({top:0, behavior:'smooth'});
     }
 
     function setMode(mode) {
-        if(mode === 'favorite') filteredData = allData.filter(d => favorites.includes(d.image));
-        render();
+        if(mode === 'favorite') {
+            // お気に入りは特殊モードなので個別処理
+            filteredData = allData.filter(d => favorites.includes(d.image));
+            render();
+        }
     }
 
     function manualSort(type) {
         currentSort = type;
-        updateSortButtons();
-        render();
+        runFilter(); // ソート順を変えて再描画
     }
 
     function updateSortButtons() {
@@ -665,19 +684,17 @@
         let data = [...filteredData];
         if (currentSort === 'new') data.sort((a,b) => b._id - a._id);
         else if (currentSort === 'old') data.sort((a,b) => a._id - b._id);
-        else if (currentSort === 'random') data.sort(() => Math.random() - 0.5);
+        else if (currentSort === 'random') data.sort(() => Math.random() - 0.5); // 完全ランダム
         return data;
     }
 
-    function highlightChip(name) {
-        document.querySelectorAll('.member-chip').forEach(c => c.classList.remove('active'));
-        const chips = document.querySelectorAll('.member-chip');
-        for(let c of chips) {
-            if(c.innerText.includes(name)) c.classList.add('active');
-        }
+    function handleSearch() {
+        const v = document.getElementById('searchInput').value.toLowerCase();
+        activeFilters.text = v;
+        runFilter();
     }
 
-    /* === Render (YouTube Hybrid Style) === */
+    /* === Render === */
     function render() {
         const app = document.getElementById('app');
         app.innerHTML = '';
@@ -698,27 +715,21 @@
 
             const card = document.createElement('div');
             card.className = 'card';
-            
-            // YouTube風のHTML構造
-            // 画像はトリミングなし(img-area)、その下にYouTube風メタデータ(card-meta)
             card.innerHTML = `
                 <div class="card-img-area" onclick="openModal('${item.image}')">
                     <img src="${item.image}" loading="lazy" alt="${item.member}">
                     ${isNew ? '<span class="new-badge">NEW</span>' : ''}
                 </div>
-                
                 <div class="card-meta">
                     <img src="${avatarUrl}" class="card-avatar" onclick="filterByCosplayer('${item.cosplayer}'); event.stopPropagation()">
-                    
                     <div class="card-texts">
                         <div class="card-title" onclick="openModal('${item.image}')">
                             ${item.cosplayer}
                         </div>
-                        <div class="card-subtitle" onclick="filterByMember('${item.member}', null)">
+                        <div class="card-subtitle" onclick="toggleFilter('member', '${item.member}')">
                             ${memberIcons[item.member] || ''} ${item.member}
                         </div>
                     </div>
-
                     <button class="fav-btn-mini ${isFav?'active':''}" onclick="toggleFav('${item.image}', this)">
                         <i class="${isFav ? 'fas' : 'far'} fa-heart"></i>
                     </button>
@@ -734,23 +745,12 @@
         else favorites.push(url);
         localStorage.setItem('vspo_favs', JSON.stringify(favorites));
         
-        // アイコンの切り替えロジック
         const icon = btn.querySelector('i');
         if (favorites.includes(url)) {
-            btn.classList.add('active');
-            icon.classList.remove('far');
-            icon.classList.add('fas');
+            btn.classList.add('active'); icon.classList.remove('far'); icon.classList.add('fas');
         } else {
-            btn.classList.remove('active');
-            icon.classList.remove('fas');
-            icon.classList.add('far');
+            btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far');
         }
-    }
-
-    function handleSearch() {
-        const v = document.getElementById('searchInput').value.toLowerCase();
-        filteredData = allData.filter(d => d.searchKey.includes(v));
-        render();
     }
 
     /* === Modals === */
@@ -781,15 +781,27 @@
 
     function closeModal() { document.getElementById('modal').classList.remove('open'); }
     
+    // ★修正: シェアURLにパラメータを付与
     function shareX() {
-        const url = document.getElementById('m-img').src;
-        window.open(`https://twitter.com/intent/tweet?text=ぶいすぽっ！コスプレアーカイブ&url=${encodeURIComponent(url)}`);
+        const currentImgUrl = document.getElementById('m-img').src;
+        const baseUrl = window.location.origin + window.location.pathname;
+        const shareUrl = `${baseUrl}?img=${encodeURIComponent(currentImgUrl)}`;
+        const text = "ぶいすぽっ！コスプレアーカイブで見つけた！";
+        window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`);
     }
+    
+    // ★修正: コピーURLにパラメータを付与
     function copyLink() {
-        navigator.clipboard.writeText(document.getElementById('m-img').src);
-        const t = document.getElementById('toast');
-        t.innerText = "URL Copied!"; t.style.visibility='visible'; t.style.opacity=1;
-        setTimeout(()=>{ t.style.opacity=0; t.style.visibility='hidden';}, 2000);
+        const currentImgUrl = document.getElementById('m-img').src;
+        const baseUrl = window.location.origin + window.location.pathname;
+        const shareUrl = `${baseUrl}?img=${encodeURIComponent(currentImgUrl)}`;
+
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            const t = document.getElementById('toast');
+            t.innerText = "シェア用URLをコピーしました！"; 
+            t.style.visibility='visible'; t.style.opacity=1;
+            setTimeout(()=>{ t.style.opacity=0; t.style.visibility='hidden';}, 2000);
+        });
     }
 
     function changeImage(dir, e) {
@@ -834,7 +846,6 @@
         
         document.getElementById('diag-res-img').src = pick.image;
         document.getElementById('diag-res-name').innerText = pick.cosplayer;
-        
         setDiagStep('result');
     }
 
@@ -850,4 +861,3 @@
 </script>
 </body>
 </html>
-
