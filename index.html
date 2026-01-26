@@ -419,11 +419,10 @@
     let storyTimer = null;
     let diagSelectedMember = "", diagSelectedVibe = "";
     
-    // フィルタリング状態管理 (カラー追加)
     let activeFilters = {
         member: null,
         tag: null,
-        color: null, // ★追加
+        color: null, 
         text: ""
     };
     
@@ -439,8 +438,10 @@
                 const kCos = keys.find(k=>k.match(/cosplayer|レイヤー/i)) || 'cosplayer';
                 const kTag = keys.find(k=>k.match(/tags|タグ/i)) || 'Tags';
                 const kLink = keys.find(k=>k.match(/link|twitter/i)) || 'link';
-                // ★追加: AIデータの読み込み
-                const kColor = keys.find(k=>k.match(/ColorName|color/i)) || 'ColorName';
+                
+                // ★修正: ColorNameを正確に拾うように変更
+                const kColor = keys.find(k=>k.match(/ColorName/i)) || keys.find(k=>k.match(/color/i) && !k.match(/main/i)) || 'ColorName';
+                
                 const kSim = keys.find(k=>k.match(/SimilarImages|similar/i)) || 'SimilarImages';
 
                 allData = results.data.filter(d => d[kMem] && d[kImg]).map((d, i) => ({
@@ -451,8 +452,7 @@
                     tags: (d[kTag]||"").toLowerCase(),
                     link: d[kLink] || "",
                     searchKey: (d[kMem] + (d[kCos]||"") + (d[kTag]||"")).toLowerCase(),
-                    // ★追加
-                    colorName: d[kColor], 
+                    colorName: d[kColor], // ここが修正後の列名を参照します
                     similarImages: d[kSim]
                 }));
 
@@ -461,9 +461,8 @@
                 initUI();
                 generateStories();
                 generateTags(allData);
-                generateColorBar(); // ★追加
+                generateColorBar();
                 
-                // 横スクロール対応
                 addHorizontalScroll("stories-container");
                 addHorizontalScroll("chips-container");
                 addHorizontalScroll("tags-container");
@@ -481,7 +480,6 @@
         });
     };
 
-    // ★追加: 横スクロール関数
     function addHorizontalScroll(id) {
         const el = document.getElementById(id);
         if(el) {
@@ -517,7 +515,6 @@
         });
     }
 
-    // ★追加: カラーバー生成
     function generateColorBar() {
         const colors = {
             "Red": "🔴", "Blue": "🔵", "Green": "🟢", "Yellow": "🟡", 
@@ -546,7 +543,6 @@
         document.getElementById('overlay').classList.toggle('open');
     }
 
-    /* === Stories (Simplified for brevity, logic remains same) === */
     function generateStories() {
         const con = document.getElementById('stories-container');
         con.innerHTML = "";
@@ -600,7 +596,6 @@
         else if (currentStoryMemberIndex > 0) { currentStoryMemberIndex--; currentStorySlideIndex = storiesData[currentStoryMemberIndex].images.length - 1; renderStory(); }
     }
 
-    /* === Filter & Sort Logic === */
     function resetToHome() {
         activeFilters = { member: null, tag: null, color: null, text: "" };
         currentSort = 'random';
@@ -612,7 +607,6 @@
         filteredData = allData.filter(d => {
             const matchMember = !activeFilters.member || d.member === activeFilters.member;
             const matchTag = !activeFilters.tag || (d.tags && d.tags.includes(activeFilters.tag));
-            // ★追加: 色検索ロジック
             const matchColor = !activeFilters.color || d.colorName === activeFilters.color;
             const matchText = !activeFilters.text || d.searchKey.includes(activeFilters.text);
             return matchMember && matchTag && matchColor && matchText;
@@ -640,7 +634,6 @@
             if (activeFilters.tag === null && el.id === 'tag-all') el.classList.add('active');
             if (activeFilters.tag && el.id === `tag-${activeFilters.tag}`) el.classList.add('active');
         });
-        // ★追加: カラーチップのスタイル
         document.querySelectorAll('#color-bar-container .color-chip').forEach(el => {
             el.classList.remove('active');
             if (activeFilters.color && el.id === `color-${activeFilters.color}`) el.classList.add('active');
@@ -675,7 +668,6 @@
         runFilter();
     }
 
-    /* === Render === */
     function render() {
         const app = document.getElementById('app');
         app.innerHTML = '';
@@ -719,7 +711,6 @@
         else { btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far'); }
     }
 
-    /* === Modals === */
     function openModal(url) {
         const modal = document.getElementById('modal');
         const img = document.getElementById('m-img');
@@ -732,26 +723,18 @@
         history = [url, ...history.filter(h=>h!==url)].slice(0, 50);
         localStorage.setItem('vspo_history', JSON.stringify(history));
 
-        // ★修正: AI類似画像のレコメンド
         const recBox = document.getElementById('m-recommend');
         recBox.innerHTML = '';
         let recs = [];
-        
         if (item.similarImages) {
-            // スプレッドシートのインデックス(行番号など)からデータを引く
-            // ※ CSVのIDと行番号のズレに注意。ここでは簡易的に配列インデックスを使用
             const indices = item.similarImages.split(',');
-            // インデックスがデータ範囲内かチェックしつつマッピング
             recs = indices.map(idx => allData[parseInt(idx)]).filter(d => d);
         }
-
-        // AIデータがない、または不足している場合は従来通りランダムで補填
         if (recs.length < 5) {
             const randomRecs = allData.filter(d => d.member === item.member && d.image !== url)
                                       .sort(() => Math.random() - 0.5).slice(0, 10);
             recs = [...recs, ...randomRecs].slice(0, 10);
         }
-
         recs.forEach(r => {
             const d = document.createElement('div');
             d.className = 'recommend-card';
@@ -791,7 +774,6 @@
         openModal(currentList[idx].image);
     }
 
-    /* === Diagnosis === */
     function openDiagnosis() { document.getElementById('diag-modal').classList.add('open'); setDiagStep(1); const grid = document.getElementById('diag-member-grid'); grid.innerHTML = ""; memberOrder.forEach(m => { grid.innerHTML += `<button class="diag-btn" style="flex-direction:column; width:auto;" onclick="selectDiagMember('${m}')"><span style="font-size:1.5rem;">${memberIcons[m]}</span><span style="font-size:0.7rem;">${m}</span></button>`; }); }
     function closeDiagnosis() { document.getElementById('diag-modal').classList.remove('open'); }
     function setDiagStep(n) { document.querySelectorAll('.diag-step').forEach(e=>e.classList.remove('active')); document.getElementById('diag-step-'+n).classList.add('active'); }
@@ -822,3 +804,4 @@
 </script>
 </body>
 </html>
+
