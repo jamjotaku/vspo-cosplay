@@ -102,6 +102,47 @@
         }
         .overlay.open { opacity: 1; visibility: visible; }
 
+        /* --- Custom Discord Card --- */
+        .discord-card {
+            background: #2b2d31;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            border: 1px solid #1e1f22;
+            text-align: center;
+        }
+        .discord-header {
+            color: #fff;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+        .discord-icon { color: #5865F2; font-size: 1.2rem; }
+        .discord-desc {
+            color: #b5bac1;
+            font-size: 0.8rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            text-align: left;
+        }
+        .discord-join-btn {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            background-color: #5865F2;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+        .discord-join-btn:hover { background-color: #4752c4; }
+
         /* --- Top Areas --- */
         .top-area { background: var(--bg-color); padding-bottom: 10px; position: sticky; top: var(--header-height); z-index: 900; }
         
@@ -293,8 +334,19 @@
     <a href="https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog" target="_blank" class="menu-item"><i class="far fa-envelope"></i> お問い合わせ</a>
 
     <div class="menu-divider"></div>
-    <div style="padding: 10px 0;">
-        <iframe src="https://discord.com/widget?id=1465261981769404419&theme=dark" width="100%" height="500" allowtransparency="true" frameborder="0" sandbox="allow-popups allow-popups-to-escape-sandbox allow-same-origin allow-scripts"></iframe>
+    <div class="discord-card">
+        <div class="discord-header">
+            <i class="fab fa-discord discord-icon"></i> ぶいすぽっ！のコスプレが集まれるコミュニティ
+        </div>
+        <p class="discord-desc">
+            Botによるクイズ機能や、<br>
+            最新のアーカイブ更新通知、<br>
+            開発の裏話などを配信中！<br>
+            誰でもお気軽にご参加ください✨
+        </p>
+        <a href="https://discord.gg/Svcbnrev4S" target="_blank" class="discord-join-btn">
+            サーバーに参加する
+        </a>
     </div>
 </aside>
 
