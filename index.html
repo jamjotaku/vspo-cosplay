@@ -498,15 +498,19 @@
                 
                 const kColor = keys.find(k=>k.match(/ColorName/i)) || keys.find(k=>k.match(/color/i) && !k.match(/main/i)) || 'ColorName';
                 const kSim = keys.find(k=>k.match(/SimilarImages|similar/i)) || 'SimilarImages';
+                // ★追加: AIタグ列を検索
+                const kAiTag = keys.find(k=>k.match(/AITags|ai_tags/i)) || 'AITags';
 
                 allData = results.data.filter(d => d[kMem] && d[kImg]).map((d, i) => ({
                     _id: i, 
                     member: d[kMem],
                     image: d[kImg],
                     cosplayer: d[kCos] || "Unknown",
-                    tags: (d[kTag]||"").toLowerCase(),
+                    // ★変更: 手動タグとAIタグを結合して、検索・表示用にする
+                    tags: ((d[kTag]||"") + "," + (d[kAiTag]||"")).toLowerCase(),
                     link: d[kLink] || "",
-                    searchKey: (d[kMem] + (d[kCos]||"") + (d[kTag]||"")).toLowerCase(),
+                    // 検索キーにもAIタグを含める
+                    searchKey: (d[kMem] + (d[kCos]||"") + (d[kTag]||"") + (d[kAiTag]||"")).toLowerCase(),
                     colorName: d[kColor], 
                     similarImages: d[kSim]
                 }));
@@ -559,10 +563,9 @@
             if(!d.tags) return;
             d.tags.split(',').forEach(t => {
                 const tag = t.trim();
-                const tagLower = tag.toLowerCase(); // Compare lower case
+                const tagLower = tag.toLowerCase(); 
                 if(tag && tagLower !== "nan") {
-                     // Use the original case for display if needed, but here we just count
-                     tagCount[tag] = (tagCount[tag] || 0) + 1;
+                      tagCount[tag] = (tagCount[tag] || 0) + 1;
                 }
             });
         });
@@ -787,7 +790,7 @@
         recBox.innerHTML = '';
         let recs = [];
         
-        // ★修正ポイント: AI類似画像から「同じメンバー」だけを抽出
+        // ★修正: AI類似画像から「同じメンバー」だけを抽出
         if (item.similarImages) {
             const indices = item.similarImages.split(',');
             recs = indices.map(idx => allData[parseInt(idx)])
@@ -878,4 +881,3 @@
 </script>
 </body>
 </html>
-
