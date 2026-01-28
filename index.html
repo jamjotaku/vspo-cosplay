@@ -439,9 +439,7 @@
                 const kTag = keys.find(k=>k.match(/tags|タグ/i)) || 'Tags';
                 const kLink = keys.find(k=>k.match(/link|twitter/i)) || 'link';
                 
-                // ★修正: ColorNameを正確に拾うように変更
                 const kColor = keys.find(k=>k.match(/ColorName/i)) || keys.find(k=>k.match(/color/i) && !k.match(/main/i)) || 'ColorName';
-                
                 const kSim = keys.find(k=>k.match(/SimilarImages|similar/i)) || 'SimilarImages';
 
                 allData = results.data.filter(d => d[kMem] && d[kImg]).map((d, i) => ({
@@ -452,7 +450,7 @@
                     tags: (d[kTag]||"").toLowerCase(),
                     link: d[kLink] || "",
                     searchKey: (d[kMem] + (d[kCos]||"") + (d[kTag]||"")).toLowerCase(),
-                    colorName: d[kColor], // ここが修正後の列名を参照します
+                    colorName: d[kColor], 
                     similarImages: d[kSim]
                 }));
 
@@ -711,6 +709,7 @@
         else { btn.classList.remove('active'); icon.classList.remove('fas'); icon.classList.add('far'); }
     }
 
+    /* === Modals === */
     function openModal(url) {
         const modal = document.getElementById('modal');
         const img = document.getElementById('m-img');
@@ -726,15 +725,28 @@
         const recBox = document.getElementById('m-recommend');
         recBox.innerHTML = '';
         let recs = [];
+        
+        // ★修正ポイント: AI類似画像から「同じメンバー」だけを抽出
         if (item.similarImages) {
             const indices = item.similarImages.split(',');
-            recs = indices.map(idx => allData[parseInt(idx)]).filter(d => d);
+            recs = indices.map(idx => allData[parseInt(idx)])
+                          .filter(d => d && d.member === item.member);
         }
+
+        // 数が足りなければランダムで補填（重複なし）
         if (recs.length < 5) {
             const randomRecs = allData.filter(d => d.member === item.member && d.image !== url)
                                       .sort(() => Math.random() - 0.5).slice(0, 10);
-            recs = [...recs, ...randomRecs].slice(0, 10);
+            
+            const currentIds = new Set(recs.map(r => r._id));
+            for(let r of randomRecs) {
+                if(!currentIds.has(r._id)) {
+                    recs.push(r);
+                    if(recs.length >= 10) break;
+                }
+            }
         }
+
         recs.forEach(r => {
             const d = document.createElement('div');
             d.className = 'recommend-card';
@@ -774,6 +786,7 @@
         openModal(currentList[idx].image);
     }
 
+    /* === Diagnosis & List === */
     function openDiagnosis() { document.getElementById('diag-modal').classList.add('open'); setDiagStep(1); const grid = document.getElementById('diag-member-grid'); grid.innerHTML = ""; memberOrder.forEach(m => { grid.innerHTML += `<button class="diag-btn" style="flex-direction:column; width:auto;" onclick="selectDiagMember('${m}')"><span style="font-size:1.5rem;">${memberIcons[m]}</span><span style="font-size:0.7rem;">${m}</span></button>`; }); }
     function closeDiagnosis() { document.getElementById('diag-modal').classList.remove('open'); }
     function setDiagStep(n) { document.querySelectorAll('.diag-step').forEach(e=>e.classList.remove('active')); document.getElementById('diag-step-'+n).classList.add('active'); }
@@ -804,4 +817,5 @@
 </script>
 </body>
 </html>
+
 
