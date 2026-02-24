@@ -173,7 +173,7 @@
         .member-bd-chip { background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; color: #e5e7eb; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.05); }
         .member-bd-count { background: rgba(0,0,0,0.3); padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; color: var(--primary); font-weight: bold; }
 
-        /* --- 🌟 Cosplayer Directory (名鑑画面用) 🌟 --- */
+        /* --- 🌟 Cosplayer Directory 🌟 --- */
         #directory-view { display: none; padding: 20px 15px 40px; max-width: 1800px; margin: 0 auto; animation: fadeIn 0.4s ease-out; }
         .dir-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;}
         .dir-title { font-size: 1.5rem; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 10px; }
@@ -316,7 +316,7 @@
 </header>
 
 <div id="main-view">
-    <div class="top-area">
+    <div class="top-area" id="top-area">
         <div id="stories-container" class="stories-container"></div>
         <div id="chips-container" class="chips-container"></div>
         <div id="tags-container" class="chips-container" style="padding-top:0; border-bottom:none;"></div>
@@ -489,7 +489,6 @@
                         allData = results.data.filter(d => d[kMem] && d[kImg]).map((d, i) => {
                             const name = d[kCos] || "Unknown";
                             const img = d[kImg];
-                            // 名鑑用の集計
                             if(!aggData[name]) aggData[name] = { count: 0, latestImg: img };
                             aggData[name].count++;
 
@@ -527,7 +526,6 @@
         });
 
         window.addEventListener('scroll', () => {
-            // メインビュー表示時のみ無限スクロール
             if (document.getElementById('main-view').style.display !== 'none') {
                 if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
                     displayLimit += 20; render();
@@ -637,6 +635,9 @@
         document.getElementById('directory-view').style.display = 'none';
         document.getElementById('main-view').style.display = 'block';
         
+        // ★追加：ホームに戻る時はトップエリア（ストーリーやタグ）を再表示
+        document.getElementById('top-area').style.display = 'block';
+        
         activeFilters = { member: null, tag: null, color: null, cosplayer: null, text: "" };
         currentSort = 'random';
         document.getElementById('searchInput').value = "";
@@ -644,15 +645,16 @@
         runFilter();
         window.scrollTo(0,0);
         
-        // URLのパラメータを消す(履歴に残さない)
         window.history.replaceState({}, document.title, window.location.pathname);
     }
 
     /* === ✨ 個人ダッシュボードの構築処理 ✨ === */
     function filterByCosplayer(name) {
-        // 名鑑画面から呼ばれた場合のためにメイン画面へ切り替え
         document.getElementById('directory-view').style.display = 'none';
         document.getElementById('main-view').style.display = 'block';
+
+        // ★追加：個人ダッシュボード時はトップエリア（ストーリーやタグ）を隠す
+        document.getElementById('top-area').style.display = 'none';
 
         activeFilters = { member: null, tag: null, color: null, cosplayer: name, text: "" };
         document.getElementById('searchInput').value = "";
@@ -722,7 +724,6 @@
             document.getElementById('profile-dashboard').style.display = 'block';
         }
         
-        // URLを更新する（リロードせずにパラメータを追加）
         const newUrl = window.location.pathname + '?cosplayer=' + encodeURIComponent(name);
         window.history.pushState({path:newUrl}, '', newUrl);
 
@@ -783,8 +784,11 @@
 
     function filterByMember(name, el) { 
         document.getElementById('profile-dashboard').style.display = 'none';
+        
+        // ★追加：メンバーを絞り込む時はトップエリアを再表示
+        document.getElementById('top-area').style.display = 'block';
+        
         activeFilters.cosplayer = null;
-        // URLパラメータを削除
         window.history.replaceState({}, document.title, window.location.pathname);
         toggleFilter('member', name); 
     }
@@ -843,7 +847,7 @@
         app.appendChild(grid);
     }
 
-    /* === Stories, Modals & Other Functions (変更なし) === */
+    /* === Stories, Modals & Other Functions === */
     function generateStories() {
         const con = document.getElementById('stories-container');
         con.innerHTML = "";
