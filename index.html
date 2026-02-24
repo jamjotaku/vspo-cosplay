@@ -106,7 +106,6 @@
         .top-area { background: var(--bg-color); padding-bottom: 10px; position: sticky; top: var(--header-height); z-index: 900; }
         
         .stories-container { display: flex; gap: 12px; overflow-x: auto; padding: 15px 15px 5px; scrollbar-width: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        
         .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 8px 15px; scrollbar-width: none; align-items: center; }
         .stories-container::-webkit-scrollbar, .chips-container::-webkit-scrollbar { display: none; }
         
@@ -134,19 +133,11 @@
 
         .utility-deck { display: flex; justify-content: space-between; align-items: center; padding: 5px 15px 15px; }
         .sort-group { display: flex; gap: 5px; background: transparent; padding: 4px; }
-        .sort-btn {
-            background: transparent; border: none; color: var(--text-sub); 
-            padding: 5px 10px; font-size: 0.8rem; 
-            cursor: pointer; font-weight: bold; transition: 0.2s;
-        }
+        .sort-btn { background: transparent; border: none; color: var(--text-sub); padding: 5px 10px; font-size: 0.8rem; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .sort-btn.active { color: var(--text-color); border-bottom: 2px solid var(--text-color); }
-        .request-btn { 
-            background: rgba(255,255,255,0.05); color: #9ca3af; 
-            border: 1px solid rgba(255,255,255,0.1); padding: 5px 12px; 
-            border-radius: 18px; font-size: 0.75rem; text-decoration: none; display: flex; align-items: center; gap: 5px;
-        }
+        .request-btn { background: rgba(255,255,255,0.05); color: #9ca3af; border: 1px solid rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 18px; font-size: 0.75rem; text-decoration: none; display: flex; align-items: center; gap: 5px; }
 
-        /* --- ✨ Cosplayer Profile Dashboard (詳細版) ✨ --- */
+        /* --- ✨ Cosplayer Profile Dashboard (詳細版 & 支援リンク対応) ✨ --- */
         #profile-dashboard {
             display: none;
             padding: 20px 15px;
@@ -159,9 +150,17 @@
         .profile-header-main { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
         .profile-name { font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 10px; }
         .profile-name i { color: var(--primary); }
-        .profile-actions { display: flex; gap: 10px; }
+        
+        .profile-actions { display: flex; gap: 8px; flex-wrap: wrap; }
         .btn-sns { background: #1da1f2; color: #fff; padding: 8px 15px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
         .btn-sns:hover { filter: brightness(1.2); }
+        
+        /* 各種支援サイトのボタンカラー */
+        .btn-insta { background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%); }
+        .btn-fantia { background: #e5005a; }
+        .btn-booth { background: #fc4d50; }
+        .btn-tiktok { background: #000000; border: 1px solid #333; }
+
         .btn-share-profile { background: #333; color: #fff; border: 1px solid #555; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
         .btn-share-profile:hover { background: #444; border-color: #fff; }
         
@@ -183,69 +182,37 @@
 
         /* --- Main Grid --- */
         main { padding: 0 4px 40px; max-width: 1800px; margin: 0 auto; }
-        .masonry-grid { 
-            column-count: 2; column-gap: 16px; padding: 0 8px;
-            animation: fadeInGrid 0.4s ease-out; 
-        }
+        .masonry-grid { column-count: 2; column-gap: 16px; padding: 0 8px; animation: fadeInGrid 0.4s ease-out; }
         @keyframes fadeInGrid { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
         @media (min-width: 600px) { .masonry-grid { column-count: 3; } }
         @media (min-width: 1000px) { .masonry-grid { column-count: 4; } }
         @media (min-width: 1400px) { .masonry-grid { column-count: 5; } }
         @media (max-width: 400px) { .masonry-grid { column-count: 1; } }
 
-        .card { 
-            break-inside: avoid; margin-bottom: 24px; background: transparent; 
-            position: relative; border-radius: 12px; transition: transform 0.2s;
-        }
+        .card { break-inside: avoid; margin-bottom: 24px; background: transparent; position: relative; border-radius: 12px; transition: transform 0.2s; }
         .card:hover { transform: translateY(-4px); }
-
-        .card-img-area { 
-            width: 100%; height: auto; border-radius: 12px; overflow: hidden; 
-            cursor: pointer; position: relative; background: #202020; box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-        }
+        .card-img-area { width: 100%; height: auto; border-radius: 12px; overflow: hidden; cursor: pointer; position: relative; background: #202020; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
         .card-img-area img { width: 100%; height: auto; display: block; transition: transform 0.5s ease; }
         .card-img-area:hover img { transform: scale(1.03); filter: brightness(1.1); }
-
-        .new-badge { 
-            position: absolute; bottom: 8px; right: 8px; 
-            background: rgba(0,0,0,0.8); color: #fff; font-size: 0.7rem; 
-            padding: 2px 6px; border-radius: 4px; font-weight: bold;
-        }
+        .new-badge { position: absolute; bottom: 8px; right: 8px; background: rgba(0,0,0,0.8); color: #fff; font-size: 0.7rem; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
 
         .card-meta { margin-top: 10px; display: flex; gap: 10px; padding: 0 4px; }
         .card-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; background: #333; flex-shrink: 0; cursor: pointer; }
         .card-texts { display: flex; flex-direction: column; overflow: hidden; justify-content: center; }
-        .card-title {
-            color: #f1f1f1; font-size: 0.95rem; font-weight: 700; line-height: 1.3;
-            margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer;
-        }
+        .card-title { color: #f1f1f1; font-size: 0.95rem; font-weight: 700; line-height: 1.3; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; cursor: pointer; }
         .card-subtitle { color: #aaaaaa; font-size: 0.8rem; display: flex; align-items: center; gap: 6px; cursor: pointer; }
         .card-subtitle:hover { color: #fff; }
 
-        .fav-btn-mini {
-            margin-left: auto; background: none; border: none; color: #555;
-            font-size: 1.1rem; cursor: pointer; transition: 0.2s; align-self: flex-start;
-        }
+        .fav-btn-mini { margin-left: auto; background: none; border: none; color: #555; font-size: 1.1rem; cursor: pointer; transition: 0.2s; align-self: flex-start; }
         .fav-btn-mini:hover { color: var(--heart); transform: scale(1.2); }
         .fav-btn-mini.active { color: var(--heart); }
 
         /* --- Story Viewer --- */
-        .story-viewer {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 5000; display: flex; align-items: center; justify-content: center;
-            visibility: hidden; opacity: 0; transition: 0.3s;
-        }
+        .story-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; display: flex; align-items: center; justify-content: center; visibility: hidden; opacity: 0; transition: 0.3s; }
         .story-viewer.active { visibility: visible; opacity: 1; }
         .story-frame { width: 100%; height: 100%; position: relative; background: #000; overflow: hidden; }
-        @media (min-width: 768px) {
-            .story-frame { max-width: 420px; height: 90vh; border-radius: 12px; box-shadow: 0 0 50px rgba(59, 130, 246, 0.2); border: 1px solid #333; }
-            .story-pc-close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 2rem; cursor: pointer; z-index: 5010; }
-        }
-        .story-header {
-            position: absolute; top: 10px; left: 0; width: 100%; padding: 10px 15px; z-index: 10;
-            display: flex; flex-direction: column; gap: 8px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
-        }
+        @media (min-width: 768px) { .story-frame { max-width: 420px; height: 90vh; border-radius: 12px; box-shadow: 0 0 50px rgba(59, 130, 246, 0.2); border: 1px solid #333; } .story-pc-close { position: absolute; top: 20px; right: 30px; color: #fff; font-size: 2rem; cursor: pointer; z-index: 5010; } }
+        .story-header { position: absolute; top: 10px; left: 0; width: 100%; padding: 10px 15px; z-index: 10; display: flex; flex-direction: column; gap: 8px; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); }
         .story-progress-bar { display: flex; gap: 4px; width: 100%; height: 2px; }
         .story-progress-segment { flex: 1; height: 100%; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
         .story-progress-fill { height: 100%; background: #fff; width: 0%; transition: width 0s linear; }
@@ -259,7 +226,6 @@
         .story-nav { position: absolute; top: 0; width: 50%; height: 100%; z-index: 5; cursor: pointer; }
         .story-nav.left { left: 0; }
         .story-nav.right { right: 0; }
-        .story-viewer:active .story-progress-fill { transition: none !important; }
 
         /* --- Modals --- */
         .modal, .diag-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
@@ -281,7 +247,6 @@
 
         #loading-sentinel { text-align: center; padding: 20px; color: var(--primary); }
         
-        /* ★修正：トップに戻るボタンを最初は隠す */
         .fab { position: fixed; bottom: 30px; right: 20px; width: 50px; height: 50px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px var(--accent); cursor: pointer; border: none; z-index: 900; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
         .fab.show { opacity: 1; visibility: visible; }
         
@@ -363,8 +328,7 @@
 <div id="profile-dashboard">
     <div class="profile-header-main">
         <h2 class="profile-name"><i class="fas fa-user-check"></i> <span id="prof-name">Name</span></h2>
-        <div class="profile-actions">
-            <a id="prof-sns" href="#" target="_blank" class="btn-sns" style="display:none;"><i class="fab fa-x-twitter"></i> Follow</a>
+        <div class="profile-actions" id="prof-actions-box">
             <button class="btn-share-profile" onclick="shareProfile()"><i class="fas fa-share-nodes"></i> Share Portfolio</button>
         </div>
     </div>
@@ -449,6 +413,9 @@
     /* === Config & Data === */
     const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
     
+    // ★追加：プロフィール用名簿CSVのURL
+    const PROFILE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=1592730885&single=true&output=csv";
+    
     const memberOrder = [
         "花芽すみれ", "花芽なずな", "小雀とと", "一ノ瀬うるは", "胡桃のあ", 
         "兎咲ミミ", "空澄セナ", "橘ひなの", "英リサ", "如月れん", 
@@ -468,7 +435,9 @@
 
     const vibeKeywords = { 'cute': ['maid','idol','bunny'], 'cool': ['police','hoodie'], 'school': ['school_uniform','gym_uniform'], 'sexy': ['swimsuit','china_dress'] };
 
-    let allData = [], filteredData = [], currentSort = 'random';
+    let allData = [];
+    let profileData = {}; // ★追加：プロフィール名簿を保存する変数
+    let filteredData = [], currentSort = 'random';
     let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
     let history = JSON.parse(localStorage.getItem('vspo_history')) || [];
     let displayLimit = 40;
@@ -479,67 +448,74 @@
     let storyTimer = null;
     let diagSelectedMember = "", diagSelectedVibe = "";
     
-    let activeFilters = {
-        member: null,
-        tag: null,
-        color: null, 
-        cosplayer: null,
-        text: ""
-    };
+    let activeFilters = { member: null, tag: null, color: null, cosplayer: null, text: "" };
     
     /* === Main Logic === */
     window.onload = function() {
-        Papa.parse(CSV_URL, {
+        // ★修正：先にプロフィール名簿を読み込む
+        Papa.parse(PROFILE_CSV_URL, {
             download: true, header: true, skipEmptyLines: true,
-            complete: function(results) {
-                if (!results.data) return;
-                const keys = Object.keys(results.data[0]);
-                const kMem = keys.find(k=>k.match(/member|名前/i)) || 'member';
-                const kImg = keys.find(k=>k.match(/image|url/i)) || 'image';
-                const kCos = keys.find(k=>k.match(/cosplayer|レイヤー/i)) || 'cosplayer';
-                const kTag = keys.find(k=>k.match(/tags|タグ/i)) || 'Tags';
-                const kLink = keys.find(k=>k.match(/link|twitter/i)) || 'link';
+            complete: function(profResults) {
+                if (profResults.data) {
+                    profResults.data.forEach(p => {
+                        // cosplayer列（名前）をキーにして保存
+                        const nameKey = p.cosplayer || p['名前'];
+                        if(nameKey) profileData[nameKey] = p;
+                    });
+                }
                 
-                const kColor = keys.find(k=>k.match(/ColorName/i)) || keys.find(k=>k.match(/color/i) && !k.match(/main/i)) || 'ColorName';
-                const kSim = keys.find(k=>k.match(/SimilarImages|similar/i)) || 'SimilarImages';
-                const kAiTag = keys.find(k=>k.match(/AITags|ai_tags/i)) || 'AITags';
+                // 次に画像データを読み込む（既存処理）
+                Papa.parse(CSV_URL, {
+                    download: true, header: true, skipEmptyLines: true,
+                    complete: function(results) {
+                        if (!results.data) return;
+                        const keys = Object.keys(results.data[0]);
+                        const kMem = keys.find(k=>k.match(/member|名前/i)) || 'member';
+                        const kImg = keys.find(k=>k.match(/image|url/i)) || 'image';
+                        const kCos = keys.find(k=>k.match(/cosplayer|レイヤー/i)) || 'cosplayer';
+                        const kTag = keys.find(k=>k.match(/tags|タグ/i)) || 'Tags';
+                        const kLink = keys.find(k=>k.match(/link|twitter/i)) || 'link';
+                        
+                        const kColor = keys.find(k=>k.match(/ColorName/i)) || keys.find(k=>k.match(/color/i) && !k.match(/main/i)) || 'ColorName';
+                        const kSim = keys.find(k=>k.match(/SimilarImages|similar/i)) || 'SimilarImages';
+                        const kAiTag = keys.find(k=>k.match(/AITags|ai_tags/i)) || 'AITags';
 
-                allData = results.data.filter(d => d[kMem] && d[kImg]).map((d, i) => ({
-                    _id: i, 
-                    member: d[kMem],
-                    image: d[kImg],
-                    cosplayer: d[kCos] || "Unknown",
-                    tags: ((d[kTag]||"") + "," + (d[kAiTag]||"")).toLowerCase(),
-                    link: d[kLink] || "",
-                    searchKey: (d[kMem] + (d[kCos]||"") + (d[kTag]||"") + (d[kAiTag]||"")).toLowerCase(),
-                    colorName: d[kColor], 
-                    similarImages: d[kSim]
-                }));
+                        allData = results.data.filter(d => d[kMem] && d[kImg]).map((d, i) => ({
+                            _id: i, 
+                            member: d[kMem],
+                            image: d[kImg],
+                            cosplayer: d[kCos] || "Unknown",
+                            tags: ((d[kTag]||"") + "," + (d[kAiTag]||"")).toLowerCase(),
+                            link: d[kLink] || "",
+                            searchKey: (d[kMem] + (d[kCos]||"") + (d[kTag]||"") + (d[kAiTag]||"")).toLowerCase(),
+                            colorName: d[kColor], 
+                            similarImages: d[kSim]
+                        }));
 
-                document.getElementById('loading-sentinel').style.display = 'none';
-                
-                initUI();
-                generateStories();
-                generateTags(allData);
-                generateColorBar();
-                
-                addHorizontalScroll("stories-container");
-                addHorizontalScroll("chips-container");
-                addHorizontalScroll("tags-container");
-                addHorizontalScroll("color-bar-container");
-                addHorizontalScroll("profile-stats-grid");
+                        document.getElementById('loading-sentinel').style.display = 'none';
+                        
+                        initUI();
+                        generateStories();
+                        generateTags(allData);
+                        generateColorBar();
+                        
+                        addHorizontalScroll("stories-container");
+                        addHorizontalScroll("chips-container");
+                        addHorizontalScroll("tags-container");
+                        addHorizontalScroll("color-bar-container");
+                        addHorizontalScroll("profile-stats-grid");
 
-                runFilter();
-                checkUrlParams();
+                        runFilter();
+                        checkUrlParams();
+                    }
+                });
             }
         });
 
-        // ★修正：スクロールイベントでトップへ戻るボタンの表示/非表示を切り替え
         window.addEventListener('scroll', () => {
             if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
                 displayLimit += 20; render();
             }
-            
             const fab = document.getElementById('scrollTopBtn');
             if (window.scrollY > 300) {
                 fab.classList.add('show');
@@ -551,12 +527,7 @@
 
     function addHorizontalScroll(id) {
         const el = document.getElementById(id);
-        if(el) {
-            el.addEventListener("wheel", (e) => {
-                e.preventDefault();
-                el.scrollLeft += e.deltaY;
-            });
-        }
+        if(el) { el.addEventListener("wheel", (e) => { e.preventDefault(); el.scrollLeft += e.deltaY; }); }
     }
 
     function initUI() {
@@ -574,41 +545,27 @@
             d.tags.split(',').forEach(t => {
                 const tag = t.trim();
                 const tagLower = tag.toLowerCase(); 
-                if(tag && tagLower !== "nan") {
-                      tagCount[tag] = (tagCount[tag] || 0) + 1;
-                }
+                if(tag && tagLower !== "nan") { tagCount[tag] = (tagCount[tag] || 0) + 1; }
             });
         });
         const sortedTags = Object.keys(tagCount).sort((a,b) => tagCount[b] - tagCount[a]).slice(0, 30);
         const container = document.getElementById('tags-container');
         container.innerHTML = `<span class="member-chip active" id="tag-all" onclick="toggleFilter('tag', null)"># All Tags</span>`;
-        sortedTags.forEach(tag => {
-            container.innerHTML += `<span class="member-chip" id="tag-${tag}" onclick="toggleFilter('tag', '${tag}')"># ${tag}</span>`;
-        });
+        sortedTags.forEach(tag => { container.innerHTML += `<span class="member-chip" id="tag-${tag}" onclick="toggleFilter('tag', '${tag}')"># ${tag}</span>`; });
     }
 
     function generateColorBar() {
-        const colors = {
-            "Red": "🔴", "Blue": "🔵", "Green": "🟢", "Yellow": "🟡", 
-            "Pink": "💖", "Purple": "🟣", "White": "⚪", "Black": "⚫"
-        };
+        const colors = { "Red": "🔴", "Blue": "🔵", "Green": "🟢", "Yellow": "🟡", "Pink": "💖", "Purple": "🟣", "White": "⚪", "Black": "⚫" };
         const container = document.getElementById('color-bar-container');
         let html = "";
-        Object.keys(colors).forEach(color => {
-            html += `<span class="color-chip" id="color-${color}" onclick="toggleFilter('color', '${color}')">${colors[color]} ${color}</span>`;
-        });
+        Object.keys(colors).forEach(color => { html += `<span class="color-chip" id="color-${color}" onclick="toggleFilter('color', '${color}')">${colors[color]} ${color}</span>`; });
         container.innerHTML = html;
     }
 
     function checkUrlParams() {
         const urlParams = new URLSearchParams(window.location.search);
-        
-        // 個人ダッシュボードURLのチェック
         const targetCosplayer = urlParams.get('cosplayer');
-        if (targetCosplayer) {
-            filterByCosplayer(decodeURIComponent(targetCosplayer));
-        }
-
+        if (targetCosplayer) { filterByCosplayer(decodeURIComponent(targetCosplayer)); }
         const targetImage = urlParams.get('img'); 
         if (targetImage) {
             const decodedUrl = decodeURIComponent(targetImage);
@@ -679,7 +636,7 @@
         activeFilters = { member: null, tag: null, color: null, cosplayer: null, text: "" };
         currentSort = 'random';
         document.getElementById('searchInput').value = "";
-        document.getElementById('profile-dashboard').style.display = 'none'; // プロフィール非表示
+        document.getElementById('profile-dashboard').style.display = 'none';
         runFilter();
     }
 
@@ -727,7 +684,7 @@
         toggleFilter('member', name); 
     }
 
-    /* === ✨ 個人ダッシュボードの構築処理 (詳細版) ✨ === */
+    /* === ✨ 個人ダッシュボードの構築処理 (リンク名簿連携版) ✨ === */
     function filterByCosplayer(name) {
         activeFilters = { member: null, tag: null, color: null, cosplayer: name, text: "" };
         document.getElementById('searchInput').value = "";
@@ -741,40 +698,63 @@
             const uniqueMembers = new Set(myData.map(d => d.member)).size;
             document.getElementById('prof-stat-members').innerText = uniqueMembers;
             
-            // ★修正：URLからXのユーザーIDを抽出してプロフィールページへのリンクを生成
-            const snsBtn = document.getElementById('prof-sns');
-            const validLinks = myData.map(d => d.link).filter(l => l && (l.includes('twitter.com') || l.includes('x.com')));
-            if (validLinks.length > 0) {
-                let profileUrl = validLinks[0];
-                // 正規表現で twitter.com/ もしくは x.com/ の後の文字列(ユーザーID)を抽出
-                const match = validLinks[0].match(/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/);
-                if (match && match[1] && match[1] !== "intent" && match[1] !== "search") {
-                    profileUrl = `https://x.com/${match[1]}`;
+            // ★追加：プロフィール名簿(profileData)から支援リンクを取得・生成
+            const actionsBox = document.getElementById('prof-actions-box');
+            // シェアボタンだけ残して初期化
+            actionsBox.innerHTML = `<button class="btn-share-profile" onclick="shareProfile()"><i class="fas fa-share-nodes"></i> Share Portfolio</button>`;
+            
+            const prof = profileData[name];
+            let linksAdded = false;
+
+            if (prof) {
+                // 列名が多少違っても拾えるように工夫
+                const pKeys = Object.keys(prof);
+                const getUrl = (keyPart) => {
+                    const k = pKeys.find(key => key.toLowerCase().includes(keyPart));
+                    return k && prof[k] ? prof[k].trim() : null;
+                };
+
+                const tw = getUrl('twitter') || getUrl('x');
+                const ig = getUrl('insta');
+                const fa = getUrl('fantia');
+                const bo = getUrl('booth');
+                const tk = getUrl('tiktok');
+
+                // afterbeginで先頭に挿入していくため、右に出したいものから順に追加
+                if (bo) actionsBox.insertAdjacentHTML('afterbegin', `<a href="${bo}" target="_blank" class="btn-sns btn-booth"><i class="fas fa-store"></i> Booth</a>`);
+                if (fa) actionsBox.insertAdjacentHTML('afterbegin', `<a href="${fa}" target="_blank" class="btn-sns btn-fantia"><i class="fas fa-heart"></i> Fantia</a>`);
+                if (tk) actionsBox.insertAdjacentHTML('afterbegin', `<a href="${tk}" target="_blank" class="btn-sns btn-tiktok"><i class="fab fa-tiktok"></i> TikTok</a>`);
+                if (ig) actionsBox.insertAdjacentHTML('afterbegin', `<a href="${ig}" target="_blank" class="btn-sns btn-insta"><i class="fab fa-instagram"></i> Insta</a>`);
+                
+                if (tw) {
+                    actionsBox.insertAdjacentHTML('afterbegin', `<a href="${tw}" target="_blank" class="btn-sns"><i class="fab fa-x-twitter"></i> Follow</a>`);
+                    linksAdded = true;
                 }
-                snsBtn.href = profileUrl;
-                snsBtn.style.display = 'inline-flex';
-            } else {
-                snsBtn.style.display = 'none';
             }
 
-            // メンバー別の内訳集計と表示
+            // 名簿シートにTwitterがない場合の過去データからのフォールバック（推測）
+            if (!linksAdded) {
+                const validLinks = myData.map(d => d.link).filter(l => l && (l.includes('twitter.com') || l.includes('x.com')));
+                if (validLinks.length > 0) {
+                    let profileUrl = validLinks[0];
+                    const match = validLinks[0].match(/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/);
+                    if (match && match[1] && match[1] !== "intent" && match[1] !== "search") {
+                        profileUrl = `https://x.com/${match[1]}`;
+                    }
+                    actionsBox.insertAdjacentHTML('afterbegin', `<a href="${profileUrl}" target="_blank" class="btn-sns"><i class="fab fa-x-twitter"></i> Follow</a>`);
+                }
+            }
+
             const memberCounts = {};
-            myData.forEach(d => {
-                memberCounts[d.member] = (memberCounts[d.member] || 0) + 1;
-            });
+            myData.forEach(d => { memberCounts[d.member] = (memberCounts[d.member] || 0) + 1; });
             const sortedMembers = Object.keys(memberCounts).sort((a,b) => memberCounts[b] - memberCounts[a]);
             
             const breakdownBox = document.getElementById('prof-breakdown-box');
             breakdownBox.innerHTML = '';
-            
             sortedMembers.forEach(mem => {
                 const count = memberCounts[mem];
                 const icon = memberIcons[mem] || '';
-                breakdownBox.innerHTML += `
-                    <div class="member-bd-chip">
-                        <span>${icon} ${mem}</span>
-                        <span class="member-bd-count">${count}</span>
-                    </div>`;
+                breakdownBox.innerHTML += `<div class="member-bd-chip"><span>${icon} ${mem}</span><span class="member-bd-count">${count}</span></div>`;
             });
 
             document.getElementById('profile-dashboard').style.display = 'block';
