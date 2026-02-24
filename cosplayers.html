@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>レイヤー名鑑 | VSPO! COSPLAY</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root { --bg: #0f0f0f; --text: #f1f1f1; --sub: #aaaaaa; --primary: #3ea6ff; --card: #1f1f1f; }
+        body { font-family: "M PLUS Rounded 1c", sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px 15px; }
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+        .back-btn { color: #fff; text-decoration: none; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; font-weight: bold; }
+        .title { font-size: 1.5rem; font-weight: 800; margin: 0; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .card { background: var(--card); border-radius: 12px; padding: 15px; display: flex; flex-direction: column; gap: 10px; border: 1px solid rgba(255,255,255,0.05); transition: 0.2s; text-decoration: none; color: inherit; }
+        .card:hover { transform: translateY(-3px); border-color: var(--primary); }
+        .card-top { display: flex; align-items: center; gap: 12px; }
+        .avatar { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #333; }
+        .name { font-size: 1.1rem; font-weight: bold; margin: 0; }
+        .stats { font-size: 0.8rem; color: var(--sub); margin-top: 2px; }
+        .sns-box { display: flex; gap: 8px; margin-top: auto; }
+        .sns-icon { width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.9rem; }
+        .c-tw { background: #1da1f2; } .c-ig { background: #e1306c; } .c-fa { background: #e5005a; } .c-bo { background: #fc4d50; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <a href="index.html" class="back-btn"><i class="fas fa-chevron-left"></i> Home</a>
+        <h1 class="title">Cosplayer Directory</h1>
+    </div>
+    <div id="grid" class="grid">読み込み中...</div>
+
+<script>
+    const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
+    const PROF_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=1592730885&single=true&output=csv";
+    
+    let profiles = {};
+    let aggData = {};
+
+    Papa.parse(PROF_URL, {
+        download: true, header: true, skipEmptyLines: true,
+        complete: function(pRes) {
+            pRes.data.forEach(p => { if(p.cosplayer) profiles[p.cosplayer] = p; });
+            
+            Papa.parse(CSV_URL, {
+                download: true, header: true, skipEmptyLines: true,
+                complete: function(res) {
+                    res.data.forEach(d => {
+                        const name = d.cosplayer || d['レイヤー'];
+                        const img = d.image || d['画像'];
+                        if(!name || !img) return;
+                        if(!aggData[name]) aggData[name] = { count: 0, latestImg: img };
+                        aggData[name].count++;
+                    });
+                    render();
+                }
+            });
+        }
+    });
+
+    function render() {
+        const grid = document.getElementById('grid');
+        grid.innerHTML = '';
+        // 投稿枚数が多い順にソート
+        const sortedNames = Object.keys(aggData).sort((a,b) => aggData[b].count - aggData[a].count);
+        
+        sortedNames.forEach(name => {
+            const data = aggData[name];
+            const p = profiles[name] || {};
+            const getU = (key) => { const k = Object.keys(p).find(x=>x.toLowerCase().includes(key)); return k && p[k] ? p[k] : null; };
+            
+            const tw = getU('twitter') || getU('x');
+            const ig = getU('insta');
+            const fa = getU('fantia');
+            const bo = getU('booth');
+
+            let snsHtml = '';
+            if(tw) snsHtml += `<div class="sns-icon c-tw"><i class="fab fa-x-twitter"></i></div>`;
+            if(ig) snsHtml += `<div class="sns-icon c-ig"><i class="fab fa-instagram"></i></div>`;
+            if(fa) snsHtml += `<div class="sns-icon c-fa"><i class="fas fa-heart"></i></div>`;
+            if(bo) snsHtml += `<div class="sns-icon c-bo"><i class="fas fa-store"></i></div>`;
+
+            // カード全体が profile.html へのリンクになる
+            grid.innerHTML += `
+                <a href="profile.html?name=${encodeURIComponent(name)}" class="card">
+                    <div class="card-top">
+                        <img src="${data.latestImg}" class="avatar">
+                        <div>
+                            <h2 class="name">${name}</h2>
+                            <div class="stats">${data.count} Photos</div>
+                        </div>
+                    </div>
+                    <div class="sns-box">${snsHtml}</div>
+                </a>`;
+        });
+    }
+</script>
+</body>
+</html>
