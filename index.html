@@ -102,47 +102,6 @@
         }
         .overlay.open { opacity: 1; visibility: visible; }
 
-        /* --- Custom Discord Card --- */
-        .discord-card {
-            background: #2b2d31;
-            border-radius: 8px;
-            padding: 15px;
-            margin: 15px 0;
-            border: 1px solid #1e1f22;
-            text-align: center;
-        }
-        .discord-header {
-            color: #fff;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            margin-bottom: 10px;
-            font-size: 0.95rem;
-        }
-        .discord-icon { color: #5865F2; font-size: 1.2rem; }
-        .discord-desc {
-            color: #b5bac1;
-            font-size: 0.8rem;
-            line-height: 1.5;
-            margin-bottom: 15px;
-            text-align: left;
-        }
-        .discord-join-btn {
-            display: block;
-            width: 100%;
-            padding: 10px;
-            background-color: #5865F2;
-            color: white;
-            text-decoration: none;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            transition: background 0.2s;
-        }
-        .discord-join-btn:hover { background-color: #4752c4; }
-
         /* --- Top Areas --- */
         .top-area { background: var(--bg-color); padding-bottom: 10px; position: sticky; top: var(--header-height); z-index: 900; }
         
@@ -187,13 +146,13 @@
             border-radius: 18px; font-size: 0.75rem; text-decoration: none; display: flex; align-items: center; gap: 5px;
         }
 
-        /* --- ✨ Cosplayer Profile Dashboard ✨ --- */
+        /* --- ✨ Cosplayer Profile Dashboard (詳細版) ✨ --- */
         #profile-dashboard {
             display: none;
             padding: 20px 15px;
             margin: 0 auto 15px;
             max-width: 1800px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(15,15,15,1) 100%);
+            background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(15,15,15,1) 100%);
             border-bottom: 1px solid rgba(255,255,255,0.1);
             animation: fadeIn 0.4s ease-out;
         }
@@ -206,11 +165,22 @@
         .btn-share-profile { background: #333; color: #fff; border: 1px solid #555; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
         .btn-share-profile:hover { background: #444; border-color: #fff; }
         
-        .profile-stats-grid { display: flex; gap: 15px; overflow-x: auto; scrollbar-width: none; padding-bottom: 5px; }
+        .profile-stats-grid { display: flex; gap: 15px; overflow-x: auto; scrollbar-width: none; padding-bottom: 10px; margin-bottom: 5px; }
         .profile-stats-grid::-webkit-scrollbar { display: none; }
         .stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 12px; min-width: 140px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; }
         .stat-val { font-size: 1.5rem; font-weight: bold; color: #fff; margin-bottom: 2px; }
         .stat-label { font-size: 0.75rem; color: var(--text-sub); font-weight: bold; }
+
+        /* 追加：詳細内訳表示 */
+        .profile-details { margin-top: 15px; }
+        .profile-details-title { font-size: 0.85rem; color: var(--text-sub); font-weight: bold; margin-bottom: 8px; display:flex; align-items:center; gap:5px; }
+        .member-breakdown-box { display: flex; flex-wrap: wrap; gap: 6px; }
+        .member-bd-chip { 
+            background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 6px; 
+            font-size: 0.8rem; color: #e5e7eb; display: flex; align-items: center; gap: 5px; 
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .member-bd-count { background: rgba(0,0,0,0.3); padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; color: var(--primary); font-weight: bold; }
 
         /* --- Main Grid --- */
         main { padding: 0 4px 40px; max-width: 1800px; margin: 0 auto; }
@@ -353,22 +323,6 @@
     <div onclick="location.href='group.html'" class="menu-item"><i class="fas fa-users-rays"></i> 大型併せ</div>
     <div class="menu-divider"></div>
     <a href="https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog" target="_blank" class="menu-item"><i class="far fa-envelope"></i> お問い合わせ</a>
-
-    <div class="menu-divider"></div>
-    <div class="discord-card">
-        <div class="discord-header">
-            <i class="fab fa-discord discord-icon"></i> ぶいすぽっ！のコスプレ好きが集まれるコミュニティ
-        </div>
-        <p class="discord-desc">
-            Botによるクイズ機能や、<br>
-            最新のアーカイブ更新通知、<br>
-            開発の裏話などを配信中！<br>
-            誰でもお気軽にご参加ください✨
-        </p>
-        <a href="https://discord.gg/Svcbnrev4S" target="_blank" class="discord-join-btn">
-            サーバーに参加する
-        </a>
-    </div>
 </aside>
 
 <header>
@@ -420,6 +374,11 @@
             <div class="stat-val" id="prof-stat-members">0</div>
             <div class="stat-label">Members Cosplayed</div>
         </div>
+    </div>
+    
+    <div class="profile-details">
+        <div class="profile-details-title"><i class="fas fa-list-ul"></i> Member Breakdown</div>
+        <div id="prof-breakdown-box" class="member-breakdown-box"></div>
     </div>
 </div>
 
@@ -517,7 +476,6 @@
     let storyTimer = null;
     let diagSelectedMember = "", diagSelectedVibe = "";
     
-    // ★追加: フィルタリング状態に cosplayer を追加
     let activeFilters = {
         member: null,
         tag: null,
@@ -566,6 +524,7 @@
                 addHorizontalScroll("chips-container");
                 addHorizontalScroll("tags-container");
                 addHorizontalScroll("color-bar-container");
+                addHorizontalScroll("profile-stats-grid");
 
                 runFilter();
                 checkUrlParams();
@@ -718,7 +677,7 @@
             const matchMember = !activeFilters.member || d.member === activeFilters.member;
             const matchTag = !activeFilters.tag || (d.tags && d.tags.includes(activeFilters.tag));
             const matchColor = !activeFilters.color || d.colorName === activeFilters.color;
-            const matchCos = !activeFilters.cosplayer || d.cosplayer === activeFilters.cosplayer; // ★追加
+            const matchCos = !activeFilters.cosplayer || d.cosplayer === activeFilters.cosplayer;
             const matchText = !activeFilters.text || d.searchKey.includes(activeFilters.text);
             return matchMember && matchTag && matchColor && matchCos && matchText;
         });
@@ -751,32 +710,26 @@
         });
     }
 
-    // メンバー絞り込み時にプロフィールを隠す
     function filterByMember(name, el) { 
         document.getElementById('profile-dashboard').style.display = 'none';
         activeFilters.cosplayer = null;
         toggleFilter('member', name); 
     }
 
-    /* === ✨ 個人ダッシュボードの構築処理 ✨ === */
+    /* === ✨ 個人ダッシュボードの構築処理 (詳細版) ✨ === */
     function filterByCosplayer(name) {
-        // フィルタ設定
         activeFilters = { member: null, tag: null, color: null, cosplayer: name, text: "" };
         document.getElementById('searchInput').value = "";
         currentSort = 'new';
         
-        // 個人データの抽出と統計計算
         const myData = allData.filter(d => d.cosplayer === name);
         if (myData.length > 0) {
-            // ヘッダー情報
             document.getElementById('prof-name').innerText = name;
             document.getElementById('prof-stat-photos').innerText = myData.length;
             
-            // 担当メンバー数
             const uniqueMembers = new Set(myData.map(d => d.member)).size;
             document.getElementById('prof-stat-members').innerText = uniqueMembers;
             
-            // SNSリンク（Xのリンクを優先）
             const snsBtn = document.getElementById('prof-sns');
             const validLinks = myData.map(d => d.link).filter(l => l && (l.includes('twitter.com') || l.includes('x.com')));
             if (validLinks.length > 0) {
@@ -786,7 +739,26 @@
                 snsBtn.style.display = 'none';
             }
 
-            // UI表示切り替え
+            // ★追加：メンバー別の内訳集計と表示
+            const memberCounts = {};
+            myData.forEach(d => {
+                memberCounts[d.member] = (memberCounts[d.member] || 0) + 1;
+            });
+            const sortedMembers = Object.keys(memberCounts).sort((a,b) => memberCounts[b] - memberCounts[a]);
+            
+            const breakdownBox = document.getElementById('prof-breakdown-box');
+            breakdownBox.innerHTML = '';
+            
+            sortedMembers.forEach(mem => {
+                const count = memberCounts[mem];
+                const icon = memberIcons[mem] || '';
+                breakdownBox.innerHTML += `
+                    <div class="member-bd-chip">
+                        <span>${icon} ${mem}</span>
+                        <span class="member-bd-count">${count}</span>
+                    </div>`;
+            });
+
             document.getElementById('profile-dashboard').style.display = 'block';
         }
         
