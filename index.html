@@ -148,10 +148,7 @@
         
         .stories-container { display: flex; gap: 12px; overflow-x: auto; padding: 15px 15px 5px; scrollbar-width: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
         
-        /* チップコンテナ共通設定 */
         .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 8px 15px; scrollbar-width: none; align-items: center; }
-        
-        /* スクロールバー非表示 */
         .stories-container::-webkit-scrollbar, .chips-container::-webkit-scrollbar { display: none; }
         
         .story-item { width: 64px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; }
@@ -169,7 +166,6 @@
         .member-chip:hover { background: #3f3f3f; }
         .member-chip.active { background: #f1f1f1; color: #0f0f0f; border-color: #f1f1f1; font-weight: bold; }
         
-        /* カラーチップ用のスタイル */
         .color-chip {
             padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;
             cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; white-space: nowrap;
@@ -190,6 +186,31 @@
             border: 1px solid rgba(255,255,255,0.1); padding: 5px 12px; 
             border-radius: 18px; font-size: 0.75rem; text-decoration: none; display: flex; align-items: center; gap: 5px;
         }
+
+        /* --- ✨ Cosplayer Profile Dashboard ✨ --- */
+        #profile-dashboard {
+            display: none;
+            padding: 20px 15px;
+            margin: 0 auto 15px;
+            max-width: 1800px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, rgba(15,15,15,1) 100%);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            animation: fadeIn 0.4s ease-out;
+        }
+        .profile-header-main { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
+        .profile-name { font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 10px; }
+        .profile-name i { color: var(--primary); }
+        .profile-actions { display: flex; gap: 10px; }
+        .btn-sns { background: #1da1f2; color: #fff; padding: 8px 15px; border-radius: 20px; text-decoration: none; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-sns:hover { filter: brightness(1.2); }
+        .btn-share-profile { background: #333; color: #fff; border: 1px solid #555; padding: 8px 15px; border-radius: 20px; cursor: pointer; font-weight: bold; font-size: 0.85rem; display: flex; align-items: center; gap: 5px; transition: 0.2s; }
+        .btn-share-profile:hover { background: #444; border-color: #fff; }
+        
+        .profile-stats-grid { display: flex; gap: 15px; overflow-x: auto; scrollbar-width: none; padding-bottom: 5px; }
+        .profile-stats-grid::-webkit-scrollbar { display: none; }
+        .stat-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05); padding: 12px 20px; border-radius: 12px; min-width: 140px; flex-shrink: 0; display: flex; flex-direction: column; justify-content: center; }
+        .stat-val { font-size: 1.5rem; font-weight: bold; color: #fff; margin-bottom: 2px; }
+        .stat-label { font-size: 0.75rem; color: var(--text-sub); font-weight: bold; }
 
         /* --- Main Grid --- */
         main { padding: 0 4px 40px; max-width: 1800px; margin: 0 auto; }
@@ -382,6 +403,26 @@
     </div>
 </div>
 
+<div id="profile-dashboard">
+    <div class="profile-header-main">
+        <h2 class="profile-name"><i class="fas fa-user-check"></i> <span id="prof-name">Name</span></h2>
+        <div class="profile-actions">
+            <a id="prof-sns" href="#" target="_blank" class="btn-sns" style="display:none;"><i class="fab fa-x-twitter"></i> Follow</a>
+            <button class="btn-share-profile" onclick="shareProfile()"><i class="fas fa-share-nodes"></i> Share Portfolio</button>
+        </div>
+    </div>
+    <div class="profile-stats-grid">
+        <div class="stat-card">
+            <div class="stat-val" id="prof-stat-photos">0</div>
+            <div class="stat-label">Total Photos</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-val" id="prof-stat-members">0</div>
+            <div class="stat-label">Members Cosplayed</div>
+        </div>
+    </div>
+</div>
+
 <main id="app"></main>
 <div id="loading-sentinel">Loading...</div>
 
@@ -476,10 +517,12 @@
     let storyTimer = null;
     let diagSelectedMember = "", diagSelectedVibe = "";
     
+    // ★追加: フィルタリング状態に cosplayer を追加
     let activeFilters = {
         member: null,
         tag: null,
         color: null, 
+        cosplayer: null,
         text: ""
     };
     
@@ -498,7 +541,6 @@
                 
                 const kColor = keys.find(k=>k.match(/ColorName/i)) || keys.find(k=>k.match(/color/i) && !k.match(/main/i)) || 'ColorName';
                 const kSim = keys.find(k=>k.match(/SimilarImages|similar/i)) || 'SimilarImages';
-                // ★追加: AIタグ列を検索
                 const kAiTag = keys.find(k=>k.match(/AITags|ai_tags/i)) || 'AITags';
 
                 allData = results.data.filter(d => d[kMem] && d[kImg]).map((d, i) => ({
@@ -506,10 +548,8 @@
                     member: d[kMem],
                     image: d[kImg],
                     cosplayer: d[kCos] || "Unknown",
-                    // ★変更: 手動タグとAIタグを結合して、検索・表示用にする
                     tags: ((d[kTag]||"") + "," + (d[kAiTag]||"")).toLowerCase(),
                     link: d[kLink] || "",
-                    // 検索キーにもAIタグを含める
                     searchKey: (d[kMem] + (d[kCos]||"") + (d[kTag]||"") + (d[kAiTag]||"")).toLowerCase(),
                     colorName: d[kColor], 
                     similarImages: d[kSim]
@@ -592,6 +632,13 @@
 
     function checkUrlParams() {
         const urlParams = new URLSearchParams(window.location.search);
+        
+        // 個人ダッシュボードURLのチェック
+        const targetCosplayer = urlParams.get('cosplayer');
+        if (targetCosplayer) {
+            filterByCosplayer(decodeURIComponent(targetCosplayer));
+        }
+
         const targetImage = urlParams.get('img'); 
         if (targetImage) {
             const decodedUrl = decodeURIComponent(targetImage);
@@ -659,9 +706,10 @@
     }
 
     function resetToHome() {
-        activeFilters = { member: null, tag: null, color: null, text: "" };
+        activeFilters = { member: null, tag: null, color: null, cosplayer: null, text: "" };
         currentSort = 'random';
         document.getElementById('searchInput').value = "";
+        document.getElementById('profile-dashboard').style.display = 'none'; // プロフィール非表示
         runFilter();
     }
 
@@ -670,8 +718,9 @@
             const matchMember = !activeFilters.member || d.member === activeFilters.member;
             const matchTag = !activeFilters.tag || (d.tags && d.tags.includes(activeFilters.tag));
             const matchColor = !activeFilters.color || d.colorName === activeFilters.color;
+            const matchCos = !activeFilters.cosplayer || d.cosplayer === activeFilters.cosplayer; // ★追加
             const matchText = !activeFilters.text || d.searchKey.includes(activeFilters.text);
-            return matchMember && matchTag && matchColor && matchText;
+            return matchMember && matchTag && matchColor && matchCos && matchText;
         });
         updateSortButtons();
         updateChipStyles();
@@ -702,14 +751,62 @@
         });
     }
 
-    function filterByMember(name, el) { toggleFilter('member', name); }
+    // メンバー絞り込み時にプロフィールを隠す
+    function filterByMember(name, el) { 
+        document.getElementById('profile-dashboard').style.display = 'none';
+        activeFilters.cosplayer = null;
+        toggleFilter('member', name); 
+    }
+
+    /* === ✨ 個人ダッシュボードの構築処理 ✨ === */
     function filterByCosplayer(name) {
-        document.getElementById('searchInput').value = name;
-        activeFilters.text = name.toLowerCase();
-        currentSort = 'old';
+        // フィルタ設定
+        activeFilters = { member: null, tag: null, color: null, cosplayer: name, text: "" };
+        document.getElementById('searchInput').value = "";
+        currentSort = 'new';
+        
+        // 個人データの抽出と統計計算
+        const myData = allData.filter(d => d.cosplayer === name);
+        if (myData.length > 0) {
+            // ヘッダー情報
+            document.getElementById('prof-name').innerText = name;
+            document.getElementById('prof-stat-photos').innerText = myData.length;
+            
+            // 担当メンバー数
+            const uniqueMembers = new Set(myData.map(d => d.member)).size;
+            document.getElementById('prof-stat-members').innerText = uniqueMembers;
+            
+            // SNSリンク（Xのリンクを優先）
+            const snsBtn = document.getElementById('prof-sns');
+            const validLinks = myData.map(d => d.link).filter(l => l && (l.includes('twitter.com') || l.includes('x.com')));
+            if (validLinks.length > 0) {
+                snsBtn.href = validLinks[0];
+                snsBtn.style.display = 'inline-flex';
+            } else {
+                snsBtn.style.display = 'none';
+            }
+
+            // UI表示切り替え
+            document.getElementById('profile-dashboard').style.display = 'block';
+        }
+        
         runFilter();
         window.scrollTo({top:0, behavior:'smooth'});
     }
+
+    function shareProfile() {
+        const cosplayerName = document.getElementById('prof-name').innerText;
+        const baseUrl = window.location.origin + window.location.pathname;
+        const shareUrl = `${baseUrl}?cosplayer=${encodeURIComponent(cosplayerName)}`;
+        
+        navigator.clipboard.writeText(shareUrl).then(() => {
+            const t = document.getElementById('toast');
+            t.innerText = "ポートフォリオURLをコピーしました！"; 
+            t.style.visibility='visible'; t.style.opacity=1;
+            setTimeout(()=>{ t.style.opacity=0; t.style.visibility='hidden';}, 2000);
+        });
+    }
+
     function setMode(mode) {
         if(mode === 'favorite') { filteredData = allData.filter(d => favorites.includes(d.image)); render(); }
     }
@@ -754,8 +851,8 @@
                 <div class="card-meta">
                     <img src="${avatarUrl}" class="card-avatar" onclick="filterByCosplayer('${item.cosplayer}'); event.stopPropagation()">
                     <div class="card-texts">
-                        <div class="card-title" onclick="openModal('${item.image}')">${item.cosplayer}</div>
-                        <div class="card-subtitle" onclick="toggleFilter('member', '${item.member}')">${memberIcons[item.member] || ''} ${item.member}</div>
+                        <div class="card-title" onclick="filterByCosplayer('${item.cosplayer}');">${item.cosplayer}</div>
+                        <div class="card-subtitle" onclick="filterByMember('${item.member}', null)">${memberIcons[item.member] || ''} ${item.member}</div>
                     </div>
                     <button class="fav-btn-mini ${isFav?'active':''}" onclick="toggleFav('${item.image}', this)"><i class="${isFav ? 'fas' : 'far'} fa-heart"></i></button>
                 </div>`;
@@ -790,14 +887,12 @@
         recBox.innerHTML = '';
         let recs = [];
         
-        // ★修正: AI類似画像から「同じメンバー」だけを抽出
         if (item.similarImages) {
             const indices = item.similarImages.split(',');
             recs = indices.map(idx => allData[parseInt(idx)])
                           .filter(d => d && d.member === item.member);
         }
 
-        // 数が足りなければランダムで補填（重複なし）
         if (recs.length < 5) {
             const randomRecs = allData.filter(d => d.member === item.member && d.image !== url)
                                       .sort(() => Math.random() - 0.5).slice(0, 10);
