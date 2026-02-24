@@ -63,9 +63,7 @@
             font-size: 1.3rem; 
             background: var(--grad-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; color: var(--primary);
         }
-        @media (max-width: 480px) {
-            .site-title .title-text { font-size: 0.9rem; white-space: nowrap; }
-        }
+        @media (max-width: 480px) { .site-title .title-text { font-size: 0.9rem; white-space: nowrap; } }
 
         .header-right { flex: 1; display: flex; justify-content: flex-end; }
         .search-box { 
@@ -95,11 +93,7 @@
         .menu-item:hover { background: rgba(255, 255, 255, 0.1); }
         .menu-item i { width: 24px; text-align: center; }
         .menu-divider { height: 1px; background: rgba(255,255,255,0.1); margin: 10px 0; }
-        .overlay { 
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); 
-            z-index: 1999; opacity: 0; visibility: hidden; transition: 0.3s; 
-        }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); z-index: 1999; opacity: 0; visibility: hidden; transition: 0.3s; }
         .overlay.open { opacity: 1; visibility: visible; }
 
         /* --- Top Areas --- */
@@ -119,7 +113,7 @@
         .member-chip { 
             background: var(--chip-bg); color: var(--text-color); 
             padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; font-weight: 500;
-            cursor: pointer; border: 1px solid rgba(255,255,255,0.05); transition: 0.2s; white-space: nowrap;
+            cursor: pointer; border: 1px solid rgba(255,255,255,0.05); transition: 0.2s; white-space: nowrap; display: inline-flex; align-items: center; gap: 6px;
         }
         .member-chip:hover { background: #3f3f3f; }
         .member-chip.active { background: #f1f1f1; color: #0f0f0f; border-color: #f1f1f1; font-weight: bold; }
@@ -188,6 +182,23 @@
         .dir-sns-box { display: flex; gap: 8px; margin-top: auto; }
         .dir-sns-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.85rem; }
 
+        /* --- 📅 Events Archive 🌟 --- */
+        #events-view { display: none; padding: 20px 15px 40px; max-width: 1800px; margin: 0 auto; animation: fadeIn 0.4s ease-out; }
+        .ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        .ev-card { 
+            height: 180px; border-radius: 12px; background-size: cover; background-position: center; 
+            position: relative; overflow: hidden; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .ev-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.8); border-color: var(--primary); }
+        .ev-card-overlay { 
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.2) 60%, transparent 100%);
+            display: flex; flex-direction: column; justify-content: flex-end; padding: 20px;
+        }
+        .ev-name { font-size: 1.5rem; font-weight: bold; color: #fff; margin: 0 0 5px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        .ev-stats { font-size: 0.9rem; color: var(--primary); font-weight: bold; }
+
         /* --- Main Grid --- */
         main { padding: 0 4px 40px; max-width: 1800px; margin: 0 auto; }
         .masonry-grid { column-count: 2; column-gap: 16px; padding: 0 8px; animation: fadeInGrid 0.4s ease-out; }
@@ -234,6 +245,7 @@
         .story-nav { position: absolute; top: 0; width: 50%; height: 100%; z-index: 5; cursor: pointer; }
         .story-nav.left { left: 0; }
         .story-nav.right { right: 0; }
+        .story-viewer:active .story-progress-fill { transition: none !important; }
 
         /* --- Modals --- */
         .modal, .diag-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
@@ -292,6 +304,7 @@
     <div onclick="setMode('favorite'); toggleMenu()" class="menu-item"><i class="fas fa-heart" style="color:var(--heart);"></i> お気に入り</div>
     <div class="menu-divider"></div>
     <div onclick="openDiagnosis(); toggleMenu()" class="menu-item"><i class="fas fa-magic" style="color:var(--accent);"></i> 推しフォト診断</div>
+    <div onclick="openEvents(); toggleMenu()" class="menu-item"><i class="fas fa-calendar-alt" style="color:#f09433;"></i> イベントまとめ</div>
     <div onclick="openDirectory(); toggleMenu()" class="menu-item"><i class="fas fa-users"></i> レイヤー名鑑</div>
     <div onclick="location.href='photographers.html'" class="menu-item"><i class="fas fa-camera"></i> カメラマン一覧</div>
     <div onclick="location.href='group.html'" class="menu-item"><i class="fas fa-users-rays"></i> 大型併せ</div>
@@ -370,6 +383,16 @@
     <div id="dir-grid" class="dir-grid"></div>
 </div>
 
+<div id="events-view">
+    <div class="dir-header">
+        <h1 class="dir-title"><i class="fas fa-calendar-alt" style="color:#f09433;"></i> イベントアーカイブ</h1>
+        <button onclick="resetToHome()" class="sort-btn" style="border:1px solid rgba(255,255,255,0.2); border-radius:20px;">
+            <i class="fas fa-times"></i> 閉じる
+        </button>
+    </div>
+    <div id="ev-grid" class="ev-grid"></div>
+</div>
+
 
 <button class="fab" id="scrollTopBtn" onclick="window.scrollTo({top:0, behavior:'smooth'})"><i class="fas fa-arrow-up"></i></button>
 <div id="toast">メッセージ</div>
@@ -446,6 +469,8 @@
     let allData = [];
     let profileData = {}; 
     let aggData = {}; // 名鑑用の集計データ
+    let eventsAgg = {}; // ★追加：イベント用の集計データ
+    
     let filteredData = [], currentSort = 'random';
     let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
     let history = JSON.parse(localStorage.getItem('vspo_history')) || [];
@@ -457,7 +482,8 @@
     let storyTimer = null;
     let diagSelectedMember = "", diagSelectedVibe = "";
     
-    let activeFilters = { member: null, tag: null, color: null, cosplayer: null, text: "" };
+    // ★追加：フィルタリング状態に event を追加
+    let activeFilters = { member: null, tag: null, color: null, cosplayer: null, event: null, text: "" };
     
     /* === Main Logic === */
     window.onload = function() {
@@ -485,12 +511,24 @@
                         const kColor = keys.find(k=>k.match(/ColorName/i)) || keys.find(k=>k.match(/color/i) && !k.match(/main/i)) || 'ColorName';
                         const kSim = keys.find(k=>k.match(/SimilarImages|similar/i)) || 'SimilarImages';
                         const kAiTag = keys.find(k=>k.match(/AITags|ai_tags/i)) || 'AITags';
+                        
+                        // ★追加：Event列を探す
+                        const kEvent = keys.find(k=>k.match(/Event|イベント/i)) || 'Event';
 
                         allData = results.data.filter(d => d[kMem] && d[kImg]).map((d, i) => {
                             const name = d[kCos] || "Unknown";
                             const img = d[kImg];
+                            const evName = d[kEvent] ? d[kEvent].trim() : "";
+                            
+                            // 名鑑用の集計
                             if(!aggData[name]) aggData[name] = { count: 0, latestImg: img };
                             aggData[name].count++;
+                            
+                            // ★追加：イベント用の集計
+                            if (evName) {
+                                if(!eventsAgg[evName]) eventsAgg[evName] = { count: 0, latestImg: img };
+                                eventsAgg[evName].count++;
+                            }
 
                             return {
                                 _id: i, 
@@ -499,7 +537,8 @@
                                 cosplayer: name,
                                 tags: ((d[kTag]||"") + "," + (d[kAiTag]||"")).toLowerCase(),
                                 link: d[kLink] || "",
-                                searchKey: (d[kMem] + name + (d[kTag]||"") + (d[kAiTag]||"")).toLowerCase(),
+                                event: evName, // ★追加
+                                searchKey: (d[kMem] + name + (d[kTag]||"") + (d[kAiTag]||"") + evName).toLowerCase(), // 検索にもイベント名を反映
                                 colorName: d[kColor], 
                                 similarImages: d[kSim]
                             };
@@ -593,6 +632,7 @@
     /* === 🌟 名鑑画面 (Directory) ロジック 🌟 === */
     function openDirectory() {
         document.getElementById('main-view').style.display = 'none';
+        document.getElementById('events-view').style.display = 'none';
         document.getElementById('directory-view').style.display = 'block';
         window.scrollTo(0,0);
         
@@ -630,15 +670,65 @@
                 </div>`;
         });
     }
+    
+    /* === 📅 イベントまとめ画面 (Events) ロジック 📅 === */
+    function openEvents() {
+        document.getElementById('main-view').style.display = 'none';
+        document.getElementById('directory-view').style.display = 'none';
+        document.getElementById('profile-dashboard').style.display = 'none';
+        document.getElementById('events-view').style.display = 'block';
+        window.scrollTo(0,0);
+        
+        const grid = document.getElementById('ev-grid');
+        grid.innerHTML = '';
+        
+        const sortedEvents = Object.keys(eventsAgg).sort((a,b) => eventsAgg[b].count - eventsAgg[a].count);
+        
+        if (sortedEvents.length === 0) {
+            grid.innerHTML = '<div style="color:#aaa; padding:20px;">まだイベントデータがありません。</div>';
+            return;
+        }
+
+        sortedEvents.forEach(ev => {
+            const data = eventsAgg[ev];
+            grid.innerHTML += `
+                <div class="ev-card" onclick="filterByEvent('${ev}')" style="background-image: url('${data.latestImg}');">
+                    <div class="ev-card-overlay">
+                        <h2 class="ev-name">${ev}</h2>
+                        <div class="ev-stats">${data.count} Photos</div>
+                    </div>
+                </div>`;
+        });
+    }
+    
+    /* ★追加：イベントで絞り込む機能 */
+    function filterByEvent(eventName) {
+        document.getElementById('events-view').style.display = 'none';
+        document.getElementById('directory-view').style.display = 'none';
+        document.getElementById('profile-dashboard').style.display = 'none';
+        document.getElementById('main-view').style.display = 'block';
+        document.getElementById('top-area').style.display = 'block';
+
+        activeFilters = { member: null, tag: null, color: null, cosplayer: null, event: eventName, text: "" };
+        document.getElementById('searchInput').value = "";
+        currentSort = 'new';
+        
+        runFilter();
+        window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    function resetEventFilter() {
+        activeFilters.event = null;
+        runFilter();
+    }
 
     function resetToHome() {
         document.getElementById('directory-view').style.display = 'none';
+        document.getElementById('events-view').style.display = 'none';
         document.getElementById('main-view').style.display = 'block';
-        
-        // ★追加：ホームに戻る時はトップエリア（ストーリーやタグ）を再表示
         document.getElementById('top-area').style.display = 'block';
         
-        activeFilters = { member: null, tag: null, color: null, cosplayer: null, text: "" };
+        activeFilters = { member: null, tag: null, color: null, cosplayer: null, event: null, text: "" };
         currentSort = 'random';
         document.getElementById('searchInput').value = "";
         document.getElementById('profile-dashboard').style.display = 'none';
@@ -651,12 +741,13 @@
     /* === ✨ 個人ダッシュボードの構築処理 ✨ === */
     function filterByCosplayer(name) {
         document.getElementById('directory-view').style.display = 'none';
+        document.getElementById('events-view').style.display = 'none';
         document.getElementById('main-view').style.display = 'block';
 
-        // ★追加：個人ダッシュボード時はトップエリア（ストーリーやタグ）を隠す
+        // プロフィール表示時はトップエリア（ストーリー・タグ）を隠す
         document.getElementById('top-area').style.display = 'none';
 
-        activeFilters = { member: null, tag: null, color: null, cosplayer: name, text: "" };
+        activeFilters = { member: null, tag: null, color: null, cosplayer: name, event: null, text: "" };
         document.getElementById('searchInput').value = "";
         currentSort = 'new';
         
@@ -750,8 +841,9 @@
             const matchTag = !activeFilters.tag || (d.tags && d.tags.includes(activeFilters.tag));
             const matchColor = !activeFilters.color || d.colorName === activeFilters.color;
             const matchCos = !activeFilters.cosplayer || d.cosplayer === activeFilters.cosplayer;
+            const matchEvent = !activeFilters.event || d.event === activeFilters.event; // ★追加
             const matchText = !activeFilters.text || d.searchKey.includes(activeFilters.text);
-            return matchMember && matchTag && matchColor && matchCos && matchText;
+            return matchMember && matchTag && matchColor && matchCos && matchEvent && matchText;
         });
         updateSortButtons();
         updateChipStyles();
@@ -768,9 +860,25 @@
     function updateChipStyles() {
         document.querySelectorAll('#chips-container .member-chip').forEach(el => {
             el.classList.remove('active');
-            if (activeFilters.member === null && el.innerText.includes('All')) el.classList.add('active');
+            // イベント選択中ではない、かつAllの時だけActive
+            if (activeFilters.member === null && !activeFilters.event && el.innerText.includes('All')) el.classList.add('active');
             if (activeFilters.member && el.innerText.includes(activeFilters.member)) el.classList.add('active');
         });
+        
+        // ★追加：イベント絞り込み中の専用解除チップを表示
+        let evChip = document.getElementById('active-event-chip');
+        if (activeFilters.event) {
+            if (!evChip) {
+                const box = document.getElementById('chips-container');
+                box.insertAdjacentHTML('afterbegin', `<span class="member-chip active" id="active-event-chip" onclick="resetEventFilter()" style="background: #f09433; color: #fff; border-color: #f09433;"><i class="fas fa-calendar-alt"></i> ${activeFilters.event} ✕</span>`);
+            } else {
+                evChip.innerHTML = `<i class="fas fa-calendar-alt"></i> ${activeFilters.event} ✕`;
+                evChip.style.display = 'inline-flex';
+            }
+        } else {
+            if (evChip) evChip.style.display = 'none';
+        }
+
         document.querySelectorAll('#tags-container .member-chip').forEach(el => {
             el.classList.remove('active');
             if (activeFilters.tag === null && el.id === 'tag-all') el.classList.add('active');
@@ -784,8 +892,6 @@
 
     function filterByMember(name, el) { 
         document.getElementById('profile-dashboard').style.display = 'none';
-        
-        // ★追加：メンバーを絞り込む時はトップエリアを再表示
         document.getElementById('top-area').style.display = 'block';
         
         activeFilters.cosplayer = null;
