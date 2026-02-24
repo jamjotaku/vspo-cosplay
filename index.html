@@ -171,7 +171,6 @@
         .stat-val { font-size: 1.5rem; font-weight: bold; color: #fff; margin-bottom: 2px; }
         .stat-label { font-size: 0.75rem; color: var(--text-sub); font-weight: bold; }
 
-        /* 追加：詳細内訳表示 */
         .profile-details { margin-top: 15px; }
         .profile-details-title { font-size: 0.85rem; color: var(--text-sub); font-weight: bold; margin-bottom: 8px; display:flex; align-items:center; gap:5px; }
         .member-breakdown-box { display: flex; flex-wrap: wrap; gap: 6px; }
@@ -281,7 +280,11 @@
         .diag-step { display: none; } .diag-step.active { display: block; }
 
         #loading-sentinel { text-align: center; padding: 20px; color: var(--primary); }
-        .fab { position: fixed; bottom: 30px; right: 20px; width: 50px; height: 50px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px var(--accent); cursor: pointer; border: none; z-index: 900; }
+        
+        /* ★修正：トップに戻るボタンを最初は隠す */
+        .fab { position: fixed; bottom: 30px; right: 20px; width: 50px; height: 50px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 15px var(--accent); cursor: pointer; border: none; z-index: 900; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
+        .fab.show { opacity: 1; visibility: visible; }
+        
         #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 30px; padding: 12px; position: fixed; z-index: 4000; left: 50%; bottom: 50px; transform: translateX(-50%); font-size: 0.9rem; opacity: 0; transition: 0.5s; }
     </style>
 </head>
@@ -531,9 +534,17 @@
             }
         });
 
+        // ★修正：スクロールイベントでトップへ戻るボタンの表示/非表示を切り替え
         window.addEventListener('scroll', () => {
             if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 500) {
                 displayLimit += 20; render();
+            }
+            
+            const fab = document.getElementById('scrollTopBtn');
+            if (window.scrollY > 300) {
+                fab.classList.add('show');
+            } else {
+                fab.classList.remove('show');
             }
         });
     };
@@ -730,16 +741,23 @@
             const uniqueMembers = new Set(myData.map(d => d.member)).size;
             document.getElementById('prof-stat-members').innerText = uniqueMembers;
             
+            // ★修正：URLからXのユーザーIDを抽出してプロフィールページへのリンクを生成
             const snsBtn = document.getElementById('prof-sns');
             const validLinks = myData.map(d => d.link).filter(l => l && (l.includes('twitter.com') || l.includes('x.com')));
             if (validLinks.length > 0) {
-                snsBtn.href = validLinks[0];
+                let profileUrl = validLinks[0];
+                // 正規表現で twitter.com/ もしくは x.com/ の後の文字列(ユーザーID)を抽出
+                const match = validLinks[0].match(/(?:twitter\.com|x\.com)\/([a-zA-Z0-9_]+)/);
+                if (match && match[1] && match[1] !== "intent" && match[1] !== "search") {
+                    profileUrl = `https://x.com/${match[1]}`;
+                }
+                snsBtn.href = profileUrl;
                 snsBtn.style.display = 'inline-flex';
             } else {
                 snsBtn.style.display = 'none';
             }
 
-            // ★追加：メンバー別の内訳集計と表示
+            // メンバー別の内訳集計と表示
             const memberCounts = {};
             myData.forEach(d => {
                 memberCounts[d.member] = (memberCounts[d.member] || 0) + 1;
