@@ -131,16 +131,18 @@
         .sort-btn.active { color: var(--text-color); border-bottom: 2px solid var(--text-color); }
         .request-btn { background: rgba(255,255,255,0.05); color: #9ca3af; border: 1px solid rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 18px; font-size: 0.75rem; text-decoration: none; display: flex; align-items: center; gap: 5px; }
 
-        /* --- ✨ Cosplayer Profile Dashboard ✨ --- */
-        #profile-dashboard {
+        /* --- ✨ Dashboards (Profile & Event) ✨ --- */
+        .dashboard-container {
             display: none;
             padding: 20px 15px;
             margin: 0 auto 15px;
             max-width: 1800px;
-            background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(15,15,15,1) 100%);
             border-bottom: 1px solid rgba(255,255,255,0.1);
             animation: fadeIn 0.4s ease-out;
         }
+        #profile-dashboard { background: linear-gradient(180deg, rgba(255,255,255,0.08) 0%, rgba(15,15,15,1) 100%); }
+        #event-dashboard { background: linear-gradient(180deg, rgba(240,148,51,0.15) 0%, rgba(15,15,15,1) 100%); }
+        
         .profile-header-main { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; margin-bottom: 15px; }
         .profile-name { font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0; display: flex; align-items: center; gap: 10px; }
         .profile-name i { color: var(--primary); }
@@ -245,7 +247,6 @@
         .story-nav { position: absolute; top: 0; width: 50%; height: 100%; z-index: 5; cursor: pointer; }
         .story-nav.left { left: 0; }
         .story-nav.right { right: 0; }
-        .story-viewer:active .story-progress-fill { transition: none !important; }
 
         /* --- Modals --- */
         .modal, .diag-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
@@ -345,7 +346,7 @@
         </div>
     </div>
 
-    <div id="profile-dashboard">
+    <div id="profile-dashboard" class="dashboard-container">
         <div class="profile-header-main">
             <h2 class="profile-name"><i class="fas fa-user-check"></i> <span id="prof-name">Name</span></h2>
             <div class="profile-actions" id="prof-actions-box">
@@ -362,10 +363,28 @@
                 <div class="stat-label">Members Cosplayed</div>
             </div>
         </div>
-        
         <div class="profile-details">
             <div class="profile-details-title"><i class="fas fa-list-ul"></i> Member Breakdown</div>
             <div id="prof-breakdown-box" class="member-breakdown-box"></div>
+        </div>
+    </div>
+
+    <div id="event-dashboard" class="dashboard-container">
+        <div class="profile-header-main">
+            <h2 class="profile-name"><i class="fas fa-calendar-alt" style="color:#f09433;"></i> <span id="ev-dash-name">Event Name</span></h2>
+            <div class="profile-actions">
+                <button class="btn-share-profile" onclick="resetEventFilter()"><i class="fas fa-times"></i> 絞り込み解除</button>
+            </div>
+        </div>
+        <div class="profile-stats-grid">
+            <div class="stat-card">
+                <div class="stat-val" id="ev-dash-photos">0</div>
+                <div class="stat-label">Total Photos</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-val" id="ev-dash-cosplayers">0</div>
+                <div class="stat-label">Total Cosplayers</div>
+            </div>
         </div>
     </div>
 
@@ -392,7 +411,6 @@
     </div>
     <div id="ev-grid" class="ev-grid"></div>
 </div>
-
 
 <button class="fab" id="scrollTopBtn" onclick="window.scrollTo({top:0, behavior:'smooth'})"><i class="fas fa-arrow-up"></i></button>
 <div id="toast">メッセージ</div>
@@ -468,8 +486,8 @@
 
     let allData = [];
     let profileData = {}; 
-    let aggData = {}; // 名鑑用の集計データ
-    let eventsAgg = {}; // ★追加：イベント用の集計データ
+    let aggData = {}; 
+    let eventsAgg = {}; 
     
     let filteredData = [], currentSort = 'random';
     let favorites = JSON.parse(localStorage.getItem('vspo_favs')) || [];
@@ -482,7 +500,6 @@
     let storyTimer = null;
     let diagSelectedMember = "", diagSelectedVibe = "";
     
-    // ★追加：フィルタリング状態に event を追加
     let activeFilters = { member: null, tag: null, color: null, cosplayer: null, event: null, text: "" };
     
     /* === Main Logic === */
@@ -511,8 +528,6 @@
                         const kColor = keys.find(k=>k.match(/ColorName/i)) || keys.find(k=>k.match(/color/i) && !k.match(/main/i)) || 'ColorName';
                         const kSim = keys.find(k=>k.match(/SimilarImages|similar/i)) || 'SimilarImages';
                         const kAiTag = keys.find(k=>k.match(/AITags|ai_tags/i)) || 'AITags';
-                        
-                        // ★追加：Event列を探す
                         const kEvent = keys.find(k=>k.match(/Event|イベント/i)) || 'Event';
 
                         allData = results.data.filter(d => d[kMem] && d[kImg]).map((d, i) => {
@@ -520,11 +535,9 @@
                             const img = d[kImg];
                             const evName = d[kEvent] ? d[kEvent].trim() : "";
                             
-                            // 名鑑用の集計
                             if(!aggData[name]) aggData[name] = { count: 0, latestImg: img };
                             aggData[name].count++;
                             
-                            // ★追加：イベント用の集計
                             if (evName) {
                                 if(!eventsAgg[evName]) eventsAgg[evName] = { count: 0, latestImg: img };
                                 eventsAgg[evName].count++;
@@ -537,8 +550,8 @@
                                 cosplayer: name,
                                 tags: ((d[kTag]||"") + "," + (d[kAiTag]||"")).toLowerCase(),
                                 link: d[kLink] || "",
-                                event: evName, // ★追加
-                                searchKey: (d[kMem] + name + (d[kTag]||"") + (d[kAiTag]||"") + evName).toLowerCase(), // 検索にもイベント名を反映
+                                event: evName, 
+                                searchKey: (d[kMem] + name + (d[kTag]||"") + (d[kAiTag]||"") + evName).toLowerCase(),
                                 colorName: d[kColor], 
                                 similarImages: d[kSim]
                             };
@@ -614,8 +627,13 @@
 
     function checkUrlParams() {
         const urlParams = new URLSearchParams(window.location.search);
+        
         const targetCosplayer = urlParams.get('cosplayer');
-        if (targetCosplayer) { filterByCosplayer(decodeURIComponent(targetCosplayer)); }
+        if (targetCosplayer) { filterByCosplayer(decodeURIComponent(targetCosplayer)); return; }
+        
+        const targetEvent = urlParams.get('event');
+        if (targetEvent) { filterByEvent(decodeURIComponent(targetEvent)); return; }
+
         const targetImage = urlParams.get('img'); 
         if (targetImage) {
             const decodedUrl = decodeURIComponent(targetImage);
@@ -638,7 +656,6 @@
         
         const grid = document.getElementById('dir-grid');
         grid.innerHTML = '';
-        
         const sortedNames = Object.keys(aggData).sort((a,b) => aggData[b].count - aggData[a].count);
         
         sortedNames.forEach(name => {
@@ -676,6 +693,7 @@
         document.getElementById('main-view').style.display = 'none';
         document.getElementById('directory-view').style.display = 'none';
         document.getElementById('profile-dashboard').style.display = 'none';
+        document.getElementById('event-dashboard').style.display = 'none';
         document.getElementById('events-view').style.display = 'block';
         window.scrollTo(0,0);
         
@@ -701,24 +719,43 @@
         });
     }
     
-    /* ★追加：イベントで絞り込む機能 */
+    /* ★ イベントで絞り込む機能（専用ダッシュボード表示） */
     function filterByEvent(eventName) {
         document.getElementById('events-view').style.display = 'none';
         document.getElementById('directory-view').style.display = 'none';
         document.getElementById('profile-dashboard').style.display = 'none';
         document.getElementById('main-view').style.display = 'block';
-        document.getElementById('top-area').style.display = 'block';
+        
+        // 普段のヘッダーを隠す
+        document.getElementById('top-area').style.display = 'none';
 
         activeFilters = { member: null, tag: null, color: null, cosplayer: null, event: eventName, text: "" };
         document.getElementById('searchInput').value = "";
         currentSort = 'new';
         
+        // イベントダッシュボードのデータ更新
+        const evData = allData.filter(d => d.event === eventName);
+        document.getElementById('ev-dash-name').innerText = eventName;
+        document.getElementById('ev-dash-photos').innerText = evData.length;
+        const uniqueCosplayers = new Set(evData.map(d => d.cosplayer)).size;
+        document.getElementById('ev-dash-cosplayers').innerText = uniqueCosplayers;
+        
+        // イベントダッシュボードを表示
+        document.getElementById('event-dashboard').style.display = 'block';
+        
+        // URLパラメータ更新
+        const newUrl = window.location.pathname + '?event=' + encodeURIComponent(eventName);
+        window.history.pushState({path:newUrl}, '', newUrl);
+
         runFilter();
         window.scrollTo({top:0, behavior:'smooth'});
     }
 
     function resetEventFilter() {
+        document.getElementById('event-dashboard').style.display = 'none';
+        document.getElementById('top-area').style.display = 'block';
         activeFilters.event = null;
+        window.history.replaceState({}, document.title, window.location.pathname);
         runFilter();
     }
 
@@ -732,6 +769,7 @@
         currentSort = 'random';
         document.getElementById('searchInput').value = "";
         document.getElementById('profile-dashboard').style.display = 'none';
+        document.getElementById('event-dashboard').style.display = 'none';
         runFilter();
         window.scrollTo(0,0);
         
@@ -744,8 +782,9 @@
         document.getElementById('events-view').style.display = 'none';
         document.getElementById('main-view').style.display = 'block';
 
-        // プロフィール表示時はトップエリア（ストーリー・タグ）を隠す
+        // プロフィール表示時はトップエリアとイベントダッシュボードを隠す
         document.getElementById('top-area').style.display = 'none';
+        document.getElementById('event-dashboard').style.display = 'none';
 
         activeFilters = { member: null, tag: null, color: null, cosplayer: name, event: null, text: "" };
         document.getElementById('searchInput').value = "";
@@ -841,7 +880,7 @@
             const matchTag = !activeFilters.tag || (d.tags && d.tags.includes(activeFilters.tag));
             const matchColor = !activeFilters.color || d.colorName === activeFilters.color;
             const matchCos = !activeFilters.cosplayer || d.cosplayer === activeFilters.cosplayer;
-            const matchEvent = !activeFilters.event || d.event === activeFilters.event; // ★追加
+            const matchEvent = !activeFilters.event || d.event === activeFilters.event;
             const matchText = !activeFilters.text || d.searchKey.includes(activeFilters.text);
             return matchMember && matchTag && matchColor && matchCos && matchEvent && matchText;
         });
@@ -860,25 +899,9 @@
     function updateChipStyles() {
         document.querySelectorAll('#chips-container .member-chip').forEach(el => {
             el.classList.remove('active');
-            // イベント選択中ではない、かつAllの時だけActive
             if (activeFilters.member === null && !activeFilters.event && el.innerText.includes('All')) el.classList.add('active');
             if (activeFilters.member && el.innerText.includes(activeFilters.member)) el.classList.add('active');
         });
-        
-        // ★追加：イベント絞り込み中の専用解除チップを表示
-        let evChip = document.getElementById('active-event-chip');
-        if (activeFilters.event) {
-            if (!evChip) {
-                const box = document.getElementById('chips-container');
-                box.insertAdjacentHTML('afterbegin', `<span class="member-chip active" id="active-event-chip" onclick="resetEventFilter()" style="background: #f09433; color: #fff; border-color: #f09433;"><i class="fas fa-calendar-alt"></i> ${activeFilters.event} ✕</span>`);
-            } else {
-                evChip.innerHTML = `<i class="fas fa-calendar-alt"></i> ${activeFilters.event} ✕`;
-                evChip.style.display = 'inline-flex';
-            }
-        } else {
-            if (evChip) evChip.style.display = 'none';
-        }
-
         document.querySelectorAll('#tags-container .member-chip').forEach(el => {
             el.classList.remove('active');
             if (activeFilters.tag === null && el.id === 'tag-all') el.classList.add('active');
@@ -892,9 +915,11 @@
 
     function filterByMember(name, el) { 
         document.getElementById('profile-dashboard').style.display = 'none';
+        document.getElementById('event-dashboard').style.display = 'none';
         document.getElementById('top-area').style.display = 'block';
         
         activeFilters.cosplayer = null;
+        activeFilters.event = null;
         window.history.replaceState({}, document.title, window.location.pathname);
         toggleFilter('member', name); 
     }
