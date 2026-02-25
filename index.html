@@ -100,8 +100,10 @@
         .top-area { background: var(--bg-color); padding-bottom: 10px; position: sticky; top: var(--header-height); z-index: 900; }
         
         .stories-container { display: flex; gap: 12px; overflow-x: auto; padding: 15px 15px 5px; scrollbar-width: none; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 8px 15px; scrollbar-width: none; align-items: center; }
-        .stories-container::-webkit-scrollbar, .chips-container::-webkit-scrollbar { display: none; }
+        .stories-container::-webkit-scrollbar { display: none; }
+        
+        .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .chips-container::-webkit-scrollbar { display: none; }
         
         .story-item { width: 64px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.2s; }
         .story-item:active { transform: scale(0.95); }
@@ -117,15 +119,8 @@
         }
         .member-chip:hover { background: #3f3f3f; }
         .member-chip.active { background: #f1f1f1; color: #0f0f0f; border-color: #f1f1f1; font-weight: bold; }
-        
-        .color-chip {
-            padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold;
-            cursor: pointer; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; white-space: nowrap;
-            display: flex; align-items: center; gap: 5px; background: #222;
-        }
-        .color-chip.active { border-color: #fff; background: #444; box-shadow: 0 0 8px rgba(255,255,255,0.3); }
 
-        .utility-deck { display: flex; justify-content: space-between; align-items: center; padding: 5px 15px 15px; }
+        .utility-deck { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px 5px; }
         .sort-group { display: flex; gap: 5px; background: transparent; padding: 4px; }
         .sort-btn { background: transparent; border: none; color: var(--text-sub); padding: 5px 10px; font-size: 0.8rem; cursor: pointer; font-weight: bold; transition: 0.2s; }
         .sort-btn.active { color: var(--text-color); border-bottom: 2px solid var(--text-color); }
@@ -166,8 +161,7 @@
         .profile-details { margin-top: 15px; }
         .profile-details-title { font-size: 0.85rem; color: var(--text-sub); font-weight: bold; margin-bottom: 8px; display:flex; align-items:center; gap:5px; }
         .member-breakdown-box { display: flex; flex-wrap: wrap; gap: 6px; }
-        .member-bd-chip { background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; color: #e5e7eb; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.05); }
-        /* ★追加：チップのホバーエフェクト */
+        .member-bd-chip { background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; color: #e5e7eb; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.05); cursor:pointer; transition:0.2s; }
         .member-bd-chip:hover { background: rgba(255,255,255,0.15); }
         .member-bd-count { background: rgba(0,0,0,0.3); padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; color: var(--primary); font-weight: bold; }
 
@@ -259,13 +253,8 @@
         .modal-close { position: absolute; top: 20px; right: 20px; font-size: 2rem; color: #fff; cursor: pointer; }
         .slide-btn { position: absolute; top: 50%; transform: translateY(-50%); background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); padding: 15px; border-radius: 50%; cursor: pointer; }
         .prev-btn { left: 15px; } .next-btn { right: 15px; }
-        .recommend-area { display: flex; gap: 10px; overflow-x: auto; width: 100%; padding: 10px 0; scrollbar-width: none; }
-        .recommend-card { flex: 0 0 100px; height: 130px; border-radius: 8px; overflow: hidden; cursor: pointer; opacity: 0.7; transition: 0.2s; border: 1px solid #333; }
-        .recommend-card:hover { opacity: 1; transform: scale(1.05); border-color: var(--primary); }
-        .recommend-card img { width: 100%; height: 100%; object-fit: cover; }
         
-        /* ★追加：モーダル内のボタン用スタイル */
-        .ctrl-chip { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+        .ctrl-chip { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; font-size: 0.9rem; padding: 8px 16px; }
         .ctrl-chip:hover { background: var(--primary); border-color: var(--primary); }
 
         .diag-container { background: #1f2937; padding: 20px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
@@ -340,8 +329,6 @@
     <div class="top-area" id="top-area">
         <div id="stories-container" class="stories-container"></div>
         <div id="chips-container" class="chips-container"></div>
-        <div id="tags-container" class="chips-container" style="padding-top:0; border-bottom:none;"></div>
-        <div id="color-bar-container" class="chips-container" style="padding-top:0; padding-bottom:15px; border-bottom:1px solid rgba(255,255,255,0.05);"></div>
         
         <div class="utility-deck">
             <div class="sort-group">
@@ -428,13 +415,11 @@
     <button class="slide-btn next-btn" onclick="changeImage(1, event)"><i class="fas fa-chevron-right"></i></button>
     <div style="display:flex; flex-direction:column; align-items:center; width:100%;">
         <img id="m-img" onclick="event.stopPropagation()">
-        <div class="recommend-label" style="width:95%; color:#aaa; margin-top:15px;">✨ 似ている写真</div>
-        <div id="m-recommend" class="recommend-area" onclick="event.stopPropagation()"></div>
         
         <div style="margin-top:15px; display:flex; gap:10px;" onclick="event.stopPropagation()">
-            <button class="ctrl-chip" onclick="shareX()" style="font-size:0.9rem; padding:8px 16px;"><i class="fab fa-x-twitter"></i> Post</button>
-            <button class="ctrl-chip" onclick="copyLink()" style="font-size:0.9rem; padding:8px 16px;"><i class="fas fa-link"></i> Copy</button>
-            <a id="m-link" href="#" target="_blank" class="ctrl-chip" style="font-size:0.9rem; padding:8px 16px; text-decoration:none;"><i class="fas fa-external-link-alt"></i> Original</a>
+            <button class="ctrl-chip" onclick="shareX()"><i class="fab fa-x-twitter"></i> Post</button>
+            <button class="ctrl-chip" onclick="copyLink()"><i class="fas fa-link"></i> Copy</button>
+            <a id="m-link" href="#" target="_blank" class="ctrl-chip" style="text-decoration:none;"><i class="fas fa-external-link-alt"></i> Original</a>
         </div>
     </div>
 </div>
@@ -508,7 +493,7 @@
     let storyTimer = null;
     let diagSelectedMember = "", diagSelectedVibe = "";
     
-    let activeFilters = { member: null, tag: null, color: null, cosplayer: null, event: null, text: "" };
+    let activeFilters = { member: null, cosplayer: null, event: null, text: "" };
     
     /* === Main Logic === */
     window.onload = function() {
@@ -533,8 +518,6 @@
                         const kTag = keys.find(k=>k.match(/tags|タグ/i)) || 'Tags';
                         const kLink = keys.find(k=>k.match(/link|twitter/i)) || 'link';
                         
-                        const kColor = keys.find(k=>k.match(/ColorName/i)) || keys.find(k=>k.match(/color/i) && !k.match(/main/i)) || 'ColorName';
-                        const kSim = keys.find(k=>k.match(/SimilarImages|similar/i)) || 'SimilarImages';
                         const kAiTag = keys.find(k=>k.match(/AITags|ai_tags/i)) || 'AITags';
                         const kEvent = keys.find(k=>k.match(/Event|イベント/i)) || 'Event';
 
@@ -556,12 +539,9 @@
                                 member: d[kMem],
                                 image: img,
                                 cosplayer: name,
-                                tags: ((d[kTag]||"") + "," + (d[kAiTag]||"")).toLowerCase(),
                                 link: d[kLink] || "",
                                 event: evName, 
-                                searchKey: (d[kMem] + name + (d[kTag]||"") + (d[kAiTag]||"") + evName).toLowerCase(),
-                                colorName: d[kColor], 
-                                similarImages: d[kSim]
+                                searchKey: (d[kMem] + name + (d[kTag]||"") + (d[kAiTag]||"") + evName).toLowerCase()
                             };
                         });
 
@@ -569,13 +549,9 @@
                         
                         initUI();
                         generateStories();
-                        generateTags(allData);
-                        generateColorBar();
                         
                         addHorizontalScroll("stories-container");
                         addHorizontalScroll("chips-container");
-                        addHorizontalScroll("tags-container");
-                        addHorizontalScroll("color-bar-container");
                         addHorizontalScroll("profile-stats-grid");
 
                         runFilter();
@@ -607,30 +583,6 @@
         memberOrder.forEach(m => {
             box.innerHTML += `<span class="member-chip" onclick="toggleFilter('member', '${m}')">${memberIcons[m]||''} ${m}</span>`;
         });
-    }
-    
-    function generateTags(data) {
-        const tagCount = {};
-        data.forEach(d => {
-            if(!d.tags) return;
-            d.tags.split(',').forEach(t => {
-                const tag = t.trim();
-                const tagLower = tag.toLowerCase(); 
-                if(tag && tagLower !== "nan") { tagCount[tag] = (tagCount[tag] || 0) + 1; }
-            });
-        });
-        const sortedTags = Object.keys(tagCount).sort((a,b) => tagCount[b] - tagCount[a]).slice(0, 30);
-        const container = document.getElementById('tags-container');
-        container.innerHTML = `<span class="member-chip active" id="tag-all" onclick="toggleFilter('tag', null)"># All Tags</span>`;
-        sortedTags.forEach(tag => { container.innerHTML += `<span class="member-chip" id="tag-${tag}" onclick="toggleFilter('tag', '${tag}')"># ${tag}</span>`; });
-    }
-
-    function generateColorBar() {
-        const colors = { "Red": "🔴", "Blue": "🔵", "Green": "🟢", "Yellow": "🟡", "Pink": "💖", "Purple": "🟣", "White": "⚪", "Black": "⚫" };
-        const container = document.getElementById('color-bar-container');
-        let html = "";
-        Object.keys(colors).forEach(color => { html += `<span class="color-chip" id="color-${color}" onclick="toggleFilter('color', '${color}')">${colors[color]} ${color}</span>`; });
-        container.innerHTML = html;
     }
 
     function checkUrlParams() {
@@ -735,7 +687,7 @@
         
         document.getElementById('top-area').style.display = 'none';
 
-        activeFilters = { member: null, tag: null, color: null, cosplayer: null, event: eventName, text: "" };
+        activeFilters = { member: null, cosplayer: null, event: eventName, text: "" };
         document.getElementById('searchInput').value = "";
         currentSort = 'new';
         
@@ -768,7 +720,7 @@
         document.getElementById('main-view').style.display = 'block';
         document.getElementById('top-area').style.display = 'block';
         
-        activeFilters = { member: null, tag: null, color: null, cosplayer: null, event: null, text: "" };
+        activeFilters = { member: null, cosplayer: null, event: null, text: "" };
         currentSort = 'random';
         document.getElementById('searchInput').value = "";
         document.getElementById('profile-dashboard').style.display = 'none';
@@ -788,7 +740,7 @@
         document.getElementById('top-area').style.display = 'none';
         document.getElementById('event-dashboard').style.display = 'none';
 
-        activeFilters = { member: null, tag: null, color: null, cosplayer: name, event: null, text: "" };
+        activeFilters = { member: null, cosplayer: name, event: null, text: "" };
         document.getElementById('searchInput').value = "";
         currentSort = 'new';
         
@@ -850,9 +802,8 @@
             sortedMembers.forEach(mem => {
                 const count = memberCounts[mem];
                 const icon = memberIcons[mem] || '';
-                // ★追加：チップを押すとそのメンバーに絞り込まれる処理
                 breakdownBox.innerHTML += `
-                    <div class="member-bd-chip" id="prof-chip-${mem}" onclick="toggleProfileMemberFilter('${name}', '${mem}')" style="cursor:pointer; transition:0.2s;">
+                    <div class="member-bd-chip" id="prof-chip-${mem}" onclick="toggleProfileMemberFilter('${mem}')">
                         <span>${icon} ${mem}</span>
                         <span class="member-bd-count">${count}</span>
                     </div>`;
@@ -869,16 +820,16 @@
     }
 
     // ★追加：ポートフォリオ内でメンバーを絞り込む関数
-    function toggleProfileMemberFilter(cosplayerName, memberName) {
+    function toggleProfileMemberFilter(memberName) {
         if (activeFilters.member === memberName) {
-            activeFilters.member = null; // すでに選択されているなら解除
+            activeFilters.member = null; 
         } else {
-            activeFilters.member = memberName; // 選択
+            activeFilters.member = memberName; 
         }
         
         runFilter();
         
-        // チップの見た目を更新（選択中かどうか分かるようにする）
+        // チップの見た目を更新
         document.querySelectorAll('.member-bd-chip').forEach(el => {
             el.style.background = 'rgba(255,255,255,0.08)';
             el.style.borderColor = 'rgba(255,255,255,0.05)';
@@ -909,12 +860,10 @@
     function runFilter() {
         filteredData = allData.filter(d => {
             const matchMember = !activeFilters.member || d.member === activeFilters.member;
-            const matchTag = !activeFilters.tag || (d.tags && d.tags.includes(activeFilters.tag));
-            const matchColor = !activeFilters.color || d.colorName === activeFilters.color;
             const matchCos = !activeFilters.cosplayer || d.cosplayer === activeFilters.cosplayer;
             const matchEvent = !activeFilters.event || d.event === activeFilters.event;
             const matchText = !activeFilters.text || d.searchKey.includes(activeFilters.text);
-            return matchMember && matchTag && matchColor && matchCos && matchEvent && matchText;
+            return matchMember && matchCos && matchEvent && matchText;
         });
         updateSortButtons();
         updateChipStyles();
@@ -934,15 +883,19 @@
             if (activeFilters.member === null && !activeFilters.event && el.innerText.includes('All')) el.classList.add('active');
             if (activeFilters.member && el.innerText.includes(activeFilters.member)) el.classList.add('active');
         });
-        document.querySelectorAll('#tags-container .member-chip').forEach(el => {
-            el.classList.remove('active');
-            if (activeFilters.tag === null && el.id === 'tag-all') el.classList.add('active');
-            if (activeFilters.tag && el.id === `tag-${activeFilters.tag}`) el.classList.add('active');
-        });
-        document.querySelectorAll('#color-bar-container .color-chip').forEach(el => {
-            el.classList.remove('active');
-            if (activeFilters.color && el.id === `color-${activeFilters.color}`) el.classList.add('active');
-        });
+        
+        let evChip = document.getElementById('active-event-chip');
+        if (activeFilters.event) {
+            if (!evChip) {
+                const box = document.getElementById('chips-container');
+                box.insertAdjacentHTML('afterbegin', `<span class="member-chip active" id="active-event-chip" onclick="resetEventFilter()" style="background: #f09433; color: #fff; border-color: #f09433;"><i class="fas fa-calendar-alt"></i> ${activeFilters.event} ✕</span>`);
+            } else {
+                evChip.innerHTML = `<i class="fas fa-calendar-alt"></i> ${activeFilters.event} ✕`;
+                evChip.style.display = 'inline-flex';
+            }
+        } else {
+            if (evChip) evChip.style.display = 'none';
+        }
     }
 
     function filterByMember(name, el) { 
@@ -1084,37 +1037,6 @@
         modal.classList.add('open');
         history = [url, ...history.filter(h=>h!==url)].slice(0, 50);
         localStorage.setItem('vspo_history', JSON.stringify(history));
-
-        const recBox = document.getElementById('m-recommend');
-        recBox.innerHTML = '';
-        let recs = [];
-        
-        if (item.similarImages) {
-            const indices = item.similarImages.split(',');
-            recs = indices.map(idx => allData[parseInt(idx)])
-                          .filter(d => d && d.member === item.member);
-        }
-
-        if (recs.length < 5) {
-            const randomRecs = allData.filter(d => d.member === item.member && d.image !== url)
-                                      .sort(() => Math.random() - 0.5).slice(0, 10);
-            
-            const currentIds = new Set(recs.map(r => r._id));
-            for(let r of randomRecs) {
-                if(!currentIds.has(r._id)) {
-                    recs.push(r);
-                    if(recs.length >= 10) break;
-                }
-            }
-        }
-
-        recs.forEach(r => {
-            const d = document.createElement('div');
-            d.className = 'recommend-card';
-            d.innerHTML = `<img src="${r.image}">`;
-            d.onclick = (e) => { e.stopPropagation(); openModal(r.image); };
-            recBox.appendChild(d);
-        });
     }
 
     function closeModal() { document.getElementById('modal').classList.remove('open'); }
