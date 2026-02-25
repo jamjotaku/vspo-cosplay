@@ -167,6 +167,8 @@
         .profile-details-title { font-size: 0.85rem; color: var(--text-sub); font-weight: bold; margin-bottom: 8px; display:flex; align-items:center; gap:5px; }
         .member-breakdown-box { display: flex; flex-wrap: wrap; gap: 6px; }
         .member-bd-chip { background: rgba(255,255,255,0.08); padding: 4px 10px; border-radius: 6px; font-size: 0.8rem; color: #e5e7eb; display: flex; align-items: center; gap: 5px; border: 1px solid rgba(255,255,255,0.05); }
+        /* ★追加：チップのホバーエフェクト */
+        .member-bd-chip:hover { background: rgba(255,255,255,0.15); }
         .member-bd-count { background: rgba(0,0,0,0.3); padding: 1px 6px; border-radius: 4px; font-size: 0.75rem; color: var(--primary); font-weight: bold; }
 
         /* --- 🌟 Cosplayer Directory 🌟 --- */
@@ -247,8 +249,9 @@
         .story-nav { position: absolute; top: 0; width: 50%; height: 100%; z-index: 5; cursor: pointer; }
         .story-nav.left { left: 0; }
         .story-nav.right { right: 0; }
+        .story-viewer:active .story-progress-fill { transition: none !important; }
 
-        /* --- Modals --- */
+        /* --- Modals & Buttons --- */
         .modal, .diag-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 3000; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal.open, .diag-modal.open { display: flex; animation: fadeIn 0.2s; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -260,6 +263,10 @@
         .recommend-card { flex: 0 0 100px; height: 130px; border-radius: 8px; overflow: hidden; cursor: pointer; opacity: 0.7; transition: 0.2s; border: 1px solid #333; }
         .recommend-card:hover { opacity: 1; transform: scale(1.05); border-color: var(--primary); }
         .recommend-card img { width: 100%; height: 100%; object-fit: cover; }
+        
+        /* ★追加：モーダル内のボタン用スタイル */
+        .ctrl-chip { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 5px; }
+        .ctrl-chip:hover { background: var(--primary); border-color: var(--primary); }
 
         .diag-container { background: #1f2937; padding: 20px; border-radius: 16px; width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
         .diag-btn { background: #374151; color: #fff; border: 1px solid rgba(255,255,255,0.1); padding: 12px; width: 100%; margin-bottom: 10px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; font-weight: bold; }
@@ -423,7 +430,8 @@
         <img id="m-img" onclick="event.stopPropagation()">
         <div class="recommend-label" style="width:95%; color:#aaa; margin-top:15px;">✨ 似ている写真</div>
         <div id="m-recommend" class="recommend-area" onclick="event.stopPropagation()"></div>
-        <div style="margin-top:15px; display:flex; gap:10px;">
+        
+        <div style="margin-top:15px; display:flex; gap:10px;" onclick="event.stopPropagation()">
             <button class="ctrl-chip" onclick="shareX()" style="font-size:0.9rem; padding:8px 16px;"><i class="fab fa-x-twitter"></i> Post</button>
             <button class="ctrl-chip" onclick="copyLink()" style="font-size:0.9rem; padding:8px 16px;"><i class="fas fa-link"></i> Copy</button>
             <a id="m-link" href="#" target="_blank" class="ctrl-chip" style="font-size:0.9rem; padding:8px 16px; text-decoration:none;"><i class="fas fa-external-link-alt"></i> Original</a>
@@ -719,31 +727,26 @@
         });
     }
     
-    /* ★ イベントで絞り込む機能（専用ダッシュボード表示） */
     function filterByEvent(eventName) {
         document.getElementById('events-view').style.display = 'none';
         document.getElementById('directory-view').style.display = 'none';
         document.getElementById('profile-dashboard').style.display = 'none';
         document.getElementById('main-view').style.display = 'block';
         
-        // 普段のヘッダーを隠す
         document.getElementById('top-area').style.display = 'none';
 
         activeFilters = { member: null, tag: null, color: null, cosplayer: null, event: eventName, text: "" };
         document.getElementById('searchInput').value = "";
         currentSort = 'new';
         
-        // イベントダッシュボードのデータ更新
         const evData = allData.filter(d => d.event === eventName);
         document.getElementById('ev-dash-name').innerText = eventName;
         document.getElementById('ev-dash-photos').innerText = evData.length;
         const uniqueCosplayers = new Set(evData.map(d => d.cosplayer)).size;
         document.getElementById('ev-dash-cosplayers').innerText = uniqueCosplayers;
         
-        // イベントダッシュボードを表示
         document.getElementById('event-dashboard').style.display = 'block';
         
-        // URLパラメータ更新
         const newUrl = window.location.pathname + '?event=' + encodeURIComponent(eventName);
         window.history.pushState({path:newUrl}, '', newUrl);
 
@@ -782,7 +785,6 @@
         document.getElementById('events-view').style.display = 'none';
         document.getElementById('main-view').style.display = 'block';
 
-        // プロフィール表示時はトップエリアとイベントダッシュボードを隠す
         document.getElementById('top-area').style.display = 'none';
         document.getElementById('event-dashboard').style.display = 'none';
 
@@ -848,7 +850,12 @@
             sortedMembers.forEach(mem => {
                 const count = memberCounts[mem];
                 const icon = memberIcons[mem] || '';
-                breakdownBox.innerHTML += `<div class="member-bd-chip"><span>${icon} ${mem}</span><span class="member-bd-count">${count}</span></div>`;
+                // ★追加：チップを押すとそのメンバーに絞り込まれる処理
+                breakdownBox.innerHTML += `
+                    <div class="member-bd-chip" id="prof-chip-${mem}" onclick="toggleProfileMemberFilter('${name}', '${mem}')" style="cursor:pointer; transition:0.2s;">
+                        <span>${icon} ${mem}</span>
+                        <span class="member-bd-count">${count}</span>
+                    </div>`;
             });
 
             document.getElementById('profile-dashboard').style.display = 'block';
@@ -859,6 +866,31 @@
 
         runFilter();
         window.scrollTo({top:0, behavior:'smooth'});
+    }
+
+    // ★追加：ポートフォリオ内でメンバーを絞り込む関数
+    function toggleProfileMemberFilter(cosplayerName, memberName) {
+        if (activeFilters.member === memberName) {
+            activeFilters.member = null; // すでに選択されているなら解除
+        } else {
+            activeFilters.member = memberName; // 選択
+        }
+        
+        runFilter();
+        
+        // チップの見た目を更新（選択中かどうか分かるようにする）
+        document.querySelectorAll('.member-bd-chip').forEach(el => {
+            el.style.background = 'rgba(255,255,255,0.08)';
+            el.style.borderColor = 'rgba(255,255,255,0.05)';
+        });
+        
+        if (activeFilters.member) {
+            const activeChip = document.getElementById(`prof-chip-${activeFilters.member}`);
+            if (activeChip) {
+                activeChip.style.background = 'var(--primary)';
+                activeChip.style.borderColor = 'var(--primary)';
+            }
+        }
     }
 
     function shareProfile() {
