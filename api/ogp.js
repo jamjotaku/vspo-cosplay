@@ -1,6 +1,7 @@
 export default async function handler(req, res) {
-  // URLからレイヤー名を取得
-  const cosplayer = req.query.cosplayer || 'ゲスト';
+  // URLからレイヤー名を取得し、末尾の「さん」を取り除いて綺麗にする
+  const rawCosplayer = req.query.cosplayer || 'ゲスト';
+  const displayName = rawCosplayer.replace(/さん$/, '').trim();
   
   // スプレッドシートの「公開CSV」URL（API制限なしで超高速に読み込めます）
   const sheetId = '1sW4ppHBQbJp7RZ0in15d2LWOxcBK077wsbqmlZjUI_U';
@@ -20,10 +21,9 @@ export default async function handler(req, res) {
       const idxImg = headers.findIndex(h => h.match(/image|画像/i));
 
       if (idxCos >= 0 && idxImg >= 0) {
-        const cleanTarget = cosplayer.replace("さん", "").trim();
         // 下（最新）から検索
         for (let i = rows.length - 1; i > 0; i--) {
-          if (rows[i].includes(cleanTarget)) {
+          if (rows[i].includes(displayName)) {
             const cols = rows[i].split('","');
             if (cols.length > Math.max(idxCos, idxImg)) {
               let foundUrl = cols[idxImg].replace(/"/g, '');
@@ -46,18 +46,20 @@ export default async function handler(req, res) {
   }
 
   // Vercel上の本サイト（自分のドメイン）へジャンプさせるURLを生成
+  // ※ジャンプ先URLには、元の rawCosplayer ではなく綺麗な displayName を使います
   const siteUrl = `https://${req.headers.host}`;
-  const targetUrl = `${siteUrl}/?cosplayer=${encodeURIComponent(cosplayer)}`;
+  const targetUrl = `${siteUrl}/?cosplayer=${encodeURIComponent(displayName)}`;
 
   // Botが確実に読める「生のHTML」を出力
+  // タイトルや説明文を ${displayName}さん で統一し、「さんさん」になるのを防ぎます
   const html = `
   <!DOCTYPE html>
   <html lang="ja">
   <head>
     <meta charset="utf-8">
-    <title>${cosplayer}のポートフォリオ | VSPO! COSPLAY</title>
-    <meta property="og:title" content="${cosplayer}のポートフォリオ | VSPO! COSPLAY">
-    <meta property="og:description" content="ぶいすぽっ！コスプレアーカイブ ${cosplayer}さんのまとめページです。">
+    <title>${displayName}さんのポートフォリオ | VSPO! COSPLAY</title>
+    <meta property="og:title" content="${displayName}さんのポートフォリオ | VSPO! COSPLAY">
+    <meta property="og:description" content="ぶいすぽっ！コスプレアーカイブ ${displayName}さんのまとめページです。">
     <meta property="og:image" content="${imageUrl}">
     <meta property="og:type" content="website">
     <meta name="twitter:card" content="summary_large_image">
