@@ -847,11 +847,10 @@
     function shareProfile() {
         const cosplayerName = document.getElementById('prof-name').innerText;
         
-        // ★重要：ステップ4で取得した【新しく作ったOGP専用GASのURL】を貼る★
-        const ogpGasUrl = "https://script.google.com/macros/s/AKfycbwubsGrFiGiLL-sYdsYLcWxJ7tHkTVdaCgIMMWAVo5oS1OXDaPDdI-t32jZq268nCiJ/exec";
-        
-        // 今回は mode=share が不要なので、シンプルに ?cosplayer=〇〇 だけでOK
-        const shareUrl = `${ogpGasUrl}?cosplayer=${encodeURIComponent(cosplayerName)}`;
+        // ★修正: Vercelの自サイト内にある api/ogp.js を呼び出す相対パスに変更！
+        // ランダムなクエリを足してDiscordのキャッシュ対策も完備
+        const randomNum = Math.floor(Math.random() * 10000); 
+        const shareUrl = `${window.location.origin}/api/ogp?cosplayer=${encodeURIComponent(cosplayerName)}&v=${randomNum}`;
         
         navigator.clipboard.writeText(shareUrl).then(() => {
             const t = document.getElementById('toast');
@@ -1096,6 +1095,7 @@
 </script>
 </body>
 </html>
+
 
 
 
