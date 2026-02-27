@@ -472,7 +472,7 @@
         "空澄セナ": "🗝♠︎", "兎咲ミミ": "🐰🍭", "神成きゅぴ": "🌩", "八雲べに": "💄💚", 
         "藍沢エマ": "🥞💫", "紫宮るな": "☪🐾", "猫汰つな": "🍒✨", "白波らむね": "🐻‍❄️🏖", "小森めと": "🪐", 
         "夢野あかり": "🍼", "夜乃くろむ": "💀⛓", "紡木こかげ": "📘💧", 
-        "千燈ゆうひ": "🫠", "蝶屋はなび": "🦋🎆", "甘結もか": "🕹🔖" 
+        "千燈ゆうひ": "🫠", "蝶屋はなび": "🦋🎆", "甘結もか": "🕹🔖" , "銀城サイネ": "🎈", "龍巻ちせ": "🐉🌪"
     };
 
     const vibeKeywords = { 'cute': ['maid','idol','bunny'], 'cool': ['police','hoodie'], 'school': ['school_uniform','gym_uniform'], 'sexy': ['swimsuit','china_dress'] };
@@ -846,8 +846,12 @@
 
     function shareProfile() {
         const cosplayerName = document.getElementById('prof-name').innerText;
-        const baseUrl = window.location.origin + window.location.pathname;
-        const shareUrl = `${baseUrl}?cosplayer=${encodeURIComponent(cosplayerName)}`;
+        
+        // ★重要：ステップ4で取得した【新しく作ったOGP専用GASのURL】を貼る★
+        const ogpGasUrl = "https://script.google.com/macros/s/新しいURL/exec";
+        
+        // 今回は mode=share が不要なので、シンプルに ?cosplayer=〇〇 だけでOK
+        const shareUrl = `${ogpGasUrl}?cosplayer=${encodeURIComponent(cosplayerName)}`;
         
         navigator.clipboard.writeText(shareUrl).then(() => {
             const t = document.getElementById('toast');
@@ -856,7 +860,7 @@
             setTimeout(()=>{ t.style.opacity=0; t.style.visibility='hidden';}, 2000);
         });
     }
-
+    
     function runFilter() {
         filteredData = allData.filter(d => {
             const matchMember = !activeFilters.member || d.member === activeFilters.member;
@@ -1092,3 +1096,4 @@
 </script>
 </body>
 </html>
+
