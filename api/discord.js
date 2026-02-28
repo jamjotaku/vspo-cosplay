@@ -31,14 +31,23 @@ export default async function handler(req, res) {
   }
 
   if (interaction.type === 2 && interaction.data.name === 'search') {
-    const rawKeyword = interaction.data.options[0].value;
-    // 検索キーワードから「さん」を抜いてヒットしやすくする
-    const keyword = rawKeyword.replace(/さん$/, '').trim();
-    
+    // 2つの入力枠からデータを取得する
+    const options = interaction.data.options || [];
+    const cosplayerOpt = options.find(opt => opt.name === 'cosplayer');
+    const memberOpt = options.find(opt => opt.name === 'member');
+
+    const rawCosplayer = cosplayerOpt ? cosplayerOpt.value : '';
+    const rawMember = memberOpt ? memberOpt.value : ''; // 任意なので空っぽの可能性あり
+
+    // 「さん」を抜いて検索しやすくする
+    const searchCosplayer = rawCosplayer.replace(/さん$/, '').trim();
+    const searchMember = rawMember.replace(/さん$/, '').trim();
+
     const sheetId = '1sW4ppHBQbJp7RZ0in15d2LWOxcBK077wsbqmlZjUI_U';
     const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('シート1')}`;
 
-    let resultMessage = `🔍 **「${rawKeyword}」** に一致するアーカイブは見つかりませんでした...`;
+    let displayKeyword = searchMember ? `${searchCosplayer} さんの ${searchMember}` : `${searchCosplayer}`;
+    let resultMessage = `🔍 **「${displayKeyword}」** のアーカイブは見つかりませんでした...`;
 
     try {
       const response = await fetch(csvUrl);
@@ -54,15 +63,24 @@ export default async function handler(req, res) {
         let latestImageUrl = '';
         let matchedName = '';
 
-        // 下（最新）から順番にすべて検索し、件数をカウントする
         for (let i = rows.length - 1; i > 0; i--) {
-          if (rows[i].includes(keyword)) {
-            matchCount++; // ヒットした件数を増やす
-            
-            // 最初の1回目（一番新しい画像）だけデータを保存しておく
+          const rowData = rows[i];
+          let isMatch = false;
+
+          // ★ AND検索のロジック
+          // メンバー名も入力されている場合は、レイヤー名とメンバー名の「両方」が含まれているかチェック
+          if (searchCosplayer && searchMember) {
+            isMatch = rowData.includes(searchCosplayer) && rowData.includes(searchMember);
+          } else {
+            // レイヤー名だけの場合は今まで通り
+            isMatch = rowData.includes(searchCosplayer);
+          }
+
+          if (isMatch) {
+            matchCount++;
             if (matchCount === 1) {
-              const cols = rows[i].split('","');
-              matchedName = cols[idxCos].replace(/"/g, '').replace(/さん$/, ''); // 「さん」を削除して綺麗に
+              const cols = rowData.split('","');
+              matchedName = cols[idxCos].replace(/"/g, '').replace(/さん$/, '');
               
               let url = cols[idxImg].replace(/"/g, '');
               if (url.includes('pbs.twimg.com')) {
@@ -73,12 +91,11 @@ export default async function handler(req, res) {
           }
         }
 
-        // 1件以上見つかった場合、メッセージを組み立てる
         if (matchCount > 0) {
           const siteUrl = `https://${req.headers.host}`;
           const portfolioUrl = `${siteUrl}/?cosplayer=${encodeURIComponent(matchedName)}`;
           
-          resultMessage = `✨ **${matchedName}** さんのアーカイブが **${matchCount}件** 見つかりました！\n\n📸 **最新の1枚:**\n${latestImageUrl}\n\n🌟 **すべてのコスプレ写真を見る（ポートフォリオへ）**\n${portfolioUrl}`;
+          resultMessage = `✨ **${matchedName}** さんの **${searchMember ? searchMember + ' ' : ''}**アーカイブが **${matchCount}件** 見つかりました！\n\n📸 **最新の1枚:**\n${latestImageUrl}\n\n🌟 **すべての写真を見る（ポートフォリオへ）**\n${portfolioUrl}`;
         }
       }
     } catch (e) {
@@ -88,9 +105,7 @@ export default async function handler(req, res) {
 
     return res.status(200).json({
       type: 4,
-      data: {
-        content: resultMessage
-      }
+      data: { content: resultMessage }
     });
   }
 
