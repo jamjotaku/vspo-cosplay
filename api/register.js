@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   // ① さっきメモした「Application ID」を ' ' の中に貼り付けます
-  const APP_ID = 'ここにApplication IDを貼る'; 
+  const APP_ID = '1477157860684202086'; 
   
   // ② Vercelに登録したBotトークンを呼び出します
   const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
