@@ -1,11 +1,9 @@
 import { verifyKey } from 'discord-interactions';
 
-// Vercelの自動処理をオフにし、Discordの暗号通信を生のまま受け取るための必須設定
 export const config = {
   api: { bodyParser: false },
 };
 
-// 通信データを読み込むための関数
 async function getRawBody(req) {
   return new Promise((resolve) => {
     let data = '';
@@ -17,12 +15,10 @@ async function getRawBody(req) {
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).send('POST only');
 
-  // Discordからの通信か確認するための署名データ
   const signature = req.headers['x-signature-ed25519'];
   const timestamp = req.headers['x-signature-timestamp'];
   const rawBody = await getRawBody(req);
 
-  // Vercelに登録した鍵（PUBLIC KEY）を使って「本物のDiscordからの通信か」を判定
   const isValidRequest = verifyKey(rawBody, signature, timestamp, process.env.DISCORD_PUBLIC_KEY);
   if (!isValidRequest) {
     return res.status(401).send('Bad request signature');
@@ -30,20 +26,19 @@ export default async function handler(req, res) {
 
   const interaction = JSON.parse(rawBody);
 
-  // ① Discordからの「起きてる？」という生存確認への返事（必須）
   if (interaction.type === 1) {
     return res.status(200).json({ type: 1 });
   }
 
-  // ② ユーザーが「/search」コマンドを打った時の処理
   if (interaction.type === 2 && interaction.data.name === 'search') {
-    const keyword = interaction.data.options[0].value;
+    const rawKeyword = interaction.data.options[0].value;
+    // 検索キーワードから「さん」を抜いてヒットしやすくする
+    const keyword = rawKeyword.replace(/さん$/, '').trim();
     
-    // スプレッドシート（公開CSV）の読み込み
     const sheetId = '1sW4ppHBQbJp7RZ0in15d2LWOxcBK077wsbqmlZjUI_U';
     const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('シート1')}`;
 
-    let resultMessage = `🔍 **「${keyword}」** に一致するアーカイブは見つかりませんでした...`;
+    let resultMessage = `🔍 **「${rawKeyword}」** に一致するアーカイブは見つかりませんでした...`;
 
     try {
       const response = await fetch(csvUrl);
@@ -55,21 +50,35 @@ export default async function handler(req, res) {
       const idxImg = headers.findIndex(h => h.match(/image|画像/i));
 
       if (idxCos >= 0 && idxImg >= 0) {
-        // 下（最新）から検索して、最初にヒットしたものを返す
+        let matchCount = 0;
+        let latestImageUrl = '';
+        let matchedName = '';
+
+        // 下（最新）から順番にすべて検索し、件数をカウントする
         for (let i = rows.length - 1; i > 0; i--) {
           if (rows[i].includes(keyword)) {
-            const cols = rows[i].split('","');
-            const name = cols[idxCos].replace(/"/g, '');
-            let url = cols[idxImg].replace(/"/g, '');
+            matchCount++; // ヒットした件数を増やす
             
-            // BotがDiscord上でエラーを出さないように画像をリサイズ
-            if (url.includes('pbs.twimg.com')) {
-               url = url.split('?')[0] + "?format=jpg&name=large";
+            // 最初の1回目（一番新しい画像）だけデータを保存しておく
+            if (matchCount === 1) {
+              const cols = rows[i].split('","');
+              matchedName = cols[idxCos].replace(/"/g, '').replace(/さん$/, ''); // 「さん」を削除して綺麗に
+              
+              let url = cols[idxImg].replace(/"/g, '');
+              if (url.includes('pbs.twimg.com')) {
+                 url = url.split('?')[0] + "?format=jpg&name=large";
+              }
+              latestImageUrl = url;
             }
-
-            resultMessage = `✨ **${name}** さんのアーカイブが見つかりました！\n${url}`;
-            break;
           }
+        }
+
+        // 1件以上見つかった場合、メッセージを組み立てる
+        if (matchCount > 0) {
+          const siteUrl = `https://${req.headers.host}`;
+          const portfolioUrl = `${siteUrl}/?cosplayer=${encodeURIComponent(matchedName)}`;
+          
+          resultMessage = `✨ **${matchedName}** さんのアーカイブが **${matchCount}件** 見つかりました！\n\n📸 **最新の1枚:**\n${latestImageUrl}\n\n🌟 **すべてのコスプレ写真を見る（ポートフォリオへ）**\n${portfolioUrl}`;
         }
       }
     } catch (e) {
@@ -77,7 +86,6 @@ export default async function handler(req, res) {
       resultMessage = "⚠️ データベースの読み込みに失敗しました。";
     }
 
-    // Discordのチャット欄に検索結果を返信する
     return res.status(200).json({
       type: 4,
       data: {
