@@ -1,0 +1,7 @@
+{
+  "name": "vspo-cosplay",
+  "version": "1.0.0",
+  "dependencies": {
+    "discord-interactions": "^3.0.0"
+  }
+}
