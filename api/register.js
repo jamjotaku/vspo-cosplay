@@ -1,11 +1,8 @@
 export default async function handler(req, res) {
-  // ① さっきメモした「Application ID」を ' ' の中に貼り付けます
+  // ① 前回と同じく「Application ID」を ' ' の中に貼り付けてください
   const APP_ID = '1477157860684202086'; 
-  
-  // ② Vercelに登録したBotトークンを呼び出します
   const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
-  // Discordに「/search」コマンドを登録するリクエストを送信
   const response = await fetch(`https://discord.com/api/v10/applications/${APP_ID}/commands`, {
     method: 'POST',
     headers: {
@@ -14,20 +11,28 @@ export default async function handler(req, res) {
     },
     body: JSON.stringify({
       name: 'search',
-      description: 'アーカイブからコスプレイヤーさんやイベントを検索します',
-      options: [{
-        name: 'keyword',
-        description: '検索したい名前（例：小雪うの、VGGC）',
-        type: 3,
-        required: true
-      }]
+      description: 'アーカイブからコスプレイヤーさんやメンバーを検索します',
+      options: [
+        {
+          name: 'cosplayer',
+          description: 'コスプレイヤーの名前（例：小雪うの）',
+          type: 3,
+          required: true
+        },
+        {
+          name: 'member',
+          description: 'ぶいすぽっ！メンバーの名前（例：花芽すみれ）※任意',
+          type: 3,
+          required: false // 任意入力にしておきます
+        }
+      ]
     })
   });
 
   if (response.ok) {
-    res.status(200).send('🎉 コマンドの登録に成功しました！Discordのチャット欄で /search と打ってみてください。');
+    res.status(200).send('🎉 コマンドのアップデートに成功しました！');
   } else {
     const error = await response.text();
-    res.status(500).send(`⚠️ エラーが発生しました: ${error}`);
+    res.status(500).send(`⚠️ エラー: ${error}`);
   }
 }
