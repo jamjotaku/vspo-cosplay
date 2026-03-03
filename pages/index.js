@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 
-// --- 設定 ---
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 const PROFILE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=1592730885&single=true&output=csv";
 
@@ -23,43 +22,53 @@ export default function Home() {
   const [currentSort, setCurrentSort] = useState('random');
   const [modalImage, setModalImage] = useState(null);
 
-  // ストーリー用の状態
+  // ストーリー管理
   const [stories, setStories] = useState([]);
-  const [activeStory, setActiveStory] = useState(null); // { memberIndex, slideIndex }
+  const [activeStory, setActiveStory] = useState(null);
   const storyTimer = useRef(null);
 
-  // 1. データ読み込み
   useEffect(() => {
     const loadData = async () => {
       const Papa = (await import('papaparse')).default;
+      
+      // アーカイブデータ取得
       Papa.parse(CSV_URL, {
         download: true, header: true, complete: (res) => {
-          const formatted = res.data.filter(d => d.image || d.url).map((d, i) => ({
+          const keys = Object.keys(res.data[0] || {});
+          // 列名を柔軟に検知
+          const kMem = keys.find(k => k.match(/member|名前/i)) || 'member';
+          const kImg = keys.find(k => k.match(/image|url/i)) || 'image';
+          const kCos = keys.find(k => k.match(/cosplayer|レイヤー/i)) || 'cosplayer';
+          const kLink = keys.find(k => k.match(/link|twitter/i)) || 'link';
+
+          const formatted = res.data.filter(d => d[kImg]).map((d, i) => ({
             _id: i,
-            member: d.member || d['名前'],
-            image: d.image || d['url'],
-            cosplayer: d.cosplayer || d['レイヤー'] || "Unknown",
-            link: d.link || d['twitter'],
-            searchKey: `${d.member} ${d.cosplayer}`.toLowerCase()
+            member: (d[kMem] || "").trim(), // 空白削除で正確にマッチング
+            image: d[kImg],
+            cosplayer: (d[kCos] || "Unknown").trim(),
+            link: d[kLink] || "",
+            // AIタグを排除し、メンバー名とレイヤー名のみを検索キーにする
+            searchKey: `${d[kMem]} ${d[kCos]}`.toLowerCase()
           }));
           setAllData(formatted);
 
-          // ストーリーデータの生成
+          // ストーリー生成（正確なマッチングのみ）
           const storyList = memberOrder.map(m => {
             const pics = formatted.filter(d => d.member === m);
             if (pics.length === 0) return null;
-            // メンバーごとにランダム/最新の数枚をピックアップ
+            // 最新5枚をピックアップ
             return { member: m, images: pics.slice(-5).reverse() };
           }).filter(Boolean);
           setStories(storyList);
         }
       });
 
+      // プロフィールデータ取得
       Papa.parse(PROFILE_CSV_URL, {
         download: true, header: true, complete: (res) => {
           const profs = {};
           res.data.forEach(p => {
-            const name = p.cosplayer || p['名前'];
+            const name = (p.cosplayer || p['名前'] || "").trim();
             if(name) profs[name] = p;
           });
           setProfileData(profs);
@@ -69,16 +78,15 @@ export default function Home() {
     loadData();
   }, []);
 
-  // 2. ストーリー制御ロジック
-  const nextStory = () => {
+  // 次のスライド（そのメンバーのスライドが終わったら閉じるように変更）
+  const nextSlide = () => {
     setActiveStory(prev => {
       if (!prev) return null;
-      const currentMember = stories[prev.memberIndex];
-      if (prev.slideIndex < currentMember.images.length - 1) {
+      const currentMemberStories = stories[prev.memberIndex];
+      if (prev.slideIndex < currentMemberStories.images.length - 1) {
         return { ...prev, slideIndex: prev.slideIndex + 1 };
-      } else if (prev.memberIndex < stories.length - 1) {
-        return { memberIndex: prev.memberIndex + 1, slideIndex: 0 };
       }
+      // 他のメンバーに勝手に飛ばないよう、ここで終了（null）にする
       return null;
     });
   };
@@ -86,12 +94,12 @@ export default function Home() {
   useEffect(() => {
     if (activeStory) {
       clearTimeout(storyTimer.current);
-      storyTimer.current = setTimeout(nextStory, 4000);
+      storyTimer.current = setTimeout(nextSlide, 4000);
     }
     return () => clearTimeout(storyTimer.current);
   }, [activeStory]);
 
-  // 3. フィルタリング & 統計計算 (既存ロジックを維持)
+  // フィルタリング & 統計 (SNS強化版)
   const stats = useMemo(() => {
     if (!activeFilters.cosplayer) return null;
     const cleanName = activeFilters.cosplayer.replace(/さん$/, '');
@@ -100,13 +108,20 @@ export default function Home() {
     const myPhotos = allData.filter(d => d.cosplayer === activeFilters.cosplayer);
     const memberCounts = {};
     myPhotos.forEach(d => { memberCounts[d.member] = (memberCounts[d.member] || 0) + 1; });
+    
     const getSnsUrl = (keywords) => {
       const foundKey = Object.keys(prof).find(key => keywords.some(k => key.toLowerCase().includes(k.toLowerCase())));
       return foundKey ? prof[foundKey].trim() : null;
     };
+
     return {
-      total: myPhotos.length, memberCount: Object.keys(memberCounts).length, breakdown: memberCounts,
-      sns: { twitter: getSnsUrl(['twitter', 'x', '𝕏', 'sns']), insta: getSnsUrl(['insta', 'instagram']), tiktok: getSnsUrl(['tiktok']), fantia: getSnsUrl(['fantia']) }
+      total: myPhotos.length,
+      memberCount: Object.keys(memberCounts).length,
+      breakdown: memberCounts,
+      sns: {
+        twitter: getSnsUrl(['twitter', 'x', '𝕏']),
+        insta: getSnsUrl(['insta', 'instagram']),
+      }
     };
   }, [activeFilters.cosplayer, allData, profileData]);
 
@@ -142,13 +157,13 @@ export default function Home() {
         </div>
       </header>
 
-      {/* --- ストーリーコンテナ (復活！) --- */}
+      {/* ストーリー表示エリア */}
       {!activeFilters.cosplayer && (
         <div className="stories-container">
           {stories.map((s, idx) => (
             <div key={s.member} className="story-item" onClick={() => setActiveStory({ memberIndex: idx, slideIndex: 0 })}>
               <div className="story-ring">
-                <img src={getTwitterUrl(s.images[0].image, 'thumb')} className="story-img" alt="" />
+                <img src={getTwitterUrl(s.images[0].image, 'thumb')} className="story-img" alt={s.member} />
               </div>
               <span className="story-name">{s.member}</span>
             </div>
@@ -156,7 +171,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* --- 個人ダッシュボード --- */}
+      {/* ポートフォリオダッシュボード */}
       {activeFilters.cosplayer && stats && (
         <div className="dashboard-container">
           <div className="profile-header-main">
@@ -169,7 +184,7 @@ export default function Home() {
           </div>
           <div className="profile-stats-grid">
             <div className="stat-card"><div className="stat-val">{stats.total}</div><div className="stat-label">Total Photos</div></div>
-            <div className="stat-card"><div className="stat-val">{stats.memberCount}</div><div className="stat-label">Members Cosplayed</div></div>
+            <div className="stat-card"><div className="stat-val">{stats.memberCount}</div><div className="stat-label">Members</div></div>
           </div>
           <div className="member-breakdown-box">
             {Object.keys(stats.breakdown).map(m => (
@@ -218,13 +233,16 @@ export default function Home() {
         </div>
       </main>
 
-      {/* --- ストーリービューワー (復活！) --- */}
+      {/* ストーリービューワー（改善版：プログレスバーとナビゲーション） */}
       {activeStory && (
         <div className="story-viewer" onClick={() => setActiveStory(null)}>
           <div className="story-progress-bar">
             {stories[activeStory.memberIndex].images.map((_, i) => (
               <div key={i} className="story-progress-segment">
-                <div className="story-progress-fill" style={{ width: i < activeStory.slideIndex ? '100%' : i === activeStory.slideIndex ? '100%' : '0%', transition: i === activeStory.slideIndex ? 'width 4s linear' : 'none' }}></div>
+                <div className="story-progress-fill" style={{ 
+                  width: i < activeStory.slideIndex ? '100%' : i === activeStory.slideIndex ? '100%' : '0%',
+                  transition: i === activeStory.slideIndex ? 'width 4s linear' : 'none'
+                }}></div>
               </div>
             ))}
           </div>
@@ -233,43 +251,43 @@ export default function Home() {
             <div className="story-header-info">
               {memberIcons[stories[activeStory.memberIndex].member]} {stories[activeStory.memberIndex].member}
             </div>
+            {/* 左右クリックでスライド移動 */}
             <div className="story-nav left" onClick={() => setActiveStory(prev => ({...prev, slideIndex: Math.max(0, prev.slideIndex - 1)}))}></div>
-            <div className="story-nav right" onClick={nextStory}></div>
+            <div className="story-nav right" onClick={nextSlide}></div>
           </div>
         </div>
       )}
 
       {modalImage && (
         <div className="modal open" onClick={() => setModalImage(null)}>
+          <span className="modal-close" onClick={() => setModalImage(null)}>&times;</span>
           <img src={getTwitterUrl(modalImage.image, 'large')} alt="" onClick={e => e.stopPropagation()} />
         </div>
       )}
 
       <style jsx global>{`
-        :root { --bg-color: #0f0f0f; --text-color: #f1f1f1; --primary: #3ea6ff; --grad-main: linear-gradient(135deg, #3b82f6 0%, #d946ef 100%); --header-height: 60px; }
+        /* --- 既存のスタイルを維持しつつストーリーを微調整 --- */
+        :root { --bg-color: #0f0f0f; --text-color: #f1f1f1; --primary: #3ea6ff; --header-height: 60px; }
         body { background: var(--bg-color); color: var(--text-color); font-family: sans-serif; margin: 0; padding-top: var(--header-height); }
-        header { position: fixed; top: 0; width: 100%; height: var(--header-height); background: rgba(15,15,15,0.9); backdrop-filter: blur(10px); z-index: 1000; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
+        header { position: fixed; top: 0; width: 100%; height: var(--header-height); background: rgba(15,15,15,0.95); backdrop-filter: blur(10px); z-index: 1000; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
         
-        /* ストーリーのスタイル */
         .stories-container { display: flex; gap: 15px; overflow-x: auto; padding: 15px; scrollbar-width: none; border-bottom: 1px solid #222; }
-        .stories-container::-webkit-scrollbar { display: none; }
         .story-item { flex-shrink: 0; width: 70px; text-align: center; cursor: pointer; }
-        .story-ring { width: 66px; height: 66px; border-radius: 50%; padding: 2px; background: var(--grad-main); display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
+        .story-ring { width: 66px; height: 66px; border-radius: 50%; padding: 2px; background: linear-gradient(135deg, #3b82f6 0%, #d946ef 100%); display: flex; align-items: center; justify-content: center; }
         .story-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #000; }
-        .story-name { font-size: 0.65rem; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+        .story-name { font-size: 0.65rem; color: #aaa; margin-top: 5px; display: block; }
 
-        /* ビューワー */
         .story-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         .story-progress-bar { position: absolute; top: 10px; width: 95%; display: flex; gap: 4px; z-index: 5010; }
         .story-progress-segment { flex: 1; height: 2px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
         .story-progress-fill { height: 100%; background: #fff; width: 0; }
-        .story-content { position: relative; width: 100%; height: 100%; max-width: 500px; display: flex; align-items: center; justify-content: center; }
+        .story-content { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
         .story-main-img { max-width: 100%; max-height: 100%; object-fit: contain; }
         .story-header-info { position: absolute; top: 30px; left: 20px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 5010; }
-        .story-nav { position: absolute; top: 0; height: 100%; width: 30%; z-index: 5005; }
+        .story-nav { position: absolute; top: 0; height: 100%; width: 40%; z-index: 5005; }
         .story-nav.left { left: 0; } .story-nav.right { right: 0; }
 
-        /* その他既存のスタイル */
+        /* ダッシュボード & グリッド */
         .dashboard-container { padding: 20px; background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, var(--bg-color) 100%); border-bottom: 1px solid #333; }
         .profile-header-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .btn-sns { background: #1da1f2; color: #fff; padding: 6px 15px; border-radius: 20px; text-decoration: none; font-size: 0.75rem; font-weight: bold; }
@@ -295,6 +313,7 @@ export default function Home() {
         .card-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
         .card-title { font-weight: bold; font-size: 0.85rem; }
         .card-subtitle { font-size: 0.7rem; color: #aaa; }
+
         .top-area { background: var(--bg-color); position: sticky; top: var(--header-height); z-index: 900; }
         .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; }
         .member-chip { background: #272727; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; }
@@ -302,10 +321,16 @@ export default function Home() {
         .utility-deck { padding: 5px 15px; display: flex; justify-content: space-between; }
         .sort-btn { background: transparent; border: none; color: #aaa; padding: 5px 8px; font-size: 0.75rem; cursor: pointer; }
         .sort-btn.active { color: #fff; border-bottom: 2px solid #fff; }
+
         .modal { position: fixed; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 2000; }
         .modal.open { display: flex; }
         .modal img { max-height: 85vh; max-width: 95%; border-radius: 8px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+        .modal-close { position: absolute; top: 20px; right: 20px; font-size: 2.5rem; color: #fff; cursor: pointer; }
+
+        .search-box { background: #121212; border: 1px solid #303030; border-radius: 20px; padding: 5px 15px; display: flex; align-items: center; }
+        .search-input { background: none; border: none; color: #fff; outline: none; margin-left: 8px; font-size: 0.9rem; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
       <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </>
