@@ -11,8 +11,7 @@
     "productName": "VspoCosplayWidget",
     "copyright": "Copyright © 2026 じゃむじゃ",
     "win": {
-      "target": "portable",
-      "icon": "icon.ico"
+      "target": "portable"
     },
     "directories": {
       "output": "dist"
