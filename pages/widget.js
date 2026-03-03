@@ -15,27 +15,31 @@ export default function Widget() {
   const [currentPhoto, setCurrentPhoto] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [config, setConfig] = useState({ member: '', cosplayer: '', interval: 60 });
+  const [isLoaded, setIsLoaded] = useState(false);
 
-  // データ取得
+  // 1. CSVデータの取得
   useEffect(() => {
     const loadData = async () => {
       const Papa = (await import('papaparse')).default;
       Papa.parse(CSV_URL, {
-        download: true, header: true,
+        download: true, header: true, skipEmptyLines: true,
         complete: (res) => {
-          const formatted = res.data.filter(d => d.image || d['画像']).map(d => ({
-            member: (d.member || d['名前'] || "").trim(),
-            image: (d.image || d['画像'] || "").replace('name=medium', 'name=large'),
-            cosplayer: (d.cosplayer || d['レイヤー'] || "Unknown").trim(),
-          }));
+          const formatted = res.data
+            .filter(d => d.image || d['画像'] || d.link || d['URL'])
+            .map(d => ({
+              member: (d.member || d['名前'] || "").trim(),
+              image: (d.image || d['画像'] || d.link || d['URL'] || "").replace('name=medium', 'name=large'),
+              cosplayer: (d.cosplayer || d['レイヤー'] || "Unknown").trim(),
+            }));
           setAllData(formatted);
+          setIsLoaded(true);
         }
       });
     };
     loadData();
   }, []);
 
-  // ランダム選出
+  // 2. 画像をランダムに選ぶ
   const pickPhoto = useCallback(() => {
     if (allData.length === 0) return;
     let pool = allData.filter(p => 
@@ -43,74 +47,175 @@ export default function Widget() {
       (!config.cosplayer || config.cosplayer === '全員' || p.cosplayer === config.cosplayer)
     );
     if (pool.length === 0) pool = allData;
-    setCurrentPhoto(pool[Math.floor(Math.random() * pool.length)]);
+    const random = pool[Math.floor(Math.random() * pool.length)];
+    setCurrentPhoto(random);
   }, [allData, config]);
 
-  // タイマー
+  // 3. 切り替えタイマー
   useEffect(() => {
     pickPhoto();
     const timer = setInterval(pickPhoto, config.interval * 1000);
     return () => clearInterval(timer);
   }, [pickPhoto, config.interval]);
 
-  // レイヤー名リスト
+  // レイヤー名リストの生成
   const cosplayers = useMemo(() => 
     ['全員', ...new Set(allData.map(d => d.cosplayer))].sort(), [allData]
   );
 
   return (
-    <div className="container">
-      <Head><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" /></Head>
+    <div className="widget-root">
+      <Head>
+        <title>Vspo! Desktop Widget</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+      </Head>
       
-      {currentPhoto && (
-        <div className="photo-frame" onClick={() => setIsSettingsOpen(!isSettingsOpen)}>
-          <img src={currentPhoto.image} alt="" className="img" />
-          <div className="info">
-            <div className="mem">{currentPhoto.member}</div>
-            <div className="cos">{currentPhoto.cosplayer}</div>
+      {/* メインフレーム */}
+      <div className="photo-frame">
+        {/* 設定を開くための浮遊ボタン（ドラッグ無効エリア） */}
+        <button className="settings-trigger" onClick={() => setIsSettingsOpen(true)}>
+          <i className="fas fa-cog"></i>
+        </button>
+
+        {currentPhoto ? (
+          <>
+            <img src={currentPhoto.image} alt="" className="main-image" />
+            <div className="overlay-info">
+              <div className="member-name">{currentPhoto.member}</div>
+              <div className="cos-name">{currentPhoto.cosplayer}</div>
+            </div>
+          </>
+        ) : (
+          <div className="loading">Loading...</div>
+        )}
+      </div>
+
+      {/* 設定パネル（スライド式） */}
+      <div className={`settings-panel ${isSettingsOpen ? 'open' : ''}`}>
+        <div className="panel-header">
+          <span><i className="fas fa-sliders-h"></i> WIDGET SETTINGS</span>
+          <button className="close-btn" onClick={() => setIsSettingsOpen(false)}>&times;</button>
+        </div>
+
+        <div className="scroll-area">
+          <div className="setting-group">
+            <label>Member Filter</label>
+            <select value={config.member} onChange={e => setConfig({...config, member: e.target.value})}>
+              {MEMBER_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
+            </select>
+          </div>
+
+          <div className="setting-group">
+            <label>Cosplayer Filter</label>
+            <select value={config.cosplayer} onChange={e => setConfig({...config, cosplayer: e.target.value})}>
+              {cosplayers.map(c => <option key={c} value={c}>{c}</option>)}
+            </select>
+          </div>
+
+          <div className="setting-group">
+            <label>Interval: {config.interval}s</label>
+            <input 
+              type="range" min="10" max="600" step="10" 
+              value={config.interval} 
+              onChange={e => setConfig({...config, interval: e.target.value})} 
+            />
           </div>
         </div>
-      )}
 
-      <div className={`panel ${isSettingsOpen ? 'open' : ''}`}>
-        <div className="header">
-          <span>⚙️ Settings</span>
-          <button onClick={() => setIsSettingsOpen(false)}>&times;</button>
-        </div>
-        <div className="item">
-          <label>Member</label>
-          <select value={config.member} onChange={e => setConfig({...config, member: e.target.value})}>
-            {MEMBER_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
-          </select>
-        </div>
-        <div className="item">
-          <label>Cosplayer</label>
-          <select value={config.cosplayer} onChange={e => setConfig({...config, cosplayer: e.target.value})}>
-            {cosplayers.map(c => <option key={c} value={c}>{c}</option>)}
-          </select>
-        </div>
-        <div className="item">
-          <label>Interval ({config.interval}s)</label>
-          <input type="range" min="10" max="600" step="10" value={config.interval} onChange={e => setConfig({...config, interval: e.target.value})} />
-        </div>
-        <button className="btn" onClick={() => { pickPhoto(); setIsSettingsOpen(false); }}>Update Now</button>
+        <button className="apply-btn" onClick={() => { pickPhoto(); setIsSettingsOpen(false); }}>
+          APPLY & UPDATE
+        </button>
       </div>
 
       <style jsx global>{`
-        body { margin: 0; background: transparent; overflow: hidden; font-family: 'Segoe UI', sans-serif; }
-        .container { width: 100vw; height: 100vh; position: relative; }
-        .photo-frame { width: 100%; height: 100%; position: relative; border-radius: 15px; overflow: hidden; -webkit-app-region: drag; cursor: grab; }
-        .img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-        .info { position: absolute; bottom: 0; width: 100%; padding: 15px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; }
-        .mem { font-size: 10px; color: #3ea6ff; font-weight: bold; }
-        .cos { font-size: 14px; font-weight: bold; }
-        .panel { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(20,20,20,0.95); color: white; padding: 20px; transition: 0.3s; transform: translateY(100%); -webkit-app-region: no-drag; z-index: 100; box-sizing: border-box; display: flex; flex-direction: column; gap: 15px; border-radius: 15px; }
-        .panel.open { transform: translateY(0); }
-        .header { display: flex; justify-content: space-between; align-items: center; }
-        .item { display: flex; flex-direction: column; gap: 5px; }
-        .item label { font-size: 11px; color: #888; }
-        select { background: #333; color: white; border: none; padding: 8px; border-radius: 5px; }
-        .btn { background: #3ea6ff; border: none; color: white; padding: 10px; border-radius: 5px; font-weight: bold; cursor: pointer; margin-top: auto; }
+        body { margin: 0; background: transparent; overflow: hidden; font-family: 'Inter', 'Meiryo', sans-serif; }
+        
+        /* ドラッグ可能エリアの設定 */
+        .photo-frame {
+          width: 100vw; height: 100vh;
+          position: relative;
+          border-radius: 16px;
+          overflow: hidden;
+          background: #111;
+          box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+          -webkit-app-region: drag; /* ウィンドウを掴んで動かせる */
+          border: 2px solid rgba(255, 255, 255, 0.1);
+          box-sizing: border-box;
+        }
+
+        .main-image {
+          width: 100%; height: 100%;
+          object-fit: cover;
+          pointer-events: none; /* ドラッグを邪魔しない */
+        }
+
+        /* 設定ボタン（ドラッグ不可） */
+        .settings-trigger {
+          position: absolute; top: 12px; left: 12px; z-index: 100;
+          background: rgba(0,0,0,0.6); color: #00f2ff;
+          border: 1px solid #00f2ff; border-radius: 50%;
+          width: 32px; height: 32px; cursor: pointer;
+          -webkit-app-region: no-drag;
+          transition: 0.3s;
+          display: flex; align-items: center; justify-content: center;
+          box-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
+        }
+        .settings-trigger:hover { background: #00f2ff; color: #000; }
+
+        .overlay-info {
+          position: absolute; bottom: 0; width: 100%;
+          padding: 30px 15px 15px;
+          background: linear-gradient(transparent, rgba(0,0,0,0.9));
+          color: white; pointer-events: none;
+        }
+        .member-name { font-size: 11px; color: #ff00ff; font-weight: bold; letter-spacing: 1px; }
+        .cos-name { font-size: 15px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+
+        /* 設定パネル */
+        .settings-panel {
+          position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+          background: rgba(10, 10, 12, 0.98);
+          color: white; padding: 20px; box-sizing: border-box;
+          transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+          transform: translateY(100%);
+          z-index: 200;
+          display: flex; flex-direction: column;
+          -webkit-app-region: no-drag;
+        }
+        .settings-panel.open { transform: translateY(0); }
+
+        .panel-header {
+          display: flex; justify-content: space-between; align-items: center;
+          margin-bottom: 20px; border-bottom: 1px solid #333; padding-bottom: 10px;
+        }
+        .panel-header span { font-size: 12px; font-weight: bold; color: #00f2ff; }
+        .close-btn { background: none; border: none; color: #888; font-size: 24px; cursor: pointer; }
+
+        .scroll-area { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        
+        .setting-group { display: flex; flex-direction: column; gap: 8px; }
+        .setting-group label { font-size: 11px; color: #aaa; text-transform: uppercase; }
+        
+        select {
+          background: #1a1a1c; color: white; border: 1px solid #333;
+          padding: 10px; border-radius: 8px; font-size: 14px; outline: none;
+        }
+        select:focus { border-color: #00f2ff; }
+
+        input[type="range"] { accent-color: #00f2ff; cursor: pointer; }
+
+        .apply-btn {
+          background: linear-gradient(45deg, #00f2ff, #ff00ff);
+          border: none; color: white; padding: 12px;
+          border-radius: 8px; font-weight: bold; cursor: pointer;
+          margin-top: 20px; letter-spacing: 1px;
+        }
+        .apply-btn:active { transform: scale(0.98); }
+
+        .loading {
+          width: 100%; height: 100%; display: flex; align-items: center;
+          justify-content: center; color: #555; font-size: 12px;
+        }
       `}</style>
     </div>
   );
