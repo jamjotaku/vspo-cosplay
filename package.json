@@ -2,15 +2,20 @@
   "name": "vspo-cosplay-archive",
   "version": "1.0.0",
   "private": true,
+  "main": "main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "widget": "electron ."
   },
   "dependencies": {
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
     "papaparse": "latest"
+  },
+  "devDependencies": {
+    "electron": "^28.0.0"
   }
 }
