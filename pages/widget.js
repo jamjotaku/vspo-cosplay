@@ -62,9 +62,11 @@ export default function Widget() {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
       </Head>
 
-      {/* メインフレーム */}
-      <div className="main-frame">
-        <button className="settings-btn" onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(true); }}>
+      {/* ポイント：設定が開いている時（isSettingsOpen）は drag-mode を外す 
+      */}
+      <div className={`main-frame ${isSettingsOpen ? '' : 'drag-mode'}`}>
+        
+        <button className="settings-btn" onClick={() => setIsSettingsOpen(true)}>
           <i className="fas fa-cog"></i>
         </button>
 
@@ -79,8 +81,8 @@ export default function Widget() {
         )}
       </div>
 
-      {/* 設定パネル：ここに強力な no-drag を指定 */}
-      <div className={`modal ${isSettingsOpen ? 'show' : ''}`} onClick={(e) => e.stopPropagation()}>
+      {/* 設定パネル */}
+      <div className={`modal ${isSettingsOpen ? 'show' : ''}`}>
         <div className="modal-header">
           <span>WIDGET CONFIG</span>
           <button className="close-x" onClick={() => setIsSettingsOpen(false)}>&times;</button>
@@ -110,41 +112,38 @@ export default function Widget() {
         body { margin: 0; background: transparent; overflow: hidden; font-family: 'Inter', sans-serif; }
         .widget-container { width: 100vw; height: 100vh; position: relative; }
         
-        /* 通常時はドラッグ可能 */
         .main-frame { 
           width: 100%; height: 100%; position: relative; border-radius: 12px; overflow: hidden; 
-          background: #111; border: 1px solid rgba(255,255,255,0.1); -webkit-app-region: drag;
+          background: #111; border: 1px solid rgba(255,255,255,0.1);
         }
-        
+
+        /* 設定が閉じている時だけドラッグを有効にする 
+        */
+        .drag-mode { -webkit-app-region: drag; }
+
         .photo { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
         
+        /* ボタンや設定画面は「絶対に」ドラッグさせない 
+        */
+        .settings-btn, .modal { -webkit-app-region: no-drag !important; }
+
         .settings-btn { 
           position: absolute; top: 10px; left: 10px; z-index: 1000; 
           background: rgba(0,0,0,0.6); color: #00f2ff; border: 1px solid #00f2ff;
           border-radius: 50%; width: 32px; height: 32px; cursor: pointer;
-          -webkit-app-region: no-drag !important; /* 絶対ドラッグさせない */
+          pointer-events: auto !important;
         }
 
-        /* 設定パネル：表示中は「絶対に」ドラッグさせない設定 */
         .modal { 
           position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
           background: rgba(10,10,12,0.98); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
           transform: translateY(100%); z-index: 2000; padding: 20px; box-sizing: border-box; 
-          display: flex; flex-direction: column;
-          -webkit-app-region: no-drag !important; /* パネル全体をNO DRAGに */
-          pointer-events: auto !important;
+          display: flex; flex-direction: column; pointer-events: auto !important;
         }
         .modal.show { transform: translateY(0); }
 
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; color: #00f2ff; font-weight: bold; }
-        
-        /* ボタンやセレクトボックスも個別にNO DRAGを念押し */
-        .close-x, select, input, .save-btn {
-          -webkit-app-region: no-drag !important;
-          pointer-events: auto !important;
-          cursor: pointer;
-        }
-
+        .close-x, select, input, .save-btn { pointer-events: auto !important; cursor: pointer; }
         .modal-body { display: flex; flex-direction: column; gap: 15px; }
         .field { display: flex; flex-direction: column; gap: 5px; }
         .field label { font-size: 10px; color: #888; }
