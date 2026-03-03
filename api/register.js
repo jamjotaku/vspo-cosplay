@@ -1,6 +1,6 @@
 export default async function handler(req, res) {
   // ① ご自身の「Application ID」を ' ' の中に貼り付けてください
-  const APP_ID = 'ここにApplication IDを貼る'; 
+  const APP_ID = '1477157860684202086'; 
   const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
   const commands = [
