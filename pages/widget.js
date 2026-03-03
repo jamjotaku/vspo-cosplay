@@ -16,7 +16,6 @@ export default function Widget() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [config, setConfig] = useState({ member: '全員', cosplayer: '全員', interval: 60 });
 
-  // 1. CSVデータの取得
   useEffect(() => {
     const loadData = async () => {
       const Papa = (await import('papaparse')).default;
@@ -37,7 +36,6 @@ export default function Widget() {
     loadData();
   }, []);
 
-  // 2. 写真のランダム選出
   const pickPhoto = useCallback(() => {
     if (allData.length === 0) return;
     let pool = allData.filter(p => 
@@ -48,7 +46,6 @@ export default function Widget() {
     setCurrentPhoto(pool[Math.floor(Math.random() * pool.length)]);
   }, [allData, config]);
 
-  // 3. タイマー設定
   useEffect(() => {
     pickPhoto();
     const timer = setInterval(pickPhoto, config.interval * 1000);
@@ -65,9 +62,9 @@ export default function Widget() {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
       </Head>
 
+      {/* メインフレーム */}
       <div className="main-frame">
-        {/* 設定ボタン：no-dragを付与してクリックを優先 */}
-        <button className="settings-btn" onClick={() => setIsSettingsOpen(true)}>
+        <button className="settings-btn" onClick={(e) => { e.stopPropagation(); setIsSettingsOpen(true); }}>
           <i className="fas fa-cog"></i>
         </button>
 
@@ -82,11 +79,11 @@ export default function Widget() {
         )}
       </div>
 
-      {/* 設定パネル */}
-      <div className={`modal ${isSettingsOpen ? 'show' : ''}`}>
+      {/* 設定パネル：ここに強力な no-drag を指定 */}
+      <div className={`modal ${isSettingsOpen ? 'show' : ''}`} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <span>WIDGET CONFIG</span>
-          <button onClick={() => setIsSettingsOpen(false)}>&times;</button>
+          <button className="close-x" onClick={() => setIsSettingsOpen(false)}>&times;</button>
         </div>
         <div className="modal-body">
           <div className="field">
@@ -112,39 +109,51 @@ export default function Widget() {
       <style jsx global>{`
         body { margin: 0; background: transparent; overflow: hidden; font-family: 'Inter', sans-serif; }
         .widget-container { width: 100vw; height: 100vh; position: relative; }
+        
+        /* 通常時はドラッグ可能 */
         .main-frame { 
           width: 100%; height: 100%; position: relative; border-radius: 12px; overflow: hidden; 
           background: #111; border: 1px solid rgba(255,255,255,0.1); -webkit-app-region: drag;
         }
+        
         .photo { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        
         .settings-btn { 
           position: absolute; top: 10px; left: 10px; z-index: 1000; 
-          background: rgba(0,0,0,0.5); color: #00f2ff; border: 1px solid #00f2ff;
+          background: rgba(0,0,0,0.6); color: #00f2ff; border: 1px solid #00f2ff;
           border-radius: 50%; width: 32px; height: 32px; cursor: pointer;
-          -webkit-app-region: no-drag; pointer-events: auto !important;
+          -webkit-app-region: no-drag !important; /* 絶対ドラッグさせない */
         }
-        .caption { 
-          position: absolute; bottom: 0; width: 100%; padding: 20px 10px 10px;
-          background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; pointer-events: none;
-        }
-        .tag { font-size: 10px; color: #ff00ff; font-weight: bold; }
-        .name { font-size: 14px; font-weight: bold; }
-        
+
+        /* 設定パネル：表示中は「絶対に」ドラッグさせない設定 */
         .modal { 
           position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-          background: rgba(10,10,12,0.95); transition: 0.3s; transform: translateY(100%);
-          z-index: 2000; padding: 20px; box-sizing: border-box; display: flex; flex-direction: column;
-          -webkit-app-region: no-drag; pointer-events: auto;
+          background: rgba(10,10,12,0.98); transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+          transform: translateY(100%); z-index: 2000; padding: 20px; box-sizing: border-box; 
+          display: flex; flex-direction: column;
+          -webkit-app-region: no-drag !important; /* パネル全体をNO DRAGに */
+          pointer-events: auto !important;
         }
         .modal.show { transform: translateY(0); }
-        .modal-header { display: flex; justify-content: space-between; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; font-size: 12px; color: #00f2ff; font-weight: bold; }
-        .modal-header button { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 15px; color: #00f2ff; font-weight: bold; }
+        
+        /* ボタンやセレクトボックスも個別にNO DRAGを念押し */
+        .close-x, select, input, .save-btn {
+          -webkit-app-region: no-drag !important;
+          pointer-events: auto !important;
+          cursor: pointer;
+        }
+
         .modal-body { display: flex; flex-direction: column; gap: 15px; }
         .field { display: flex; flex-direction: column; gap: 5px; }
         .field label { font-size: 10px; color: #888; }
-        select { background: #222; color: white; border: 1px solid #444; padding: 8px; border-radius: 4px; }
-        input[type="range"] { accent-color: #00f2ff; }
-        .save-btn { background: linear-gradient(45deg, #00f2ff, #ff00ff); border: none; color: white; padding: 10px; border-radius: 4px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        select { background: #222; color: white; border: 1px solid #444; padding: 10px; border-radius: 6px; outline: none; }
+        .save-btn { background: linear-gradient(45deg, #00f2ff, #ff00ff); border: none; color: white; padding: 12px; border-radius: 6px; font-weight: bold; margin-top: 10px; }
+        
+        .caption { position: absolute; bottom: 0; width: 100%; padding: 20px 10px 10px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; pointer-events: none; }
+        .tag { font-size: 10px; color: #ff00ff; font-weight: bold; }
+        .name { font-size: 14px; font-weight: bold; }
       `}</style>
     </div>
   );
