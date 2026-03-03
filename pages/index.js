@@ -31,11 +31,9 @@ export default function Home() {
     const loadData = async () => {
       const Papa = (await import('papaparse')).default;
       
-      // アーカイブデータ取得
       Papa.parse(CSV_URL, {
         download: true, header: true, complete: (res) => {
           const keys = Object.keys(res.data[0] || {});
-          // 列名を柔軟に検知
           const kMem = keys.find(k => k.match(/member|名前/i)) || 'member';
           const kImg = keys.find(k => k.match(/image|url/i)) || 'image';
           const kCos = keys.find(k => k.match(/cosplayer|レイヤー/i)) || 'cosplayer';
@@ -43,27 +41,58 @@ export default function Home() {
 
           const formatted = res.data.filter(d => d[kImg]).map((d, i) => ({
             _id: i,
-            member: (d[kMem] || "").trim(), // 空白削除で正確にマッチング
+            member: (d[kMem] || "").trim(),
             image: d[kImg],
             cosplayer: (d[kCos] || "Unknown").trim(),
             link: d[kLink] || "",
-            // AIタグを排除し、メンバー名とレイヤー名のみを検索キーにする
             searchKey: `${d[kMem]} ${d[kCos]}`.toLowerCase()
           }));
           setAllData(formatted);
 
-          // ストーリー生成（正確なマッチングのみ）
-          const storyList = memberOrder.map(m => {
-            const pics = formatted.filter(d => d.member === m);
-            if (pics.length === 0) return null;
-            // 最新5枚をピックアップ
-            return { member: m, images: pics.slice(-5).reverse() };
-          }).filter(Boolean);
-          setStories(storyList);
+          // ★24時間ランダムストーリー生成ロジック★
+          const generateDailyStories = (allPics) => {
+            const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+            const cacheKey = `vspo_daily_stories_${today}`;
+            const cached = localStorage.getItem(cacheKey);
+
+            // キャッシュがあればそれを使う
+            if (cached) {
+              try {
+                return JSON.parse(cached);
+              } catch (e) {
+                // パースエラーなら再生成
+              }
+            }
+
+            // --- ここから新規生成（全メンバー分） ---
+            const newStories = memberOrder.map(m => {
+              const pics = allPics.filter(d => d.member === m);
+              if (pics.length === 0) return null;
+
+              // そのメンバーの全写真から最大5枚を完全ランダム抽出
+              const shuffled = [...pics].sort(() => 0.5 - Math.random());
+              const selected = shuffled.slice(0, 5);
+
+              return { member: m, images: selected };
+            }).filter(Boolean);
+
+            // 古いキャッシュを削除（'vspo_daily_stories_' で始まるもの）
+            Object.keys(localStorage).forEach(key => {
+              if (key.startsWith('vspo_daily_stories_')) {
+                localStorage.removeItem(key);
+              }
+            });
+
+            // 新しいキャッシュを保存
+            localStorage.setItem(cacheKey, JSON.stringify(newStories));
+            return newStories;
+          };
+
+          // ストーリーを設定
+          setStories(generateDailyStories(formatted));
         }
       });
 
-      // プロフィールデータ取得
       Papa.parse(PROFILE_CSV_URL, {
         download: true, header: true, complete: (res) => {
           const profs = {};
@@ -78,7 +107,6 @@ export default function Home() {
     loadData();
   }, []);
 
-  // 次のスライド（そのメンバーのスライドが終わったら閉じるように変更）
   const nextSlide = () => {
     setActiveStory(prev => {
       if (!prev) return null;
@@ -86,7 +114,6 @@ export default function Home() {
       if (prev.slideIndex < currentMemberStories.images.length - 1) {
         return { ...prev, slideIndex: prev.slideIndex + 1 };
       }
-      // 他のメンバーに勝手に飛ばないよう、ここで終了（null）にする
       return null;
     });
   };
@@ -99,7 +126,6 @@ export default function Home() {
     return () => clearTimeout(storyTimer.current);
   }, [activeStory]);
 
-  // フィルタリング & 統計 (SNS強化版)
   const stats = useMemo(() => {
     if (!activeFilters.cosplayer) return null;
     const cleanName = activeFilters.cosplayer.replace(/さん$/, '');
@@ -157,7 +183,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* ストーリー表示エリア */}
       {!activeFilters.cosplayer && (
         <div className="stories-container">
           {stories.map((s, idx) => (
@@ -171,7 +196,6 @@ export default function Home() {
         </div>
       )}
 
-      {/* ポートフォリオダッシュボード */}
       {activeFilters.cosplayer && stats && (
         <div className="dashboard-container">
           <div className="profile-header-main">
@@ -233,7 +257,6 @@ export default function Home() {
         </div>
       </main>
 
-      {/* ストーリービューワー（改善版：プログレスバーとナビゲーション） */}
       {activeStory && (
         <div className="story-viewer" onClick={() => setActiveStory(null)}>
           <div className="story-progress-bar">
@@ -251,7 +274,6 @@ export default function Home() {
             <div className="story-header-info">
               {memberIcons[stories[activeStory.memberIndex].member]} {stories[activeStory.memberIndex].member}
             </div>
-            {/* 左右クリックでスライド移動 */}
             <div className="story-nav left" onClick={() => setActiveStory(prev => ({...prev, slideIndex: Math.max(0, prev.slideIndex - 1)}))}></div>
             <div className="story-nav right" onClick={nextSlide}></div>
           </div>
@@ -266,7 +288,6 @@ export default function Home() {
       )}
 
       <style jsx global>{`
-        /* --- 既存のスタイルを維持しつつストーリーを微調整 --- */
         :root { --bg-color: #0f0f0f; --text-color: #f1f1f1; --primary: #3ea6ff; --header-height: 60px; }
         body { background: var(--bg-color); color: var(--text-color); font-family: sans-serif; margin: 0; padding-top: var(--header-height); }
         header { position: fixed; top: 0; width: 100%; height: var(--header-height); background: rgba(15,15,15,0.95); backdrop-filter: blur(10px); z-index: 1000; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
@@ -287,7 +308,6 @@ export default function Home() {
         .story-nav { position: absolute; top: 0; height: 100%; width: 40%; z-index: 5005; }
         .story-nav.left { left: 0; } .story-nav.right { right: 0; }
 
-        /* ダッシュボード & グリッド */
         .dashboard-container { padding: 20px; background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, var(--bg-color) 100%); border-bottom: 1px solid #333; }
         .profile-header-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .btn-sns { background: #1da1f2; color: #fff; padding: 6px 15px; border-radius: 20px; text-decoration: none; font-size: 0.75rem; font-weight: bold; }
