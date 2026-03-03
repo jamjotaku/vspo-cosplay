@@ -1,13 +1,22 @@
 {
-  "name": "vspo-cosplay-archive",
+  "name": "vspo-cosplay-widget",
   "version": "1.0.0",
-  "private": true,
   "main": "main.js",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "widget": "electron ."
+    "widget": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "build": {
+    "appId": "com.vspo.cosplay.widget",
+    "productName": "VspoCosplayWidget",
+    "copyright": "Copyright © 2026 じゃむじゃ",
+    "win": {
+      "target": "portable",
+      "icon": "icon.ico"
+    },
+    "directories": {
+      "output": "dist"
+    }
   },
   "dependencies": {
     "next": "latest",
@@ -16,6 +25,7 @@
     "papaparse": "latest"
   },
   "devDependencies": {
-    "electron": "^28.0.0"
+    "electron": "^28.0.0",
+    "electron-builder": "^24.0.0"
   }
 }
