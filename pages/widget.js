@@ -10,6 +10,13 @@ const MEMBER_ORDER = [
   '夜乃くろむ', '紡木こかげ', '千燈ゆうひ', '蝶屋はなび', '甘結もか', '銀城サイネ', '龍巻ちせ'
 ];
 
+const SIZES = {
+  '小': { w: 240, h: 360 },
+  '中': { w: 320, h: 480 },
+  '大': { w: 400, h: 600 },
+  'ワイド': { w: 480, h: 270 }
+};
+
 export default function Widget() {
   const [allData, setAllData] = useState([]);
   const [currentPhoto, setCurrentPhoto] = useState(null);
@@ -52,18 +59,21 @@ export default function Widget() {
     return () => clearInterval(timer);
   }, [pickPhoto, config.interval]);
 
+  const handleSizeChange = (sizeKey) => {
+    const { w, h } = SIZES[sizeKey];
+    if (window.electronAPI) {
+      window.electronAPI.resizeWindow(w, h);
+    }
+  };
+
   const cosplayers = useMemo(() => 
     ['全員', ...new Set(allData.map(d => d.cosplayer))].sort(), [allData]
   );
 
   return (
     <div className="widget-root">
-      <Head>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-      </Head>
-
+      <Head><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" /></Head>
       <div className="main-wrapper">
-        {/* 1. 背景写真レイヤー */}
         {currentPhoto && (
           <div className="photo-layer">
             <img src={currentPhoto.image} alt="" className="main-img" />
@@ -73,97 +83,52 @@ export default function Widget() {
             </div>
           </div>
         )}
-
-        {/* 2. 透明なドラッグ専用レイヤー 
-             設定が開いている時は消すことでクリックを100%通す */}
         {!isSettingsOpen && <div className="drag-handle" />}
-
-        {/* 3. UIレイヤー (常にドラッグ不可に設定) */}
-        <button className="gear-btn" onClick={() => setIsSettingsOpen(true)}>
-          <i className="fas fa-cog"></i>
-        </button>
-
-        {/* 設定モーダル */}
+        <button className="gear-btn" onClick={() => setIsSettingsOpen(true)}><i className="fas fa-cog"></i></button>
         <div className={`config-modal ${isSettingsOpen ? 'is-open' : ''}`}>
           <div className="modal-inner">
-            <div className="modal-header">
-              <span>WIDGET CONFIG</span>
-              <button className="close-x" onClick={() => setIsSettingsOpen(false)}>&times;</button>
-            </div>
+            <div className="modal-header"><span>WIDGET CONFIG</span><button className="close-x" onClick={() => setIsSettingsOpen(false)}>&times;</button></div>
             <div className="modal-content">
-              <div className="input-box">
-                <label>MEMBER</label>
+              <div className="input-box"><label>MEMBER</label>
                 <select value={config.member} onChange={e => setConfig({...config, member: e.target.value})}>
                   {MEMBER_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
-              <div className="input-box">
-                <label>COSPLAYER</label>
-                <select value={config.cosplayer} onChange={e => setConfig({...config, cosplayer: e.target.value})}>
-                  {cosplayers.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
+              <div className="input-box"><label>WIDGET SIZE</label>
+                <div className="size-buttons">
+                  {Object.keys(SIZES).map(s => (<button key={s} onClick={() => handleSizeChange(s)} className="size-btn">{s}</button>))}
+                </div>
               </div>
-              <div className="input-box">
-                <label>INTERVAL ({config.interval}s)</label>
+              <div className="input-box"><label>INTERVAL ({config.interval}s)</label>
                 <input type="range" min="10" max="600" step="10" value={config.interval} onChange={e => setConfig({...config, interval: parseInt(e.target.value)})} />
               </div>
-              <button className="save-btn" onClick={() => { pickPhoto(); setIsSettingsOpen(false); }}>
-                SAVE & UPDATE
-              </button>
+              <button className="save-btn" onClick={() => { pickPhoto(); setIsSettingsOpen(false); }}>SAVE & UPDATE</button>
             </div>
           </div>
         </div>
       </div>
-
       <style jsx global>{`
         body { margin: 0; background: transparent; overflow: hidden; font-family: 'Inter', sans-serif; user-select: none; }
         .widget-root { width: 100vw; height: 100vh; position: relative; }
         .main-wrapper { width: 100%; height: 100%; border-radius: 12px; overflow: hidden; background: #000; position: relative; }
-
-        /* 写真レイヤー：クリックを透過させて下のレイヤーを邪魔しない */
         .photo-layer { width: 100%; height: 100%; pointer-events: none; }
         .main-img { width: 100%; height: 100%; object-fit: cover; }
         .overlay-text { position: absolute; bottom: 0; width: 100%; padding: 20px 12px 12px; background: linear-gradient(transparent, rgba(0,0,0,0.8)); color: white; }
-        .mem-tag { font-size: 10px; color: #00f2ff; font-weight: bold; }
-        .cos-name { font-size: 14px; font-weight: bold; }
-
-        /* ドラッグ専用の透明な膜：ここがElectronの移動を司る */
-        .drag-handle {
-          position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-          z-index: 50;
-          -webkit-app-region: drag;
-          cursor: move;
-        }
-
-        /* ギアボタン：最前面かつドラッグ不可 */
-        .gear-btn {
-          position: absolute; top: 12px; left: 12px; z-index: 100;
-          background: rgba(0,0,0,0.6); color: #00f2ff; border: 1px solid #00f2ff;
-          border-radius: 50%; width: 34px; height: 34px; cursor: pointer;
-          -webkit-app-region: no-drag !important;
-          pointer-events: auto !important;
-        }
-
-        /* モーダル：最前面。表示中はドラッグハンドルが消えるので100%クリック可能 */
-        .config-modal {
-          position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-          background: rgba(10,10,12,0.98); color: white;
-          z-index: 200; transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 1, 0.3, 1);
-          padding: 20px; box-sizing: border-box;
-          -webkit-app-region: no-drag !important;
-          pointer-events: auto !important;
-        }
+        .drag-handle { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 50; -webkit-app-region: drag; }
+        .gear-btn { position: absolute; top: 12px; left: 12px; z-index: 100; background: rgba(0,0,0,0.6); color: #00f2ff; border: 1px solid #00f2ff; border-radius: 50%; width: 34px; height: 34px; cursor: pointer; -webkit-app-region: no-drag !important; pointer-events: auto !important; }
+        .config-modal { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(10,10,12,0.98); color: white; z-index: 200; transform: translateY(100%); transition: 0.3s cubic-bezier(0.2, 1, 0.3, 1); padding: 20px; box-sizing: border-box; -webkit-app-region: no-drag !important; pointer-events: auto !important; }
         .config-modal.is-open { transform: translateY(0); }
-
         .modal-inner { display: flex; flex-direction: column; height: 100%; }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px; font-weight: bold; color: #00f2ff; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px; color: #00f2ff; font-weight: bold; }
         .close-x { background: none; border: none; color: white; font-size: 24px; cursor: pointer; }
-        
-        .modal-content { display: flex; flex-direction: column; gap: 18px; }
+        .modal-content { display: flex; flex-direction: column; gap: 15px; }
         .input-box { display: flex; flex-direction: column; gap: 6px; }
-        .input-box label { font-size: 10px; color: #888; letter-spacing: 1px; }
-        select { background: #1a1a1c; color: white; border: 1px solid #333; padding: 12px; border-radius: 8px; outline: none; -webkit-app-region: no-drag; }
-        .save-btn { background: linear-gradient(45deg, #00f2ff, #ff00ff); border: none; color: white; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; -webkit-app-region: no-drag; }
+        .input-box label { font-size: 10px; color: #888; }
+        select { background: #1a1a1c; color: white; border: 1px solid #333; padding: 10px; border-radius: 8px; outline: none; }
+        .size-buttons { display: flex; gap: 5px; }
+        .size-btn { flex: 1; background: #222; color: #fff; border: 1px solid #444; padding: 6px; border-radius: 4px; cursor: pointer; font-size: 11px; -webkit-app-region: no-drag; }
+        .size-btn:hover { border-color: #00f2ff; color: #00f2ff; }
+        .save-btn { background: linear-gradient(45deg, #00f2ff, #ff00ff); border: none; color: white; padding: 14px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
       `}</style>
     </div>
   );
