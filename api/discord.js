@@ -26,11 +26,63 @@ export default async function handler(req, res) {
 
   const interaction = JSON.parse(rawBody);
 
+  // --- 1. PING (生存確認) ---
   if (interaction.type === 1) {
     return res.status(200).json({ type: 1 });
   }
 
-  // search コマンドと pickup コマンドの両方に対応
+  const sheetId = '1sW4ppHBQbJp7RZ0in15d2LWOxcBK077wsbqmlZjUI_U';
+  const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('シート1')}`;
+
+  // --- 2. AUTOCOMPLETE (入力候補の提示) ---
+  if (interaction.type === 4) {
+    const options = interaction.data.options;
+    const focusedOption = options.find(opt => opt.focused); // 現在入力中の項目を特定
+    const searchText = focusedOption.value.toLowerCase();
+
+    try {
+      const response = await fetch(csvUrl);
+      const csvText = await response.text();
+      const rows = csvText.split('\n');
+      const headers = rows[0].split('","').map(h => h.replace(/"/g, ''));
+      
+      // 検索対象の列を決定
+      let colIndex = -1;
+      if (focusedOption.name === 'cosplayer') {
+        colIndex = headers.findIndex(h => h.match(/cosplayer|レイヤー/i));
+      } else if (focusedOption.name === 'member') {
+        colIndex = headers.findIndex(h => h.match(/member|メンバー/i));
+      }
+
+      if (colIndex === -1) return res.status(200).json({ type: 8, data: { choices: [] } });
+
+      // 重複のない名前リストを作成
+      const nameSet = new Set();
+      for (let i = 1; i < rows.length; i++) {
+        const cols = rows[i].split('","');
+        if (cols[colIndex]) {
+          const name = cols[colIndex].replace(/"/g, '').trim();
+          if (name) nameSet.add(name);
+        }
+      }
+
+      // 入力された文字に一致するものを抽出（最大25件まで）
+      const choices = Array.from(nameSet)
+        .filter(name => name.toLowerCase().includes(searchText))
+        .slice(0, 25)
+        .map(name => ({ name: name, value: name }));
+
+      return res.status(200).json({
+        type: 8,
+        data: { choices: choices }
+      });
+    } catch (e) {
+      console.error(e);
+      return res.status(200).json({ type: 8, data: { choices: [] } });
+    }
+  }
+
+  // --- 3. APPLICATION_COMMAND (検索・ピックアップ実行) ---
   if (interaction.type === 2 && (interaction.data.name === 'search' || interaction.data.name === 'pickup')) {
     const commandName = interaction.data.name;
     const options = interaction.data.options || [];
@@ -42,9 +94,6 @@ export default async function handler(req, res) {
 
     const searchCosplayer = rawCosplayer.replace(/さん$/, '').trim();
     const searchMember = rawMember.replace(/さん$/, '').trim();
-
-    const sheetId = '1sW4ppHBQbJp7RZ0in15d2LWOxcBK077wsbqmlZjUI_U';
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent('シート1')}`;
 
     let displayKeyword = searchMember ? `${searchCosplayer} さんの ${searchMember}` : `${searchCosplayer}`;
     let resultMessage = `🔍 **「${displayKeyword}」** のアーカイブは見つかりませんでした...`;
@@ -59,7 +108,7 @@ export default async function handler(req, res) {
       const idxImg = headers.findIndex(h => h.match(/image|画像/i));
 
       if (idxCos >= 0 && idxImg >= 0) {
-        let matchedItems = []; // ヒットした画像をすべて貯める箱
+        let matchedItems = [];
 
         for (let i = rows.length - 1; i > 0; i--) {
           const rowData = rows[i];
@@ -78,7 +127,6 @@ export default async function handler(req, res) {
             if (url.includes('pbs.twimg.com')) {
                url = url.split('?')[0] + "?format=jpg&name=large";
             }
-            // 貯金箱に入れる
             matchedItems.push({ name, url });
           }
         }
@@ -92,16 +140,11 @@ export default async function handler(req, res) {
           let displayImageUrl = '';
 
           if (commandName === 'pickup') {
-            // ★ ピックアップモード：ランダム抽出（ガチャ）
             const randomIndex = Math.floor(Math.random() * matchCount);
             displayImageUrl = matchedItems[randomIndex].url;
-            
             resultMessage = `🏆 **今日のピックアップ！**\n✨ **${matchedName}** さんの素敵なアーカイブをご紹介！\n\n📸 **全${matchCount}枚の中からランダムで1枚表示中:**\n${displayImageUrl}\n\n🌟 **すべての写真を見る（ポートフォリオへ）**\n${portfolioUrl}`;
-            
           } else {
-            // ★ 通常の検索モード：最新の1枚
             displayImageUrl = matchedItems[0].url;
-            
             resultMessage = `✨ **${matchedName}** さんの **${searchMember ? searchMember + ' ' : ''}**アーカイブが **${matchCount}件** 見つかりました！\n\n📸 **最新の1枚:**\n${displayImageUrl}\n\n🌟 **すべての写真を見る（ポートフォリオへ）**\n${portfolioUrl}`;
           }
         }
