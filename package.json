@@ -20,12 +20,12 @@
   },
   "dependencies": {
     "next": "latest",
+    "papaparse": "latest",
     "react": "latest",
-    "react-dom": "latest",
-    "papaparse": "latest"
+    "react-dom": "latest"
   },
   "devDependencies": {
     "electron": "^28.0.0",
-    "electron-builder": "^24.0.0"
+    "electron-builder": "^24.13.3"
   }
 }
