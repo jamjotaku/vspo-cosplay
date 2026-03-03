@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Head from 'next/head';
 
-// --- データURL設定 ---
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 const PROFILE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=1592730885&single=true&output=csv";
 
@@ -29,7 +28,6 @@ export default function Home() {
   const [diagResult, setDiagResult] = useState(null);
   const storyTimer = useRef(null);
 
-  // 1. データ初期化
   useEffect(() => {
     const loadData = async () => {
       const Papa = (await import('papaparse')).default;
@@ -45,9 +43,8 @@ export default function Home() {
           }));
           setAllData(formatted);
 
-          // 24時間ランダムストーリー
           const today = new Date().toISOString().slice(0, 10);
-          const cacheKey = `v_daily_v4_${today}`;
+          const cacheKey = `v_daily_final_${today}`;
           const cached = localStorage.getItem(cacheKey);
           if (cached) setStories(JSON.parse(cached));
           else {
@@ -72,7 +69,6 @@ export default function Home() {
     loadData();
   }, []);
 
-  // 名鑑・イベント集計
   const aggregated = useMemo(() => {
     const cos = {}; const evs = {};
     allData.forEach(d => {
@@ -86,7 +82,6 @@ export default function Home() {
     return { cos, evs };
   }, [allData]);
 
-  // 個人SNS統計
   const stats = useMemo(() => {
     if (!activeFilters.cosplayer) return null;
     const cleanName = activeFilters.cosplayer.replace(/さん$/, '');
@@ -99,7 +94,6 @@ export default function Home() {
     return { total: myPhotos.length, breakdown: memberCounts, sns: { twitter: getSns(['twitter', 'x', '𝕏']), insta: getSns(['insta', 'instagram']), tiktok: getSns(['tiktok']), fantia: getSns(['fantia']) } };
   }, [activeFilters.cosplayer, allData, profileData]);
 
-  // フィルタリング
   useEffect(() => {
     let result = allData.filter(d => {
       const mMem = !activeFilters.member || d.member === activeFilters.member;
@@ -114,18 +108,42 @@ export default function Home() {
     setFilteredData(result);
   }, [allData, activeFilters, currentSort]);
 
+  const nextSlide = () => {
+    setActiveStory(prev => {
+      if (!prev) return null;
+      const current = stories[prev.memberIndex];
+      if (prev.slideIndex < current.images.length - 1) return { ...prev, slideIndex: prev.slideIndex + 1 };
+      return null;
+    });
+  };
+
+  useEffect(() => {
+    if (activeStory) { clearTimeout(storyTimer.current); storyTimer.current = setTimeout(nextSlide, 4000); }
+    return () => clearTimeout(storyTimer.current);
+  }, [activeStory]);
+
   return (
-    <div className="vspo-app">
+    <>
       <Head>
         <title>VSPO! COSPLAY ARCHIVE</title>
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
       </Head>
 
-      {/* --- Header --- */}
+      <div className={`overlay ${isMenuOpen ? 'open' : ''}`} onClick={() => setIsMenuOpen(false)}></div>
+      <aside className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
+        <div className="sidebar-header"><span className="sidebar-title">MENU</span><button className="close-btn" onClick={() => setIsMenuOpen(false)}>&times;</button></div>
+        <div className="menu-item" onClick={() => {setViewMode('home'); setActiveFilters({member:null,cosplayer:null,event:null,text:""}); setIsMenuOpen(false);}}><i className="fas fa-home"></i> ホーム</div>
+        <div className="menu-item" onClick={() => {setViewMode('directory'); setIsMenuOpen(false);}}><i className="fas fa-users"></i> レイヤー名鑑</div>
+        <div className="menu-item" onClick={() => {setViewMode('events'); setIsMenuOpen(false);}}><i className="fas fa-calendar-alt"></i> イベントまとめ</div>
+        <div className="menu-divider"></div>
+        <div className="menu-item" onClick={() => {setDiagStep(1); setIsMenuOpen(false);}}><i className="fas fa-magic"></i> 推しフォト診断</div>
+      </aside>
+
       <header>
         <div className="header-left">
           <button className="menu-btn" onClick={() => setIsMenuOpen(true)}><i className="fas fa-bars"></i></button>
-          <div className="site-title" onClick={() => {setViewMode('home'); setActiveFilters({member:null,cosplayer:null,event:null,text:""});}}>
+          <div className="site-title" onClick={() => {setViewMode('home'); setActiveFilters({member:null,cosplayer:null,event:null,text:""}); window.scrollTo({top:0,behavior:'smooth'});}}>
             <i className="fas fa-camera site-logo-icon"></i>
             <span className="title-text">VSPO! ARCHIVE</span>
           </div>
@@ -138,24 +156,9 @@ export default function Home() {
         </div>
       </header>
 
-      {/* --- Sidebar & Overlay --- */}
-      <div className={`overlay ${isMenuOpen ? 'open' : ''}`} onClick={() => setIsMenuOpen(false)}></div>
-      <aside className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
-        <div className="sidebar-header">
-          <span className="sidebar-title">MENU</span>
-          <button className="close-btn" onClick={() => setIsMenuOpen(false)}>&times;</button>
-        </div>
-        <div className="menu-item" onClick={() => {setViewMode('home'); setActiveFilters({member:null,cosplayer:null,event:null,text:""}); setIsMenuOpen(false);}}><i className="fas fa-home"></i> ホーム</div>
-        <div className="menu-item" onClick={() => {setViewMode('directory'); setIsMenuOpen(false);}}><i className="fas fa-users"></i> レイヤー名鑑</div>
-        <div className="menu-item" onClick={() => {setViewMode('events'); setIsMenuOpen(false);}}><i className="fas fa-calendar-alt"></i> イベントまとめ</div>
-        <div className="menu-divider"></div>
-        <div className="menu-item" onClick={() => {setDiagStep(1); setIsMenuOpen(false);}}><i className="fas fa-magic"></i> 推しフォト診断</div>
-      </aside>
-
       <main>
         {viewMode === 'home' && (
           <>
-            {/* ストーリー */}
             {!activeFilters.cosplayer && !activeFilters.event && (
               <div className="stories-container">
                 {stories.map((s, idx) => (
@@ -167,7 +170,6 @@ export default function Home() {
               </div>
             )}
 
-            {/* ダッシュボード */}
             {activeFilters.cosplayer && stats && (
               <div className="dashboard-container">
                 <div className="profile-header-main">
@@ -180,6 +182,15 @@ export default function Home() {
                 </div>
                 <div className="member-breakdown-box">
                   {Object.keys(stats.breakdown).map(m => <div key={m} className="member-bd-chip">{memberIcons[m]} {m} <span className="member-bd-count">{stats.breakdown[m]}</span></div>)}
+                </div>
+              </div>
+            )}
+
+            {activeFilters.event && (
+              <div className="dashboard-container">
+                <div className="profile-header-main">
+                  <h2 className="profile-name"><i className="fas fa-calendar-alt"></i> {activeFilters.event}</h2>
+                  <button className="btn-share-profile" onClick={() => setActiveFilters(prev => ({...prev, event: null}))}><i className="fas fa-times"></i> Close</button>
                 </div>
               </div>
             )}
@@ -217,15 +228,14 @@ export default function Home() {
           </>
         )}
 
-        {/* --- 名鑑・イベント・診断のビュー --- */}
         {viewMode === 'directory' && (
           <div className="special-view">
-            <h2 className="site-title"><i className="fas fa-users"></i> レイヤー名鑑</h2>
+            <h2 className="profile-name"><i className="fas fa-users"></i> レイヤー名鑑</h2>
             <div className="dir-grid">
               {Object.keys(aggregated.cos).sort((a,b) => aggregated.cos[b].count - aggregated.cos[a].count).map(name => (
                 <div key={name} className="dir-card" onClick={() => {setActiveFilters(p => ({...p, cosplayer: name})); setViewMode('home');}}>
                   <img src={getTwitterUrl(aggregated.cos[name].latest, 'thumb')} alt="" className="dir-avatar" />
-                  <div><div className="dir-name">{name}</div><div className="dir-stats">{aggregated.cos[name].count} Photos</div></div>
+                  <div><div className="dir-name">{name}</div><div className="dir-count">{aggregated.cos[name].count} Photos</div></div>
                 </div>
               ))}
             </div>
@@ -234,7 +244,7 @@ export default function Home() {
 
         {viewMode === 'events' && (
           <div className="special-view">
-            <h2 className="site-title"><i className="fas fa-calendar-alt"></i> イベントアーカイブ</h2>
+            <h2 className="profile-name"><i className="fas fa-calendar-alt"></i> イベントアーカイブ</h2>
             <div className="ev-grid">
               {Object.keys(aggregated.evs).sort((a,b) => aggregated.evs[b].count - aggregated.evs[a].count).map(ev => (
                 <div key={ev} className="ev-card" style={{backgroundImage: `url(${getTwitterUrl(aggregated.evs[ev].latest, 'medium')})`}} onClick={() => {setActiveFilters(p => ({...p, event: ev})); setViewMode('home');}}>
@@ -246,14 +256,14 @@ export default function Home() {
         )}
       </main>
 
-      {/* --- モーダル・診断ツール --- */}
+      {/* 診断ツールモーダル */}
       {diagStep > 0 && (
         <div className="modal open" onClick={() => setDiagStep(0)}>
           <div className="diag-container" onClick={e => e.stopPropagation()}>
             {diagStep === 1 ? (
-              <div className="diag-grid">
+              <div className="diag-grid-wrap">
                 <h3>誰を引く？</h3>
-                <div className="grid">
+                <div className="diag-grid">
                   {memberOrder.map(m => <button key={m} className="diag-btn" onClick={() => { const list = allData.filter(d => d.member === m); if(list.length) { setDiagResult(list[Math.floor(Math.random()*list.length)]); setDiagStep(2); } }}>{memberIcons[m]}<br/>{m}</button>)}
                 </div>
               </div>
@@ -270,9 +280,25 @@ export default function Home() {
         </div>
       )}
 
+      {/* ストーリービューワー */}
+      {activeStory && (
+        <div className="story-viewer" onClick={() => setActiveStory(null)}>
+          <div className="story-progress-bar">
+            {stories[activeStory.memberIndex].images.map((_, i) => (
+              <div key={i} className="story-progress-segment"><div className="story-progress-fill" style={{ width: i <= activeStory.slideIndex ? '100%' : '0%', transition: i === activeStory.slideIndex ? 'width 4s linear' : 'none' }}></div></div>
+            ))}
+          </div>
+          <div className="story-content" onClick={e => e.stopPropagation()}>
+            <img src={getTwitterUrl(stories[activeStory.memberIndex].images[activeStory.slideIndex].image, 'large')} className="story-main-img" alt="" />
+            <div className="story-header-info">{memberIcons[stories[activeStory.memberIndex].member]} {stories[activeStory.memberIndex].member}</div>
+            <div className="story-nav left" onClick={() => setActiveStory(prev => ({...prev, slideIndex: Math.max(0, prev.slideIndex - 1)}))}></div>
+            <div className="story-nav right" onClick={nextSlide}></div>
+          </div>
+        </div>
+      )}
+
       {modalImage && <div className="modal open" onClick={() => setModalImage(null)}><img src={getTwitterUrl(modalImage.image, 'large')} alt="" /></div>}
 
-      {/* --- 🎨 100% 元の index.html デザインを復元したCSS --- */}
       <style jsx global>{`
         :root {
           --bg-color: #0f0f0f;
@@ -287,70 +313,90 @@ export default function Home() {
 
         body { 
           margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color); font-family: sans-serif; 
-          padding-top: var(--header-height);
+          padding-top: var(--header-height); overflow-x: hidden; width: 100%;
         }
 
+        /* 帯を消すための絶対的な設定 */
         header { 
-          position: fixed; top: 0; width: 100%; height: var(--header-height); background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px);
+          position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height); background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px);
           display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 1000; box-sizing: border-box;
         }
-        .header-left, .header-right { display: flex; align-items: center; gap: 15px; }
-        .menu-btn { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; }
+        .header-left, .header-right { display: flex; align-items: center; gap: 10px; }
+        .menu-btn { background: none; border: none; color: #fff; font-size: 1.4rem; cursor: pointer; padding: 5px; }
         .site-title { font-size: 1.1rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; }
         .site-logo-icon { background: var(--grad-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
-        .search-box { background: #121212; border: 1px solid #303030; border-radius: 20px; padding: 5px 15px; display: flex; align-items: center; }
-        .search-input { background: none; border: none; color: #fff; outline: none; margin-left: 8px; }
+        .search-box { background: #121212; border: 1px solid #303030; border-radius: 20px; padding: 5px 15px; display: flex; align-items: center; max-width: 140px; transition: 0.3s; }
+        .search-box:focus-within { max-width: 400px; border-color: var(--primary); }
+        .search-input { background: none; border: none; color: #fff; outline: none; margin-left: 8px; width: 100%; }
 
+        /* ホーム画面パーツ */
         .top-area { background: var(--bg-color); position: sticky; top: var(--header-height); z-index: 900; }
-        .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; white-space: nowrap; }
-        .member-chip { background: var(--chip-bg); color: var(--text-color); padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; }
+        .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; white-space: nowrap; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; }
+        .member-chip { background: var(--chip-bg); color: var(--text-color); padding: 6px 14px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; flex-shrink: 0; }
         .member-chip.active { background: #f1f1f1; color: #0f0f0f; font-weight: bold; }
 
-        .stories-container { display: flex; gap: 12px; overflow-x: auto; padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        .stories-container { display: flex; gap: 12px; overflow-x: auto; padding: 15px; scrollbar-width: none; border-bottom: 1px solid rgba(255,255,255,0.05); flex-wrap: nowrap; }
         .story-item { width: 64px; flex-shrink: 0; text-align: center; cursor: pointer; }
         .story-ring { width: 62px; height: 62px; border-radius: 50%; padding: 2px; background: var(--grad-main); display: flex; align-items: center; justify-content: center; }
         .story-img { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 2px solid #000; }
-        .story-name { font-size: 0.65rem; color: #d1d5db; margin-top: 4px; display: block; overflow: hidden; text-overflow: ellipsis; }
+        .story-name { font-size: 0.65rem; color: #d1d5db; margin-top: 4px; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-        /* Masonry: ここを完全復元 */
-        .masonry-grid { column-count: 2; column-gap: 16px; padding: 15px; }
+        /* Masonry: 完全復元 */
+        .masonry-grid { column-count: 2; column-gap: 16px; padding: 15px; width: 100%; box-sizing: border-box; }
         @media (min-width: 600px) { .masonry-grid { column-count: 3; } }
         @media (min-width: 1000px) { .masonry-grid { column-count: 4; } }
         @media (min-width: 1400px) { .masonry-grid { column-count: 5; } }
 
-        .card { break-inside: avoid; margin-bottom: 24px; }
-        .card-img-area { border-radius: 12px; overflow: hidden; background: #202020; cursor: pointer; }
+        .card { break-inside: avoid; margin-bottom: 24px; width: 100%; }
+        .card-img-area { border-radius: 12px; overflow: hidden; background: #202020; cursor: pointer; line-height: 0; }
         .card-img-area img { width: 100%; height: auto; display: block; transition: 0.3s; }
         .card-img-area:hover img { transform: scale(1.03); }
 
-        .card-meta { display: flex; gap: 10px; margin-top: 10px; padding: 0 4px; cursor: pointer; }
+        .card-meta { display: flex; gap: 10px; margin-top: 10px; padding: 0 4px; cursor: pointer; align-items: center; }
         .card-avatar { width: 36px; height: 36px; border-radius: 50%; object-fit: cover; }
         .card-title { color: #f1f1f1; font-size: 0.95rem; font-weight: 700; }
         .card-subtitle { color: var(--text-sub); font-size: 0.8rem; }
 
-        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: #0f0f0f; z-index: 2000; transition: 0.3s; padding: 20px; border-right: 1px solid #333; }
+        /* サイドバー: 完全に独立させて帯を消す */
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: #0f0f0f; z-index: 2000; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 20px; border-right: 1px solid #333; box-sizing: border-box; }
         .sidebar.open { left: 0; }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1500; display: none; }
         .overlay.open { display: block; }
+        .menu-item { display: flex; align-items: center; gap: 15px; padding: 12px 15px; border-radius: 10px; color: #fff; cursor: pointer; font-weight: bold; }
+        .menu-item:hover { background: rgba(255,255,255,0.1); }
 
+        /* モーダル */
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: none; align-items: center; justify-content: center; }
         .modal.open { display: flex; }
-        .modal img { max-height: 90vh; max-width: 95%; border-radius: 8px; }
+        .modal img { max-height: 90vh; max-width: 95%; border-radius: 8px; object-fit: contain; }
+        .modal-close { position: absolute; top: 20px; right: 20px; font-size: 2.5rem; color: #fff; cursor: pointer; }
 
-        .special-view { padding: 20px; animation: fadeIn 0.4s; }
+        /* 特殊ビュー */
+        .special-view { padding: 20px; width: 100%; box-sizing: border-box; }
         .dir-grid, .ev-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
         .dir-card { background: #1a1a1a; padding: 12px; border-radius: 12px; display: flex; align-items: center; gap: 15px; cursor: pointer; }
         .ev-card { height: 180px; border-radius: 12px; background-size: cover; background-position: center; position: relative; cursor: pointer; overflow: hidden; }
-        .ev-card-overlay { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); }
-        
-        .diag-container { background: #1a1a1a; padding: 20px; border-radius: 16px; width: 90%; max-width: 400px; position: relative; }
-        .diag-btn { background: #333; border: none; color: #fff; padding: 10px; border-radius: 8px; cursor: pointer; }
-        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .ev-card-overlay { position: absolute; bottom: 0; width: 100%; padding: 20px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); box-sizing: border-box; }
+
+        /* 診断 */
+        .diag-container { background: #1a1a1a; padding: 20px; border-radius: 16px; width: 90%; max-width: 400px; position: relative; max-height: 80vh; overflow-y: auto; }
+        .diag-btn { background: #333; border: none; color: #fff; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; }
+        .diag-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+
+        /* ストーリービューワー */
+        .story-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .story-progress-bar { position: absolute; top: 15px; width: 95%; display: flex; gap: 5px; }
+        .story-progress-segment { flex: 1; height: 2px; background: rgba(255,255,255,0.2); border-radius: 2px; overflow: hidden; }
+        .story-progress-fill { height: 100%; background: #fff; width: 0; }
+        .story-content { position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; }
+        .story-main-img { max-height: 100%; max-width: 100%; object-fit: contain; }
+        .story-header-info { position: absolute; top: 40px; left: 20px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        .story-nav { position: absolute; top: 0; height: 100%; width: 40%; z-index: 5010; }
+        .story-nav.left { left: 0; } .story-nav.right { right: 0; }
 
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
       `}</style>
-      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    </div>
+    </>
   );
 }
