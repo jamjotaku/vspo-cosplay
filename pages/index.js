@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import Head from 'next/head';
 import Image from 'next/image';
 
@@ -23,11 +23,15 @@ export default function Home() {
   const [currentSort, setCurrentSort] = useState('random');
   const [modalImage, setModalImage] = useState(null);
 
+  // ストーリー用の状態
+  const [stories, setStories] = useState([]);
+  const [activeStory, setActiveStory] = useState(null); // { memberIndex, slideIndex }
+  const storyTimer = useRef(null);
+
   // 1. データ読み込み
   useEffect(() => {
     const loadData = async () => {
       const Papa = (await import('papaparse')).default;
-      
       Papa.parse(CSV_URL, {
         download: true, header: true, complete: (res) => {
           const formatted = res.data.filter(d => d.image || d.url).map((d, i) => ({
@@ -39,6 +43,15 @@ export default function Home() {
             searchKey: `${d.member} ${d.cosplayer}`.toLowerCase()
           }));
           setAllData(formatted);
+
+          // ストーリーデータの生成
+          const storyList = memberOrder.map(m => {
+            const pics = formatted.filter(d => d.member === m);
+            if (pics.length === 0) return null;
+            // メンバーごとにランダム/最新の数枚をピックアップ
+            return { member: m, images: pics.slice(-5).reverse() };
+          }).filter(Boolean);
+          setStories(storyList);
         }
       });
 
@@ -46,7 +59,7 @@ export default function Home() {
         download: true, header: true, complete: (res) => {
           const profs = {};
           res.data.forEach(p => {
-            const name = p.cosplayer || p['名前'] || p['レイヤー'];
+            const name = p.cosplayer || p['名前'];
             if(name) profs[name] = p;
           });
           setProfileData(profs);
@@ -56,44 +69,47 @@ export default function Home() {
     loadData();
   }, []);
 
-  // 2. 個人統計とSNSリンクの計算 (強化ロジック)
+  // 2. ストーリー制御ロジック
+  const nextStory = () => {
+    setActiveStory(prev => {
+      if (!prev) return null;
+      const currentMember = stories[prev.memberIndex];
+      if (prev.slideIndex < currentMember.images.length - 1) {
+        return { ...prev, slideIndex: prev.slideIndex + 1 };
+      } else if (prev.memberIndex < stories.length - 1) {
+        return { memberIndex: prev.memberIndex + 1, slideIndex: 0 };
+      }
+      return null;
+    });
+  };
+
+  useEffect(() => {
+    if (activeStory) {
+      clearTimeout(storyTimer.current);
+      storyTimer.current = setTimeout(nextStory, 4000);
+    }
+    return () => clearTimeout(storyTimer.current);
+  }, [activeStory]);
+
+  // 3. フィルタリング & 統計計算 (既存ロジックを維持)
   const stats = useMemo(() => {
     if (!activeFilters.cosplayer) return null;
-
-    // 「さん」抜きの名前でプロフィールを検索
     const cleanName = activeFilters.cosplayer.replace(/さん$/, '');
     const profKey = Object.keys(profileData).find(k => k.replace(/さん$/, '') === cleanName) || activeFilters.cosplayer;
     const prof = profileData[profKey] || {};
-
     const myPhotos = allData.filter(d => d.cosplayer === activeFilters.cosplayer);
     const memberCounts = {};
-    myPhotos.forEach(d => {
-      memberCounts[d.member] = (memberCounts[d.member] || 0) + 1;
-    });
-
-    // 列名にキーワードが含まれているか柔軟に探す
+    myPhotos.forEach(d => { memberCounts[d.member] = (memberCounts[d.member] || 0) + 1; });
     const getSnsUrl = (keywords) => {
-      const foundKey = Object.keys(prof).find(key => 
-        keywords.some(k => key.toLowerCase().includes(k.toLowerCase()))
-      );
+      const foundKey = Object.keys(prof).find(key => keywords.some(k => key.toLowerCase().includes(k.toLowerCase())));
       return foundKey ? prof[foundKey].trim() : null;
     };
-
     return {
-      total: myPhotos.length,
-      memberCount: Object.keys(memberCounts).length,
-      breakdown: memberCounts,
-      sns: {
-        twitter: getSnsUrl(['twitter', 'x', '𝕏', 'sns']),
-        insta: getSnsUrl(['insta', 'instagram']),
-        tiktok: getSnsUrl(['tiktok']),
-        fantia: getSnsUrl(['fantia']),
-        booth: getSnsUrl(['booth']),
-      }
+      total: myPhotos.length, memberCount: Object.keys(memberCounts).length, breakdown: memberCounts,
+      sns: { twitter: getSnsUrl(['twitter', 'x', '𝕏', 'sns']), insta: getSnsUrl(['insta', 'instagram']), tiktok: getSnsUrl(['tiktok']), fantia: getSnsUrl(['fantia']) }
     };
   }, [activeFilters.cosplayer, allData, profileData]);
 
-  // 3. フィルタリング & ソート
   useEffect(() => {
     let result = allData.filter(d => {
       const mMem = !activeFilters.member || d.member === activeFilters.member;
@@ -107,32 +123,13 @@ export default function Home() {
     setFilteredData(result);
   }, [allData, activeFilters, currentSort]);
 
-  // 4. 無限スクロール
-  useEffect(() => {
-    const handleScroll = () => {
-      if ((window.innerHeight + window.scrollY) >= document.body.offsetHeight - 600) {
-        setDisplayLimit(prev => prev + 20);
-      }
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const resetToHome = () => {
-    setActiveFilters({ member: null, cosplayer: null, text: "" });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-
   return (
     <>
-      <Head>
-        <title>VSPO! COSPLAY ARCHIVE</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-      </Head>
+      <Head><title>VSPO! COSPLAY ARCHIVE</title></Head>
 
       <header>
-        <div className="header-left">
-          <div className="site-title" onClick={resetToHome}>
+        <div className="header-left" onClick={() => setActiveFilters({member:null, cosplayer:null, text:""})}>
+          <div className="site-title">
             <i className="fas fa-camera site-logo-icon"></i>
             <span className="title-text">VSPO! COSPLAY ARCHIVE</span>
           </div>
@@ -145,6 +142,20 @@ export default function Home() {
         </div>
       </header>
 
+      {/* --- ストーリーコンテナ (復活！) --- */}
+      {!activeFilters.cosplayer && (
+        <div className="stories-container">
+          {stories.map((s, idx) => (
+            <div key={s.member} className="story-item" onClick={() => setActiveStory({ memberIndex: idx, slideIndex: 0 })}>
+              <div className="story-ring">
+                <img src={getTwitterUrl(s.images[0].image, 'thumb')} className="story-img" alt="" />
+              </div>
+              <span className="story-name">{s.member}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* --- 個人ダッシュボード --- */}
       {activeFilters.cosplayer && stats && (
         <div className="dashboard-container">
@@ -153,20 +164,12 @@ export default function Home() {
             <div className="profile-actions">
               {stats.sns.twitter && <a href={stats.sns.twitter} target="_blank" rel="noreferrer" className="btn-sns"><i className="fab fa-x-twitter"></i> Follow</a>}
               {stats.sns.insta && <a href={stats.sns.insta} target="_blank" rel="noreferrer" className="btn-sns btn-insta"><i className="fab fa-instagram"></i> Insta</a>}
-              {stats.sns.tiktok && <a href={stats.sns.tiktok} target="_blank" rel="noreferrer" className="btn-sns" style={{background:'#000'}}><i className="fab fa-tiktok"></i> TikTok</a>}
-              {stats.sns.fantia && <a href={stats.sns.fantia} target="_blank" rel="noreferrer" className="btn-sns" style={{background:'#e5005a'}}><i className="fas fa-heart"></i> Fantia</a>}
-              <button className="btn-share-profile" onClick={resetToHome}><i className="fas fa-times"></i> Close</button>
+              <button className="btn-share-profile" onClick={() => setActiveFilters(prev => ({...prev, cosplayer: null}))}><i className="fas fa-times"></i> Close</button>
             </div>
           </div>
           <div className="profile-stats-grid">
-            <div className="stat-card">
-              <div className="stat-val">{stats.total}</div>
-              <div className="stat-label">Total Photos</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-val">{stats.memberCount}</div>
-              <div className="stat-label">Members Cosplayed</div>
-            </div>
+            <div className="stat-card"><div className="stat-val">{stats.total}</div><div className="stat-label">Total Photos</div></div>
+            <div className="stat-card"><div className="stat-val">{stats.memberCount}</div><div className="stat-label">Members Cosplayed</div></div>
           </div>
           <div className="member-breakdown-box">
             {Object.keys(stats.breakdown).map(m => (
@@ -178,36 +181,34 @@ export default function Home() {
         </div>
       )}
 
-      {!activeFilters.cosplayer && (
-        <div className="top-area">
-          <div className="chips-container">
-            <span className={`member-chip ${!activeFilters.member ? 'active' : ''}`} onClick={() => setActiveFilters(prev => ({...prev, member: null}))}>🏠 All</span>
-            {memberOrder.map(m => (
-              <span key={m} className={`member-chip ${activeFilters.member === m ? 'active' : ''}`} onClick={() => setActiveFilters(prev => ({...prev, member: m}))}>
-                {memberIcons[m]} {m}
-              </span>
-            ))}
-          </div>
-          <div className="utility-deck">
-            <div className="sort-group">
-              <button className={`sort-btn ${currentSort === 'old' ? 'active' : ''}`} onClick={() => setCurrentSort('old')}>⬇️ 登録順</button>
-              <button className={`sort-btn ${currentSort === 'new' ? 'active' : ''}`} onClick={() => setCurrentSort('new')}>✨ 新着順</button>
-              <button className={`sort-btn ${currentSort === 'random' ? 'active' : ''}`} onClick={() => setCurrentSort('random')}>🔀 シャッフル</button>
-            </div>
+      <div className="top-area">
+        <div className="chips-container">
+          <span className={`member-chip ${!activeFilters.member ? 'active' : ''}`} onClick={() => setActiveFilters(prev => ({...prev, member: null}))}>🏠 All</span>
+          {memberOrder.map(m => (
+            <span key={m} className={`member-chip ${activeFilters.member === m ? 'active' : ''}`} onClick={() => setActiveFilters(prev => ({...prev, member: m}))}>
+              {memberIcons[m]} {m}
+            </span>
+          ))}
+        </div>
+        <div className="utility-deck">
+          <div className="sort-group">
+            <button className={`sort-btn ${currentSort === 'old' ? 'active' : ''}`} onClick={() => setCurrentSort('old')}>⬇️ 登録順</button>
+            <button className={`sort-btn ${currentSort === 'new' ? 'active' : ''}`} onClick={() => setCurrentSort('new')}>✨ 新着順</button>
+            <button className={`sort-btn ${currentSort === 'random' ? 'active' : ''}`} onClick={() => setCurrentSort('random')}>🔀 シャッフル</button>
           </div>
         </div>
-      )}
+      </div>
 
       <main>
         <div className="masonry-grid">
           {filteredData.slice(0, displayLimit).map((item) => (
             <div key={item._id} className="card">
               <div className="card-img-area" onClick={() => setModalImage(item)}>
-                <Image src={getTwitterUrl(item.image, 'medium')} alt={item.member} width={400} height={600} className="main-img" loading="lazy" />
+                <Image src={getTwitterUrl(item.image, 'medium')} alt={item.member} width={400} height={600} className="main-img" />
               </div>
-              <div className="card-meta">
-                <img src={getTwitterUrl(item.image, 'thumb')} className="card-avatar" alt="" onClick={() => setActiveFilters(prev => ({...prev, cosplayer: item.cosplayer}))} />
-                <div className="card-texts" onClick={() => setActiveFilters(prev => ({...prev, cosplayer: item.cosplayer}))}>
+              <div className="card-meta" onClick={() => setActiveFilters(prev => ({...prev, cosplayer: item.cosplayer}))}>
+                <img src={getTwitterUrl(item.image, 'thumb')} className="card-avatar" alt="" />
+                <div className="card-texts">
                   <div className="card-title">{item.cosplayer}</div>
                   <div className="card-subtitle">{memberIcons[item.member]} {item.member}</div>
                 </div>
@@ -217,81 +218,96 @@ export default function Home() {
         </div>
       </main>
 
+      {/* --- ストーリービューワー (復活！) --- */}
+      {activeStory && (
+        <div className="story-viewer" onClick={() => setActiveStory(null)}>
+          <div className="story-progress-bar">
+            {stories[activeStory.memberIndex].images.map((_, i) => (
+              <div key={i} className="story-progress-segment">
+                <div className="story-progress-fill" style={{ width: i < activeStory.slideIndex ? '100%' : i === activeStory.slideIndex ? '100%' : '0%', transition: i === activeStory.slideIndex ? 'width 4s linear' : 'none' }}></div>
+              </div>
+            ))}
+          </div>
+          <div className="story-content" onClick={e => e.stopPropagation()}>
+            <img src={getTwitterUrl(stories[activeStory.memberIndex].images[activeStory.slideIndex].image, 'large')} className="story-main-img" alt="" />
+            <div className="story-header-info">
+              {memberIcons[stories[activeStory.memberIndex].member]} {stories[activeStory.memberIndex].member}
+            </div>
+            <div className="story-nav left" onClick={() => setActiveStory(prev => ({...prev, slideIndex: Math.max(0, prev.slideIndex - 1)}))}></div>
+            <div className="story-nav right" onClick={nextStory}></div>
+          </div>
+        </div>
+      )}
+
       {modalImage && (
         <div className="modal open" onClick={() => setModalImage(null)}>
-          <span className="modal-close" onClick={() => setModalImage(null)}>&times;</span>
           <img src={getTwitterUrl(modalImage.image, 'large')} alt="" onClick={e => e.stopPropagation()} />
         </div>
       )}
 
       <style jsx global>{`
-        :root {
-          --bg-color: #0f0f0f;
-          --text-color: #f1f1f1;
-          --text-sub: #aaaaaa;
-          --primary: #3ea6ff;
-          --grad-main: linear-gradient(135deg, #3b82f6 0%, #d946ef 100%);
-          --header-height: 60px;
-        }
+        :root { --bg-color: #0f0f0f; --text-color: #f1f1f1; --primary: #3ea6ff; --grad-main: linear-gradient(135deg, #3b82f6 0%, #d946ef 100%); --header-height: 60px; }
         body { background: var(--bg-color); color: var(--text-color); font-family: sans-serif; margin: 0; padding-top: var(--header-height); }
-        header { position: fixed; top: 0; width: 100%; height: var(--header-height); background: rgba(15,15,15,0.95); backdrop-filter: blur(10px); z-index: 1000; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
-        .site-title { font-weight: 800; display: flex; align-items: center; gap: 8px; cursor: pointer; }
-        .site-logo-icon { background: var(--grad-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        header { position: fixed; top: 0; width: 100%; height: var(--header-height); background: rgba(15,15,15,0.9); backdrop-filter: blur(10px); z-index: 1000; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; }
+        
+        /* ストーリーのスタイル */
+        .stories-container { display: flex; gap: 15px; overflow-x: auto; padding: 15px; scrollbar-width: none; border-bottom: 1px solid #222; }
+        .stories-container::-webkit-scrollbar { display: none; }
+        .story-item { flex-shrink: 0; width: 70px; text-align: center; cursor: pointer; }
+        .story-ring { width: 66px; height: 66px; border-radius: 50%; padding: 2px; background: var(--grad-main); display: flex; align-items: center; justify-content: center; margin-bottom: 5px; }
+        .story-img { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 2px solid #000; }
+        .story-name { font-size: 0.65rem; color: #aaa; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
 
-        .dashboard-container { padding: 20px; background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, var(--bg-color) 100%); border-bottom: 1px solid #333; animation: fadeIn 0.4s; }
-        .profile-header-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px; }
-        .profile-name { font-size: 1.5rem; margin: 0; }
-        .profile-actions { display: flex; gap: 10px; flex-wrap: wrap; }
-        .btn-sns { background: #1da1f2; color: #fff; padding: 8px 15px; border-radius: 20px; text-decoration: none; font-size: 0.8rem; font-weight: bold; }
-        .btn-insta { background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); }
-        .btn-share-profile { background: #333; color: #fff; border: none; padding: 8px 15px; border-radius: 20px; cursor: pointer; }
+        /* ビューワー */
+        .story-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .story-progress-bar { position: absolute; top: 10px; width: 95%; display: flex; gap: 4px; z-index: 5010; }
+        .story-progress-segment { flex: 1; height: 2px; background: rgba(255,255,255,0.3); border-radius: 2px; overflow: hidden; }
+        .story-progress-fill { height: 100%; background: #fff; width: 0; }
+        .story-content { position: relative; width: 100%; height: 100%; max-width: 500px; display: flex; align-items: center; justify-content: center; }
+        .story-main-img { max-width: 100%; max-height: 100%; object-fit: contain; }
+        .story-header-info { position: absolute; top: 30px; left: 20px; color: #fff; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.5); z-index: 5010; }
+        .story-nav { position: absolute; top: 0; height: 100%; width: 30%; z-index: 5005; }
+        .story-nav.left { left: 0; } .story-nav.right { right: 0; }
 
-        .profile-stats-grid { display: flex; gap: 15px; margin-bottom: 20px; }
-        .stat-card { background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; flex: 1; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-        .stat-val { font-size: 1.5rem; font-weight: bold; }
-        .stat-label { font-size: 0.7rem; color: var(--text-sub); }
-
-        .member-breakdown-box { display: flex; flex-wrap: wrap; gap: 8px; }
-        .member-bd-chip { background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
-        .member-bd-chip.active { background: var(--primary); color: #fff; }
-        .member-bd-count { color: var(--primary); font-weight: bold; margin-left: 5px; }
+        /* その他既存のスタイル */
+        .dashboard-container { padding: 20px; background: linear-gradient(180deg, rgba(255,255,255,0.05) 0%, var(--bg-color) 100%); border-bottom: 1px solid #333; }
+        .profile-header-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .btn-sns { background: #1da1f2; color: #fff; padding: 6px 15px; border-radius: 20px; text-decoration: none; font-size: 0.75rem; font-weight: bold; }
+        .btn-insta { background: linear-gradient(45deg, #f09433, #bc1888); }
+        .btn-share-profile { background: #333; color: #fff; border: none; padding: 6px 15px; border-radius: 20px; cursor: pointer; }
+        .profile-stats-grid { display: flex; gap: 10px; margin-bottom: 15px; }
+        .stat-card { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; flex: 1; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
+        .stat-val { font-size: 1.2rem; font-weight: bold; }
+        .stat-label { font-size: 0.6rem; color: #aaa; }
+        .member-breakdown-box { display: flex; flex-wrap: wrap; gap: 6px; }
+        .member-bd-chip { background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
+        .member-bd-chip.active { background: var(--primary); }
+        .member-bd-count { color: var(--primary); font-weight: bold; margin-left: 4px; }
         .member-bd-chip.active .member-bd-count { color: #fff; }
 
         .masonry-grid { column-count: 2; column-gap: 15px; padding: 15px; }
         @media (min-width: 768px) { .masonry-grid { column-count: 3; } }
         @media (min-width: 1200px) { .masonry-grid { column-count: 5; } }
-        
         .card { break-inside: avoid; margin-bottom: 20px; }
         .card-img-area { border-radius: 12px; overflow: hidden; background: #222; }
-        .card-img-area :global(img) { width: 100%; height: auto; display: block; transition: 0.3s; }
-        .card-img-area:hover :global(img) { transform: scale(1.03); }
-        
+        .card-img-area :global(img) { width: 100%; height: auto; display: block; }
         .card-meta { display: flex; gap: 10px; margin-top: 10px; cursor: pointer; }
         .card-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
-        .card-texts { display: flex; flex-direction: column; overflow: hidden; }
-        .card-title { font-weight: bold; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .card-subtitle { font-size: 0.75rem; color: var(--text-sub); }
-
+        .card-title { font-weight: bold; font-size: 0.85rem; }
+        .card-subtitle { font-size: 0.7rem; color: #aaa; }
         .top-area { background: var(--bg-color); position: sticky; top: var(--header-height); z-index: 900; }
         .chips-container { display: flex; gap: 8px; overflow-x: auto; padding: 10px 15px; scrollbar-width: none; }
-        .chips-container::-webkit-scrollbar { display: none; }
-        .member-chip { background: #272727; padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+        .member-chip { background: #272727; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; white-space: nowrap; }
         .member-chip.active { background: #fff; color: #000; font-weight: bold; }
-
         .utility-deck { padding: 5px 15px; display: flex; justify-content: space-between; }
-        .sort-btn { background: transparent; border: none; color: var(--text-sub); padding: 5px 10px; font-size: 0.8rem; cursor: pointer; }
-        .sort-btn.active { color: var(--text-color); border-bottom: 2px solid var(--text-color); }
-
+        .sort-btn { background: transparent; border: none; color: #aaa; padding: 5px 8px; font-size: 0.75rem; cursor: pointer; }
+        .sort-btn.active { color: #fff; border-bottom: 2px solid #fff; }
         .modal { position: fixed; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); display: none; justify-content: center; align-items: center; z-index: 2000; }
         .modal.open { display: flex; }
         .modal img { max-height: 85vh; max-width: 95%; border-radius: 8px; }
-        .modal-close { position: absolute; top: 20px; right: 20px; font-size: 2.5rem; color: #fff; cursor: pointer; z-index: 2100; }
-
-        .search-box { background: #121212; border: 1px solid #303030; border-radius: 20px; padding: 5px 15px; display: flex; align-items: center; }
-        .search-input { background: none; border: none; color: #fff; outline: none; margin-left: 8px; font-size: 0.9rem; }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
     </>
   );
 }
