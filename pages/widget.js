@@ -103,7 +103,6 @@ export default function Widget() {
       <div className="main-wrapper">
         <div className="bg-photo-layer">{currentPhoto && <img src={currentPhoto.image} alt="" className="main-photo" />}</div>
         
-        {/* 透明なドラッグ領域（クリック不可。ボタンがある場所はここを無視させる） */}
         <div className="drag-handle-base"></div>
 
         <div className="ui-overlay">
@@ -118,7 +117,6 @@ export default function Widget() {
 
           <div className="footer-ui">
             <div className="model-info"><span className="label">MODEL</span><div className="name">{currentPhoto?.cosplayer || '---'}</div></div>
-            {/* ポモドーロボタン */}
             <button className="pomo-trigger-btn" onClick={togglePomo}>
               <div className="dot"></div>
               <span>{pomoStatus === 'idle' ? 'START SESSION' : `${Math.floor(timeLeft/60)}:${String(timeLeft%60).padStart(2,'0')}`}</span>
@@ -126,10 +124,8 @@ export default function Widget() {
           </div>
         </div>
 
-        {/* 設定ボタン（常に最前面） */}
         <button className="gear-trigger-btn" onClick={() => setIsSettingsOpen(true)}><i className="fas fa-ellipsis-v"></i></button>
 
-        {/* 設定画面（pointer-events: auto で確実に操作可能にする） */}
         <div className={`settings-view ${isSettingsOpen ? 'is-active' : ''}`}>
           <div className="settings-content">
             <div className="settings-header">
@@ -150,11 +146,13 @@ export default function Widget() {
                     {MEMBER_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
                   
-                  {/* 復活：コスプレイヤー選択 */}
                   <label>COSPLAYER / レイヤーさん</label>
                   <select value={config.cosplayer} onChange={e => setConfig({...config, cosplayer: e.target.value})}>
                     {cosplayers.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
+
+                  <label>INTERVAL / 更新間隔 ({config.interval} 秒)</label>
+                  <input type="range" min="10" max="600" step="10" value={config.interval} onChange={e => setConfig({...config, interval: parseInt(e.target.value)})} />
 
                   <label>SIZE / ウィンドウサイズ</label>
                   <div className="size-grid">
@@ -181,55 +179,50 @@ export default function Widget() {
         
         .bg-photo-layer { position: absolute; inset: 0; z-index: 1; }
         .main-photo { width: 100%; height: 100%; object-fit: cover; }
-
-        /* 透明なドラッグハンドル（ボタンのない場所をクリックした時用） */
         .drag-handle-base { position: absolute; inset: 0; z-index: 5; -webkit-app-region: drag; }
 
-        /* UIオーバーレイ */
         .ui-overlay { position: absolute; inset: 0; z-index: 10; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
-        
-        .header-ui, .masthead-ui, .footer-ui { pointer-events: none; }
-        .top-clock { font-size: 14px; font-weight: 800; opacity: 0.8; }
-        .brand-badge { font-size: 8px; font-weight: 800; letter-spacing: 0.2em; border-left: 2px solid #00f2ff; padding-left: 8px; }
-
         .title-text { font-family: 'Playfair Display', serif; font-style: italic; font-size: 42px; margin: 0; text-align: center; line-height: 1; text-shadow: 0 4px 15px rgba(0,0,0,0.8); }
 
-        .footer-ui { display: flex; justify-content: space-between; align-items: flex-end; }
-        .model-info .label { font-size: 7px; font-weight: 800; opacity: 0.5; }
-        .model-info .name { font-size: 18px; font-weight: 800; }
-
-        /* ボタン類（確実にクリックを通すための no-drag） */
         .pomo-trigger-btn, .gear-trigger-btn, .settings-view { pointer-events: auto !important; -webkit-app-region: no-drag !important; }
 
         .pomo-trigger-btn { background: rgba(0,0,0,0.7); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 10px 15px; border-radius: 30px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.3s; }
         .pomo-trigger-btn:hover { background: #00f2ff; color: #000; border-color: #00f2ff; }
         .dot { width: 8px; height: 8px; border-radius: 50%; background: #00f2ff; box-shadow: 0 0 10px #00f2ff; }
         .status-focus .dot { background: #ff00ff; box-shadow: 0 0 10px #ff00ff; }
-        .pomo-trigger-btn span { font-size: 10px; font-weight: 800; }
+        
+        .gear-trigger-btn { position: absolute; top: 15px; right: 15px; z-index: 100; width: 40px; height: 40px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 
-        .gear-trigger-btn { position: absolute; top: 15px; right: 15px; z-index: 100; width: 40px; height: 40px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.2); color: white; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
-        .gear-trigger-btn:hover { background: #fff; color: #000; }
-
-        /* 設定画面 */
+        /* 設定画面のスクロール対応 */
         .settings-view { position: absolute; inset: 0; background: #0a0a0c; z-index: 1000; transform: translateY(100%); transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
         .settings-view.is-active { transform: translateY(0); }
         .settings-content { padding: 30px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
         
-        .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .x-btn { background: none; border: none; color: #555; font-size: 32px; cursor: pointer; }
-        
-        .settings-tabs { display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid #222; }
+        .settings-body { 
+          flex: 1; 
+          overflow-y: auto; /* スクロール有効化 */
+          padding-right: 5px;
+          margin: 10px 0;
+          -webkit-app-region: no-drag !important; /* スクロールを邪魔させない */
+        }
+        /* スクロールバーのデザイン */
+        .settings-body::-webkit-scrollbar { width: 4px; }
+        .settings-body::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+
+        .settings-header { display: flex; justify-content: space-between; align-items: center; }
+        .settings-tabs { display: flex; gap: 15px; border-bottom: 1px solid #222; }
         .settings-tabs button { background: none; border: none; color: #555; font-weight: 800; padding: 10px 0; cursor: pointer; }
         .settings-tabs button.on { color: #00f2ff; border-bottom: 2px solid #00f2ff; }
 
         .field-group label { display: block; font-size: 9px; color: #666; font-weight: 800; margin: 15px 0 5px 0; }
-        select { width: 100%; padding: 12px; background: #1a1a1c; border: 1px solid #333; color: white; border-radius: 6px; font-family: inherit; }
+        select, input[type="range"] { width: 100%; padding: 12px; background: #1a1a1c; border: 1px solid #333; color: white; border-radius: 6px; }
         
         .size-grid { display: flex; gap: 5px; }
         .size-grid button { flex: 1; padding: 10px; background: #1a1a1c; border: 1px solid #333; color: white; font-size: 11px; cursor: pointer; border-radius: 6px; }
         .size-grid button.on { border-color: #00f2ff; color: #00f2ff; }
 
-        .final-apply-btn { margin-top: auto; background: #00f2ff; color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: 800; cursor: pointer; }
+        .final-apply-btn { background: #00f2ff; color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: 800; cursor: pointer; margin-top: 10px; }
+        .x-btn { background: none; border: none; color: #555; font-size: 32px; cursor: pointer; }
       `}</style>
     </div>
   );
