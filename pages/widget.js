@@ -15,8 +15,6 @@ const SIZES = { '小': { w: 240, h: 360 }, '中': { w: 320, h: 480 }, '大': { w
 export default function Widget() {
   const [allData, setAllData] = useState([]);
   const [currentPhoto, setCurrentPhoto] = useState(null);
-  const [nextPhoto, setNextPhoto] = useState(null);
-  const [isChanging, setIsChanging] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('magazine'); 
   const [config, setConfig] = useState({ member: '全員', cosplayer: '全員', interval: 60, size: '中' });
@@ -25,7 +23,6 @@ export default function Widget() {
   const [pomoStatus, setPomoStatus] = useState('idle'); 
   const [timeLeft, setTimeLeft] = useState(0);
 
-  // 1. データ読み込み
   useEffect(() => {
     const clockTimer = setInterval(() => setNow(new Date()), 1000);
     const saved = localStorage.getItem('vspo-widget-config');
@@ -41,7 +38,6 @@ export default function Widget() {
           const formatted = res.data.filter(d => d.image || d['画像'] || d.link || d['URL']).map(d => ({
             member: (d.member || d['名前'] || "").trim(),
             image: (d.image || d['画像'] || d.link || d['URL'] || "").replace('name=medium', 'name=large'),
-            link: (d.link || d['URL'] || "").trim(),
             cosplayer: (d.cosplayer || d['レイヤー'] || "Unknown").trim(),
           }));
           setAllData(formatted);
@@ -52,25 +48,12 @@ export default function Widget() {
     return () => clearInterval(clockTimer);
   }, []);
 
-  // 2. 画像切り替えロジック（アニメーション対応）
   const pickPhoto = useCallback(() => {
     if (allData.length === 0) return;
     let pool = allData.filter(p => (config.member === '全員' || p.member === config.member) && (config.cosplayer === '全員' || p.cosplayer === config.cosplayer));
     if (pool.length === 0) pool = allData;
-    const selected = pool[Math.floor(Math.random() * pool.length)];
-    
-    if (!currentPhoto) {
-      setCurrentPhoto(selected);
-    } else {
-      setNextPhoto(selected);
-      setIsChanging(true);
-      setTimeout(() => {
-        setCurrentPhoto(selected);
-        setIsChanging(false);
-        setNextPhoto(null);
-      }, 1200); // クロスフェード時間
-    }
-  }, [allData, config.member, config.cosplayer, currentPhoto]);
+    setCurrentPhoto(pool[Math.floor(Math.random() * pool.length)]);
+  }, [allData, config.member, config.cosplayer]);
 
   useEffect(() => {
     pickPhoto();
@@ -79,14 +62,16 @@ export default function Widget() {
     return () => clearInterval(timer);
   }, [pickPhoto, config.interval, pomoStatus]);
 
-  // 3. タイマー・ウィンドウ制御
+  // ポモドーロタイマーの核心ロジック
   useEffect(() => {
     if (pomoStatus === 'idle') return;
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
-          setPomoStatus(pomoStatus === 'focus' ? 'break' : 'focus');
-          return (pomoStatus === 'focus' ? pomoConfig.breakTime : pomoConfig.focusTime) * 60;
+          const nextStatus = pomoStatus === 'focus' ? 'break' : 'focus';
+          const nextTime = (nextStatus === 'focus' ? pomoConfig.focusTime : pomoConfig.breakTime) * 60;
+          setPomoStatus(nextStatus);
+          return nextTime;
         }
         return prev - 1;
       });
@@ -94,25 +79,26 @@ export default function Widget() {
     return () => clearInterval(timer);
   }, [pomoStatus, pomoConfig]);
 
+  const togglePomo = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (pomoStatus === 'idle') {
+      setPomoStatus('focus');
+      setTimeLeft(pomoConfig.focusTime * 60);
+    } else {
+      if (confirm("タイマーを終了しますか？")) {
+        setPomoStatus('idle');
+        setTimeLeft(0);
+      }
+    }
+  };
+
   useEffect(() => {
     if (window.electronAPI) {
       const { w, h } = SIZES[config.size || '中'];
       window.electronAPI.resizeWindow(w, h);
     }
   }, [config.size]);
-
-  const togglePomo = (e) => {
-    e.stopPropagation();
-    if (pomoStatus === 'idle') { 
-      setPomoStatus('focus'); 
-      setTimeLeft(pomoConfig.focusTime * 60); 
-    } else { 
-      if (confirm("タイマーをリセットしますか？")) {
-        setPomoStatus('idle'); 
-        setTimeLeft(0); 
-      }
-    }
-  };
 
   const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
   const dateStr = `${now.getFullYear()}.${String(now.getMonth() + 1).padStart(2, '0')}.${String(now.getDate()).padStart(2, '0')}`;
@@ -126,29 +112,21 @@ export default function Widget() {
       </Head>
 
       <div className="main-wrapper">
+        {/* 背景・画像レイヤー */}
         <div className="magazine-view">
-          {/* 画像レイヤー */}
-          <div className={`photo-layer ${isChanging ? 'is-leaving' : ''}`}>
-            {currentPhoto && <img src={currentPhoto.image} alt="" className="photo" />}
-          </div>
-          {nextPhoto && (
-            <div className={`photo-layer is-entering`}>
-              <img src={nextPhoto.image} alt="" className="photo" />
-            </div>
-          )}
-
+          {currentPhoto && <img src={currentPhoto.image} alt="" className="main-photo" />}
           <div className="grain-overlay"></div>
-
-          {/* 誌面デザインオーバーレイ */}
+          
+          {/* UIオーバーレイ - pointer-events:noneでクリックを透過させ、ボタンだけautoにする */}
           <div className="editorial-ui">
             <div className="top-meta">
               <div className="brand">VSPO! ARCHIVE / SPECIAL ISSUE</div>
-              <div className="time-code">{pomoStatus === 'idle' ? timeStr : `${Math.floor(timeLeft/60)}:${String(timeLeft%60).padStart(2,'0')}`}</div>
+              <div className="time-display">{timeStr}</div>
             </div>
 
             <div className="masthead">
-              <h1 className="main-title">{currentPhoto?.member || 'VSPO!'}</h1>
-              <div className="sub-line">{dateStr} / NEW ARCHIVE RELEASE</div>
+              <h1 className="member-name">{currentPhoto?.member || 'VSPO!'}</h1>
+              <div className="issue-info">{dateStr} / NEW RELEASE</div>
             </div>
 
             <div className="bottom-meta">
@@ -156,30 +134,37 @@ export default function Widget() {
                 <span className="label">FEATURED MODEL</span>
                 <div className="name">{currentPhoto?.cosplayer || 'Unknown'}</div>
               </div>
-              <div className="session-status" onClick={togglePomo}>
-                <div className="status-indicator"></div>
-                <span>{pomoStatus === 'idle' ? 'START SESSION' : pomoStatus.toUpperCase()}</span>
+              {/* ポモドーロスイッチ */}
+              <div className="pomo-toggle" onClick={togglePomo}>
+                <div className="pomo-indicator"></div>
+                <div className="pomo-text">
+                  {pomoStatus === 'idle' ? 'START SESSION' : `${Math.floor(timeLeft/60)}:${String(timeLeft%60).padStart(2,'0')}`}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* ポモドーロプログレス */}
           {pomoStatus !== 'idle' && (
-            <div className="pomo-progress-container">
-              <div className="pomo-progress-bar" style={{ width: `${(timeLeft / (pomoStatus === 'focus' ? pomoConfig.focusTime*60 : pomoConfig.breakTime*60)) * 100}%` }}></div>
+            <div className="pomo-progress-track">
+              <div className="pomo-progress-fill" style={{ width: `${(timeLeft / (pomoStatus === 'focus' ? pomoConfig.focusTime*60 : pomoConfig.breakTime*60)) * 100}%` }}></div>
             </div>
           )}
         </div>
 
-        <div className="drag-handle"></div>
-        <button className="settings-trigger" onClick={() => setIsSettingsOpen(true)}><i className="fas fa-ellipsis-v"></i></button>
+        {/* 最前面の操作レイヤー */}
+        <div className="interaction-layer">
+          <div className="drag-area"></div>
+          <button className="settings-btn" onClick={() => setIsSettingsOpen(true)} title="Settings">
+            <i className="fas fa-ellipsis-v"></i>
+          </button>
+        </div>
 
-        {/* 設定モーダル */}
+        {/* 設定パネル */}
         <div className={`settings-panel ${isSettingsOpen ? 'is-open' : ''}`}>
           <div className="panel-inner">
             <div className="panel-header">
-              <h3>SETTINGS</h3>
-              <button onClick={() => setIsSettingsOpen(false)}>&times;</button>
+              <h3>WIDGET SETTINGS</h3>
+              <button className="close-btn" onClick={() => setIsSettingsOpen(false)}>&times;</button>
             </div>
             <div className="panel-tabs">
               <button className={activeTab === 'magazine' ? 'active' : ''} onClick={() => setActiveTab('magazine')}>Magazine</button>
@@ -187,27 +172,26 @@ export default function Widget() {
             </div>
             <div className="panel-body">
               {activeTab === 'magazine' ? (
-                <>
-                  <div className="field"><label>Member</label>
-                    <select value={config.member} onChange={e => setConfig({...config, member: e.target.value})}>
-                      {MEMBER_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
-                    </select>
+                <div className="settings-group">
+                  <label>MEMBER</label>
+                  <select value={config.member} onChange={e => setConfig({...config, member: e.target.value})}>
+                    {MEMBER_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                  <label>SIZE</label>
+                  <div className="size-selector">
+                    {Object.keys(SIZES).map(s => <button key={s} className={config.size === s ? 'active' : ''} onClick={() => setConfig({...config, size: s})}>{s}</button>)}
                   </div>
-                  <div className="field"><label>Size</label>
-                    <div className="btn-group">
-                      {Object.keys(SIZES).map(s => <button key={s} className={config.size === s ? 'active' : ''} onClick={() => setConfig({...config, size: s})}>{s}</button>)}
-                    </div>
-                  </div>
-                </>
+                </div>
               ) : (
-                <>
-                  <div className="field"><label>Focus (min)</label>
-                    <input type="range" min="5" max="60" value={pomoConfig.focusTime} onChange={e => setPomoConfig({...pomoConfig, focusTime: parseInt(e.target.value)})} />
-                  </div>
-                </>
+                <div className="settings-group">
+                  <label>FOCUS TIME ({pomoConfig.focusTime} min)</label>
+                  <input type="range" min="5" max="60" step="5" value={pomoConfig.focusTime} onChange={e => setPomoConfig({...pomoConfig, focusTime: parseInt(e.target.value)})} />
+                  <label>BREAK TIME ({pomoConfig.breakTime} min)</label>
+                  <input type="range" min="1" max="15" step="1" value={pomoConfig.breakTime} onChange={e => setPomoConfig({...pomoConfig, breakTime: parseInt(e.target.value)})} />
+                </div>
               )}
             </div>
-            <button className="apply-btn" onClick={() => { localStorage.setItem('vspo-widget-config', JSON.stringify(config)); setIsSettingsOpen(false); }}>APPLY CHANGES</button>
+            <button className="apply-btn" onClick={() => { localStorage.setItem('vspo-widget-config', JSON.stringify(config)); setIsSettingsOpen(false); }}>SAVE & CLOSE</button>
           </div>
         </div>
       </div>
@@ -216,54 +200,58 @@ export default function Widget() {
         body { margin: 0; background: transparent; overflow: hidden; font-family: 'Montserrat', sans-serif; color: white; user-select: none; }
         .main-wrapper { width: 100vw; height: 100vh; position: relative; background: #000; border-radius: 12px; overflow: hidden; }
         
+        /* 描画レイヤー */
         .magazine-view { width: 100%; height: 100%; position: relative; }
-        .photo-layer { position: absolute; inset: 0; transition: transform 1.2s cubic-bezier(0.19, 1, 0.22, 1), opacity 1.2s; }
-        .photo { width: 100%; height: 100%; object-fit: cover; }
-        .is-leaving { transform: scale(1.1); opacity: 0; z-index: 1; }
-        .is-entering { transform: scale(0.95); opacity: 1; z-index: 2; animation: enter 1.2s cubic-bezier(0.19, 1, 0.22, 1) forwards; }
-        @keyframes enter { to { transform: scale(1); } }
+        .main-photo { width: 100%; height: 100%; object-fit: cover; }
+        .grain-overlay { position: absolute; inset: 0; background-image: url("https://grainy-gradients.vercel.app/noise.svg"); opacity: 0.1; pointer-events: none; z-index: 5; }
 
-        .grain-overlay { position: absolute; inset: 0; background-image: url("https://grainy-gradients.vercel.app/noise.svg"); opacity: 0.15; pointer-events: none; z-index: 5; mix-blend-mode: overlay; }
-
-        .editorial-ui { position: absolute; inset: 0; z-index: 10; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent 40%, transparent 60%, rgba(0,0,0,0.6)); }
+        /* デザインオーバーレイ（クリック不可にして、中のボタンだけ可にする） */
+        .editorial-ui { position: absolute; inset: 0; z-index: 10; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; background: linear-gradient(to bottom, rgba(0,0,0,0.4), transparent 30%, transparent 70%, rgba(0,0,0,0.6)); }
         
-        .top-meta { display: flex; justify-content: space-between; align-items: flex-start; }
+        .top-meta { display: flex; justify-content: space-between; align-items: center; }
         .brand { font-size: 8px; font-weight: 800; letter-spacing: 0.2em; border-left: 2px solid #00f2ff; padding-left: 8px; }
-        .time-code { font-family: 'Montserrat', sans-serif; font-weight: 800; font-size: 16px; color: #00f2ff; }
+        .time-display { font-size: 14px; font-weight: 800; opacity: 0.8; }
 
         .masthead { text-align: center; }
-        .main-title { font-family: 'Playfair Display', serif; font-style: italic; font-size: 48px; margin: 0; line-height: 0.9; text-shadow: 0 10px 20px rgba(0,0,0,0.5); }
-        .sub-line { font-size: 8px; font-weight: 300; letter-spacing: 0.3em; margin-top: 10px; opacity: 0.7; }
+        .member-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 42px; margin: 0; line-height: 1; text-shadow: 0 4px 15px rgba(0,0,0,0.8); }
+        .issue-info { font-size: 8px; letter-spacing: 0.3em; margin-top: 8px; opacity: 0.6; }
 
         .bottom-meta { display: flex; justify-content: space-between; align-items: flex-end; }
-        .featured .label { font-size: 7px; font-weight: 800; opacity: 0.5; display: block; }
+        .featured .label { font-size: 7px; font-weight: 800; opacity: 0.5; }
         .featured .name { font-size: 18px; font-weight: 800; }
-        .session-status { cursor: pointer; display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 8px 12px; border-radius: 20px; font-size: 9px; font-weight: 800; -webkit-app-region: no-drag; transition: 0.3s; }
-        .session-status:hover { background: #00f2ff; color: #000; }
-        .status-indicator { width: 6px; height: 6px; border-radius: 50%; background: #00f2ff; box-shadow: 0 0 10px #00f2ff; }
-        .status-focus .status-indicator { background: #ff00ff; box-shadow: 0 0 10px #ff00ff; }
 
-        .drag-handle { position: absolute; inset: 0; z-index: 5; -webkit-app-region: drag; }
-        .settings-trigger { position: absolute; top: 20px; right: 20px; z-index: 100; background: none; border: none; color: #fff; cursor: pointer; -webkit-app-region: no-drag; opacity: 0.3; transition: 0.3s; }
-        .settings-trigger:hover { opacity: 1; }
+        /* ポモドーロスイッチ（ここをクリック可能に） */
+        .pomo-toggle { pointer-events: auto; cursor: pointer; display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.6); padding: 10px 15px; border-radius: 30px; border: 1px solid rgba(255,255,255,0.1); transition: 0.3s; }
+        .pomo-toggle:hover { border-color: #00f2ff; background: #00f2ff; color: #000; }
+        .pomo-indicator { width: 8px; height: 8px; border-radius: 50%; background: #00f2ff; box-shadow: 0 0 10px #00f2ff; }
+        .status-focus .pomo-indicator { background: #ff00ff; box-shadow: 0 0 10px #ff00ff; }
+        .pomo-text { font-size: 10px; font-weight: 800; }
 
-        .pomo-progress-container { position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: rgba(255,255,255,0.1); z-index: 20; }
-        .pomo-progress-bar { height: 100%; background: #00f2ff; transition: width 1s linear; }
-        .status-focus .pomo-progress-bar { background: #ff00ff; }
+        /* プログレスバー */
+        .pomo-progress-track { position: absolute; bottom: 0; left: 0; width: 100%; height: 3px; background: rgba(255,255,255,0.1); z-index: 15; }
+        .pomo-progress-fill { height: 100%; background: #00f2ff; transition: width 1s linear; }
+        .status-focus .pomo-progress-fill { background: #ff00ff; }
+
+        /* 操作レイヤー（最前面） */
+        .interaction-layer { position: absolute; inset: 0; z-index: 100; pointer-events: none; }
+        .drag-area { position: absolute; inset: 0; -webkit-app-region: drag; z-index: 1; }
+        .settings-btn { position: absolute; top: 15px; right: 15px; width: 40px; height: 40px; border-radius: 50%; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.1); color: white; cursor: pointer; pointer-events: auto; -webkit-app-region: no-drag; z-index: 10; transition: 0.3s; }
+        .settings-btn:hover { background: #fff; color: #000; }
 
         /* 設定パネル */
-        .settings-panel { position: absolute; inset: 0; background: rgba(10,10,12,0.95); z-index: 200; transform: translateX(100%); transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1); }
+        .settings-panel { position: absolute; inset: 0; background: #0a0a0c; z-index: 200; transform: translateX(100%); transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1); pointer-events: auto; }
         .settings-panel.is-open { transform: translateX(0); }
-        .panel-inner { padding: 30px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
-        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-        .panel-tabs { display: flex; gap: 10px; margin-bottom: 20px; }
-        .panel-tabs button { background: none; border: none; color: #555; font-weight: 800; cursor: pointer; border-bottom: 2px solid transparent; }
-        .panel-tabs button.active { color: #00f2ff; border-bottom-color: #00f2ff; }
-        .field { margin-bottom: 20px; }
-        .field label { display: block; font-size: 10px; font-weight: 800; margin-bottom: 8px; color: #555; }
-        select, .btn-group button { width: 100%; background: #1a1a1c; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-family: inherit; }
-        .btn-group { display: flex; gap: 5px; }
-        .btn-group button.active { border-color: #00f2ff; color: #00f2ff; }
+        .panel-inner { padding: 30px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .close-btn { background: none; border: none; color: #555; font-size: 28px; cursor: pointer; }
+        .panel-tabs { display: flex; gap: 15px; margin-bottom: 25px; border-bottom: 1px solid #222; }
+        .panel-tabs button { background: none; border: none; color: #555; font-weight: 800; cursor: pointer; padding-bottom: 10px; }
+        .panel-tabs button.active { color: #00f2ff; border-bottom: 2px solid #00f2ff; }
+        .settings-group label { display: block; font-size: 9px; color: #666; font-weight: 800; margin-bottom: 10px; }
+        select, input[type="range"] { width: 100%; margin-bottom: 20px; }
+        .size-selector { display: flex; gap: 5px; margin-bottom: 20px; }
+        .size-selector button { flex: 1; background: #1a1a1c; border: 1px solid #333; color: white; padding: 10px; border-radius: 6px; font-size: 11px; cursor: pointer; }
+        .size-selector button.active { border-color: #00f2ff; color: #00f2ff; }
         .apply-btn { margin-top: auto; background: #00f2ff; color: #000; border: none; padding: 15px; border-radius: 8px; font-weight: 800; cursor: pointer; }
       `}</style>
     </div>
