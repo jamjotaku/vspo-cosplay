@@ -1,10 +1,15 @@
 {
   "name": "vspo-cosplay-widget",
   "version": "1.0.0",
+  "description": "Vspo! Cosplay Archive Widget & Chronicle Map",
   "main": "main.js",
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "widget": "electron .",
-    "dist": "electron-builder --win"
+    "dist": "electron-builder --win",
+    "lint": "next lint"
   },
   "build": {
     "appId": "com.vspo.cosplay.widget",
@@ -19,6 +24,7 @@
     }
   },
   "dependencies": {
+    "d3": "^7.9.0",
     "next": "latest",
     "papaparse": "latest",
     "react": "latest",
