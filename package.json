@@ -1,7 +1,7 @@
 {
-  "name": "vspo-cosplay-widget",
+  "name": "vspo-cosplay-all-in-one",
   "version": "1.0.0",
-  "description": "Vspo! Cosplay Archive Widget & Chronicle Map",
+  "description": "Vspo! Cosplay Archive - Universal Platform",
   "main": "main.js",
   "scripts": {
     "dev": "next dev",
@@ -24,6 +24,7 @@
     }
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.98.0",
     "d3": "^7.9.0",
     "next": "latest",
     "papaparse": "latest",
