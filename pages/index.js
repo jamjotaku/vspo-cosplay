@@ -5,7 +5,7 @@ import Link from 'next/link';
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 const PROFILE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=1592730885&single=true&output=csv";
 
-const memberOrder = ["花芽すみれ", "花芽なずな", "小雀とと", "一ノ瀬うるは", "胡桃のあ", "兎咲ミミ", "空澄セナ", "橘ひなの", "英リサ", "如月れん", "神成きゅぴ", "八雲べに", "藍沢エマ", "紫宮るな", "猫汰つな", "白波らむね", "小森めと", "夢野あかり", "夜乃くろむ", "紡木こかげ", "千燈ゆうひ", "蝶屋はなび", "甘結もか"];
+const memberOrder = ["花芽すみれ", "花芽なずな", "小雀とと", "一ノ瀬うるは", "胡桃のあ", "兎咲ミミ", "空澄セナ", "橘ひなの", "英リサ", "如月れれん", "神成きゅぴ", "八雲べに", "藍沢エマ", "紫宮るな", "猫汰つな", "白波らむね", "小森めと", "夢野あかり", "夜乃くろむ", "紡木こかげ", "千燈ゆうひ", "蝶屋はなび", "甘結もか"];
 const memberIcons = { "花芽すみれ": "👾💤", "花芽なずな": "🍣", "小雀とと": "🔫🐥", "一ノ瀬うるは": "🌠", "胡桃のあ": "🧸♔", "橘ひなの": "🍫💘", "如月れん": "⏰", "英リサ": "💐", "空澄セナ": "🗝♠︎", "兎咲ミミ": "🐰🍭", "神成きゅぴ": "🌩", "八雲べに": "💄💚", "藍沢エマ": "🥞💫", "紫宮るな": "☪🐾", "猫汰つな": "🍒✨", "白波らむね": "🐻‍❄️🏖", "小森めと": "🪐", "夢野あかり": "🍼", "夜乃くろむ": "💀⛓", "紡木こかげ": "📘💧", "千燈ゆうひ": "🫠", "蝶屋はなび": "🦋🎆", "甘結もか": "🕹🔖", "銀城サイネ": "🎈", "龍巻ちせ": "🐉🌪" };
 
 const getTwitterUrl = (url, size = 'medium') => {
@@ -32,13 +32,13 @@ export default function Home() {
   useEffect(() => {
     const loadData = async () => {
       const Papa = (await import('papaparse')).default;
-      Papa.parse(CSV_URL, {
+       Papa.parse(CSV_URL, {
         download: true, header: true, complete: (res) => {
           const formatted = res.data.filter(d => d.image || d.url || d['画像'] || d['URL']).map((d, i) => ({
             _id: i,
             member: (d.member || d['名前'] || "").trim(),
             image: d.image || d.url || d['画像'] || d['URL'],
-            link: (d.link || d['URL'] || d.url || "").trim(), // 元投稿リンクを取得
+            link: (d.link || d['URL'] || d.url || "").trim(),
             cosplayer: (d.cosplayer || d['レイヤー'] || "Unknown").trim(),
             event: (d.event || d.Event || d['イベント'] || "").trim(),
             searchKey: `${d.member} ${d.cosplayer} ${d.event || d.Event || d['イベント']}`.toLowerCase()
@@ -169,7 +169,7 @@ export default function Home() {
 
       <main className="main-content">
         {viewMode === 'home' && diagStep === 0 && (
-          <>
+          <div className="home-view-layer">
             {!activeFilters.member && !activeFilters.cosplayer && !activeFilters.event && !activeFilters.text && (
               <div className="stories-tray">
                 {stories.map((s, idx) => (
@@ -201,19 +201,22 @@ export default function Home() {
               </div>
             )}
 
-            <div className="filter-bar">
-              <div className="member-chips">
-                <button className={`chip ${!activeFilters.member ? 'active' : ''}`} onClick={() => setActiveFilters(p => ({...p, member:null}))}>ALL</button>
-                {memberOrder.map(m => (
-                  <button key={m} className={`chip ${activeFilters.member === m ? 'active' : ''}`} onClick={() => setActiveFilters(p => ({...p, member:m}))}>
-                    {memberIcons[m]} {m}
-                  </button>
-                ))}
-              </div>
-              <div className="sort-group">
-                <button className={`sort-tool ${currentSort === 'old' ? 'active' : ''}`} onClick={() => setCurrentSort('old')} title="登録順"><i className="fas fa-history"></i></button>
-                <button className={`sort-tool ${currentSort === 'new' ? 'active' : ''}`} onClick={() => setCurrentSort('new')} title="新着順"><i className="fas fa-sparkles"></i></button>
-                <button className={`sort-tool ${currentSort === 'random' ? 'active' : ''}`} onClick={() => setCurrentSort('random')} title="シャッフル"><i className="fas fa-random"></i></button>
+            {/* UIの重なりを解消するための構成変更 */}
+            <div className="filter-wrapper-sticky">
+              <div className="filter-bar">
+                <div className="member-chips">
+                  <button className={`chip ${!activeFilters.member ? 'active' : ''}`} onClick={() => setActiveFilters(p => ({...p, member:null}))}>ALL</button>
+                  {memberOrder.map(m => (
+                    <button key={m} className={`chip ${activeFilters.member === m ? 'active' : ''}`} onClick={() => setActiveFilters(p => ({...p, member:m}))}>
+                      {memberIcons[m]} {m}
+                    </button>
+                  ))}
+                </div>
+                <div className="sort-group">
+                  <button className={`sort-tool ${currentSort === 'old' ? 'active' : ''}`} onClick={() => setCurrentSort('old')} title="登録順"><i className="fas fa-history"></i></button>
+                  <button className={`sort-tool ${currentSort === 'new' ? 'active' : ''}`} onClick={() => setCurrentSort('new')} title="新着順"><i className="fas fa-sparkles"></i></button>
+                  <button className={`sort-tool ${currentSort === 'random' ? 'active' : ''}`} onClick={() => setCurrentSort('random')} title="シャッフル"><i className="fas fa-random"></i></button>
+                </div>
               </div>
             </div>
 
@@ -222,7 +225,6 @@ export default function Home() {
                 <div key={item._id} className="archive-card">
                   <div className="card-thumb">
                     <img src={getTwitterUrl(item.image, 'medium')} alt="" loading="lazy" onClick={() => setModalImage(item)} />
-                    {/* 追加：𝕏リンクボタン */}
                     {item.link && (
                       <a href={item.link} target="_blank" rel="noreferrer" className="x-link-btn" title="View on 𝕏">
                         <i className="fa-brands fa-x-twitter"></i>
@@ -236,10 +238,10 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          </>
+          </div>
         )}
 
-        {/* ... (他ビュー省略なし) ... */}
+        {/* --- 名鑑 / イベント / 診断ビュー (省略なしで維持) --- */}
         {viewMode === 'directory' && (
           <div className="list-view">
             <h2 className="view-title">DIRECTORY / 名鑑</h2>
@@ -254,7 +256,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
         {viewMode === 'events' && (
           <div className="list-view">
             <h2 className="view-title">EVENTS / まとめ</h2>
@@ -269,7 +270,6 @@ export default function Home() {
             </div>
           </div>
         )}
-
         {diagStep > 0 && (
           <div className="diag-screen">
             {diagStep === 1 ? (
@@ -283,7 +283,7 @@ export default function Home() {
             ) : (
               <div className="diag-result-screen">
                 <h3 className="diag-result-title">✨ DESTINY PHOTO ✨</h3>
-                <img src={getTwitterUrl(diagResult?.image, 'large')} className="diag-img" alt="" onClick={() => setModalImage(diagResult)} />
+                {diagResult && <img src={getTwitterUrl(diagResult.image, 'large')} className="diag-img" alt="" onClick={() => setModalImage(diagResult)} />}
                 <p className="diag-name"><b>{diagResult?.cosplayer}</b> さん</p>
                 <div className="diag-buttons">
                   <button className="diag-btn-main" onClick={() => setDiagStep(1)}>もう一度引く</button>
@@ -295,7 +295,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* モーダル & ストーリー省略なし */}
+      {/* ストーリー ＆ モーダル */}
       {activeStory && (
         <div className="story-viewer" onClick={() => setActiveStory(null)}>
           <div className="story-bars">
@@ -311,82 +311,72 @@ export default function Home() {
           </div>
         </div>
       )}
-
       {modalImage && <div className="modal-full" onClick={() => setModalImage(null)}><img src={getTwitterUrl(modalImage.image, 'large')} alt="" /></div>}
 
       <style jsx global>{`
         :root { --bg: #0a0a0b; --cyan: #00f2ff; --pink: #ff00ff; --dim: #88888e; --h: 70px; }
-        
-        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); overflow-x: hidden; }
+        html, body { margin: 0; padding: 0; width: 100%; background: var(--bg); overflow-x: hidden; }
         .site-wrapper { width: 100%; position: relative; min-height: 100vh; }
         body { padding-top: var(--h); font-family: 'Montserrat', sans-serif; color: #fff; }
 
-        /* Header */
-        .main-header { position: fixed; top: 0; left: 0; width: 100%; height: var(--h); background: rgba(10,10,11,0.95); backdrop-filter: blur(20px); z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        /* Header - 重なりを防ぐために透過度を調整 */
+        .main-header { position: fixed; top: 0; left: 0; width: 100%; height: var(--h); background: rgba(10,10,11,0.98); backdrop-filter: blur(25px); z-index: 1100; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .header-inner { max-width: 1400px; margin: 0 auto; height: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-sizing: border-box; }
         .brand { cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 14px; letter-spacing: 0.1em; }
         .brand-logo { font-size: 22px; background: linear-gradient(135deg, var(--cyan), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        /* Filter Bar Sticky - コンテンツが被らないように高さを確保し、背景を完全に不透明寄りに */
+        .filter-wrapper-sticky { 
+          position: sticky; 
+          top: var(--h); 
+          z-index: 1000; 
+          background: var(--bg); /* 背景を完全に確保 */
+        }
+        .filter-bar { 
+          display: flex; justify-content: space-between; align-items: center; 
+          padding: 15px 20px; 
+          background: rgba(10,10,11,0.95); 
+          backdrop-filter: blur(20px);
+          border-bottom: 1px solid rgba(255,255,255,0.05);
+          box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+        }
+        .member-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+        .chip { background: #1a1a1c; border: 1px solid #222; color: var(--dim); padding: 8px 18px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; transition: 0.3s; }
+        .chip.active { background: #fff; color: #000; border-color: #fff; }
+
+        /* Grid - UIとの距離を適切に取る */
+        .archive-grid { column-count: 2; column-gap: 20px; padding: 20px 20px 40px 20px; box-sizing: border-box; position: relative; z-index: 1; }
+        @media (min-width: 768px) { .archive-grid { column-count: 3; } }
+        @media (min-width: 1200px) { .archive-grid { column-count: 4; } }
 
         /* Sidebar */
         .sidebar { position: fixed; top: 0; left: -320px; width: 320px; height: 100%; background: #000; z-index: 2000; transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1); padding: 40px 30px; border-right: 1px solid #222; box-sizing: border-box; }
         .sidebar.is-open { left: 0; }
         .nav-item { padding: 15px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 15px; font-size: 13px; }
         .nav-item:hover { background: rgba(255,255,255,0.05); }
-        .nav-divider { font-size: 10px; font-weight: 800; color: #333; margin: 30px 0 10px 20px; letter-spacing: 0.2em; }
-        .special-cyan { color: var(--cyan); background: rgba(0,242,255,0.05); }
-        .special-pink { color: var(--pink); background: rgba(255, 0, 255, 0.05); }
 
-        .main-content { width: 100%; max-width: 100vw; margin: 0; padding: 0; position: relative; }
-
-        /* Stories */
-        .stories-tray { display: flex; gap: 20px; overflow-x: auto; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); scrollbar-width: none; }
-        .story-node .ring { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--pink)); padding: 2px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .story-node img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid #000; }
-        .story-node .label { display: block; font-size: 10px; font-weight: 700; text-align: center; margin-top: 8px; color: var(--dim); }
-
-        /* Filter Bar (被り問題解決の要) */
-        .filter-bar { 
-          display: flex; justify-content: space-between; align-items: center; 
-          padding: 20px; position: sticky; top: var(--h); 
-          background: rgba(10,10,11,0.9); backdrop-filter: blur(10px);
-          z-index: 900; 
-          box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-        .member-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
-        .chip { background: #1a1a1c; border: 1px solid #222; color: var(--dim); padding: 8px 18px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
-        .chip.active { background: #fff; color: #000; border-color: #fff; }
-
-        /* Grid - 開始位置を調整 */
-        .archive-grid { column-count: 2; column-gap: 20px; padding: 20px 20px 40px 20px; box-sizing: border-box; }
-        @media (min-width: 768px) { .archive-grid { column-count: 3; } }
-        @media (min-width: 1200px) { .archive-grid { column-count: 4; } }
-        
+        /* Photo Card & X-Button */
         .archive-card { break-inside: avoid; margin-bottom: 30px; transition: 0.4s; position: relative; }
         .card-thumb { border-radius: 16px; overflow: hidden; background: #161618; cursor: pointer; position: relative; }
         .card-thumb img { width: 100%; display: block; transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
         .archive-card:hover { transform: translateY(-5px); }
         .archive-card:hover img { transform: scale(1.05); }
-
-        /* 𝕏ボタンのスタイリング */
-        .x-link-btn { 
-          position: absolute; top: 12px; right: 12px; 
-          width: 32px; height: 32px; background: rgba(0,0,0,0.6); 
-          backdrop-filter: blur(5px); border-radius: 50%; 
-          display: flex; align-items: center; justify-content: center; 
-          color: white; text-decoration: none; border: 1px solid rgba(255,255,255,0.2);
-          transition: 0.3s; z-index: 10;
-        }
+        .x-link-btn { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; z-index: 10; font-size: 14px; }
         .x-link-btn:hover { background: #fff; color: #000; transform: scale(1.1); }
 
         .card-caption { padding: 12px 5px; cursor: pointer; }
         .caption-name { font-size: 14px; font-weight: 800; color: #fff; }
         .caption-sub { font-size: 11px; color: var(--dim); margin-top: 4px; }
 
-        /* 他UIパーツ */
+        /* Others */
+        .stories-tray { display: flex; gap: 20px; overflow-x: auto; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); scrollbar-width: none; }
+        .story-node .ring { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--pink)); padding: 2px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .story-node img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid #000; }
+        .hero-section { padding: 60px 40px; background: radial-gradient(circle at top right, rgba(0,242,255,0.1), transparent); border-radius: 20px; margin: 20px; }
         .sort-group { display: flex; gap: 5px; background: #1a1a1c; padding: 4px; border-radius: 12px; }
-        .sort-tool { background: none; border: none; color: #555; padding: 10px; width: 40px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+        .sort-tool { background: none; border: none; color: #555; padding: 10px; width: 40px; border-radius: 8px; cursor: pointer; }
         .sort-tool.active { background: #2a2a2c; color: var(--cyan); }
-        .modal-full { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; display: flex; align-items: center; justify-content: center; }
+        .modal-full { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 3000; display: flex; align-items: center; justify-content: center; }
         .modal-full img { max-height: 95vh; max-width: 95%; object-fit: contain; }
       `}</style>
     </div>
