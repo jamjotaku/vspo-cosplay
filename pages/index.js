@@ -5,7 +5,7 @@ import Link from 'next/link';
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 const PROFILE_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=1592730885&single=true&output=csv";
 
-const memberOrder = ["花芽すみれ", "花芽なずな", "小雀とと", "一ノ瀬うるは", "胡桃のあ", "兎咲ミミ", "空澄セナ", "橘ひなの", "英リサ", "如月れれん", "神成きゅぴ", "八雲べに", "藍沢エマ", "紫宮るな", "猫汰つな", "白波らむね", "小森めと", "夢野あかり", "夜乃くろむ", "紡木こかげ", "千燈ゆうひ", "蝶屋はなび", "甘結もか"];
+const memberOrder = ["花芽すみれ", "花芽なずな", "小雀とと", "一ノ瀬うるは", "胡桃のあ", "兎咲ミミ", "空澄セナ", "橘ひなの", "英リサ", "如月れん", "神成きゅぴ", "八雲べに", "藍沢エマ", "紫宮るな", "猫汰つな", "白波らむね", "小森めと", "夢野あかり", "夜乃くろむ", "紡木こかげ", "千燈ゆうひ", "蝶屋はなび", "甘結もか"];
 const memberIcons = { "花芽すみれ": "👾💤", "花芽なずな": "🍣", "小雀とと": "🔫🐥", "一ノ瀬うるは": "🌠", "胡桃のあ": "🧸♔", "橘ひなの": "🍫💘", "如月れん": "⏰", "英リサ": "💐", "空澄セナ": "🗝♠︎", "兎咲ミミ": "🐰🍭", "神成きゅぴ": "🌩", "八雲べに": "💄💚", "藍沢エマ": "🥞💫", "紫宮るな": "☪🐾", "猫汰つな": "🍒✨", "白波らむね": "🐻‍❄️🏖", "小森めと": "🪐", "夢野あかり": "🍼", "夜乃くろむ": "💀⛓", "紡木こかげ": "📘💧", "千燈ゆうひ": "🫠", "蝶屋はなび": "🦋🎆", "甘結もか": "🕹🔖", "銀城サイネ": "🎈", "龍巻ちせ": "🐉🌪" };
 
 const getTwitterUrl = (url, size = 'medium') => {
@@ -32,7 +32,7 @@ export default function Home() {
   useEffect(() => {
     const loadData = async () => {
       const Papa = (await import('papaparse')).default;
-       Papa.parse(CSV_URL, {
+      Papa.parse(CSV_URL, {
         download: true, header: true, complete: (res) => {
           const formatted = res.data.filter(d => d.image || d.url || d['画像'] || d['URL']).map((d, i) => ({
             _id: i,
@@ -163,13 +163,21 @@ export default function Home() {
           <div className="nav-divider">PRO TOOLS</div>
           <Link href="/chronicle"><div className="nav-item special-cyan"><i className="fas fa-project-diagram"></i> CHRONICLE MAP</div></Link>
           <Link href="/tracker"><div className="nav-item special-pink"><i className="fas fa-cut"></i> COSTUME TRACKER</div></Link>
-          <div className="nav-item" onClick={() => {setDiagStep(1); setIsMenuOpen(false);}}><i className="fas fa-magic"></i> 診断ツール</div>
+          
+          {/* 追加：推し活ログ（OSHIGOTO LOG）への導線 */}
+          <Link href="/log">
+            <div className="nav-item special-gold">
+              <i className="fas fa-journal-whills"></i> OSHIGOTO LOG
+            </div>
+          </Link>
+          
+          <div className="nav-item" onClick={() => {setDiagStep(1); setIsMenuOpen(false);}}><i className="fas fa-magic"></i> 推しフォト診断</div>
         </div>
       </aside>
 
       <main className="main-content">
         {viewMode === 'home' && diagStep === 0 && (
-          <div className="home-view-layer">
+          <>
             {!activeFilters.member && !activeFilters.cosplayer && !activeFilters.event && !activeFilters.text && (
               <div className="stories-tray">
                 {stories.map((s, idx) => (
@@ -201,7 +209,6 @@ export default function Home() {
               </div>
             )}
 
-            {/* UIの重なりを解消するための構成変更 */}
             <div className="filter-wrapper-sticky">
               <div className="filter-bar">
                 <div className="member-chips">
@@ -238,10 +245,10 @@ export default function Home() {
                 </div>
               ))}
             </div>
-          </div>
+          </>
         )}
 
-        {/* --- 名鑑 / イベント / 診断ビュー (省略なしで維持) --- */}
+        {/* リスト・診断ビュー等は省略なしで完全維持 */}
         {viewMode === 'directory' && (
           <div className="list-view">
             <h2 className="view-title">DIRECTORY / 名鑑</h2>
@@ -314,70 +321,67 @@ export default function Home() {
       {modalImage && <div className="modal-full" onClick={() => setModalImage(null)}><img src={getTwitterUrl(modalImage.image, 'large')} alt="" /></div>}
 
       <style jsx global>{`
-        :root { --bg: #0a0a0b; --cyan: #00f2ff; --pink: #ff00ff; --dim: #88888e; --h: 70px; }
-        html, body { margin: 0; padding: 0; width: 100%; background: var(--bg); overflow-x: hidden; }
+        :root { --bg: #0a0a0b; --cyan: #00f2ff; --pink: #ff00ff; --gold: #ffcc00; --dim: #88888e; --h: 70px; }
+        html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); overflow-x: hidden; }
         .site-wrapper { width: 100%; position: relative; min-height: 100vh; }
         body { padding-top: var(--h); font-family: 'Montserrat', sans-serif; color: #fff; }
 
-        /* Header - 重なりを防ぐために透過度を調整 */
+        /* Header */
         .main-header { position: fixed; top: 0; left: 0; width: 100%; height: var(--h); background: rgba(10,10,11,0.98); backdrop-filter: blur(25px); z-index: 1100; border-bottom: 1px solid rgba(255,255,255,0.08); }
         .header-inner { max-width: 1400px; margin: 0 auto; height: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-sizing: border-box; }
         .brand { cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 14px; letter-spacing: 0.1em; }
         .brand-logo { font-size: 22px; background: linear-gradient(135deg, var(--cyan), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .search-pill { background: rgba(255,255,255,0.05); border-radius: 30px; padding: 8px 15px; display: flex; align-items: center; gap: 10px; border: 1px solid transparent; width: 180px; transition: 0.3s; }
+        .search-pill:focus-within { border-color: var(--cyan); width: 260px; }
+        .search-pill input { background: none; border: none; color: #fff; outline: none; font-size: 13px; width: 100%; }
 
-        /* Filter Bar Sticky - コンテンツが被らないように高さを確保し、背景を完全に不透明寄りに */
-        .filter-wrapper-sticky { 
-          position: sticky; 
-          top: var(--h); 
-          z-index: 1000; 
-          background: var(--bg); /* 背景を完全に確保 */
-        }
-        .filter-bar { 
-          display: flex; justify-content: space-between; align-items: center; 
-          padding: 15px 20px; 
-          background: rgba(10,10,11,0.95); 
-          backdrop-filter: blur(20px);
-          border-bottom: 1px solid rgba(255,255,255,0.05);
-          box-shadow: 0 15px 30px rgba(0,0,0,0.4);
-        }
+        /* Sidebar & Special Items */
+        .sidebar { position: fixed; top: 0; left: -320px; width: 320px; height: 100%; background: #000; z-index: 2000; transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1); padding: 40px 30px; border-right: 1px solid #222; box-sizing: border-box; }
+        .sidebar.is-open { left: 0; }
+        .nav-item { padding: 15px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 15px; font-size: 13px; transition: 0.2s; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); }
+        .special-cyan { color: var(--cyan); background: rgba(0,242,255,0.03); margin-bottom: 5px; }
+        .special-pink { color: var(--pink); background: rgba(255,0,255,0.03); margin-bottom: 5px; }
+        .special-gold { color: var(--gold); background: rgba(255,204,0,0.03); }
+
+        /* Filter Bar Sticky Fix */
+        .filter-wrapper-sticky { position: sticky; top: var(--h); z-index: 1000; background: var(--bg); }
+        .filter-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(10,10,11,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); box-shadow: 0 15px 30px rgba(0,0,0,0.4); }
         .member-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
         .chip { background: #1a1a1c; border: 1px solid #222; color: var(--dim); padding: 8px 18px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; transition: 0.3s; }
         .chip.active { background: #fff; color: #000; border-color: #fff; }
 
-        /* Grid - UIとの距離を適切に取る */
-        .archive-grid { column-count: 2; column-gap: 20px; padding: 20px 20px 40px 20px; box-sizing: border-box; position: relative; z-index: 1; }
+        /* Archive Grid & Cards */
+        .archive-grid { column-count: 2; column-gap: 20px; padding: 20px; box-sizing: border-box; }
         @media (min-width: 768px) { .archive-grid { column-count: 3; } }
         @media (min-width: 1200px) { .archive-grid { column-count: 4; } }
-
-        /* Sidebar */
-        .sidebar { position: fixed; top: 0; left: -320px; width: 320px; height: 100%; background: #000; z-index: 2000; transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1); padding: 40px 30px; border-right: 1px solid #222; box-sizing: border-box; }
-        .sidebar.is-open { left: 0; }
-        .nav-item { padding: 15px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 15px; font-size: 13px; }
-        .nav-item:hover { background: rgba(255,255,255,0.05); }
-
-        /* Photo Card & X-Button */
         .archive-card { break-inside: avoid; margin-bottom: 30px; transition: 0.4s; position: relative; }
         .card-thumb { border-radius: 16px; overflow: hidden; background: #161618; cursor: pointer; position: relative; }
         .card-thumb img { width: 100%; display: block; transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
         .archive-card:hover { transform: translateY(-5px); }
         .archive-card:hover img { transform: scale(1.05); }
-        .x-link-btn { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; z-index: 10; font-size: 14px; }
+        .x-link-btn { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; z-index: 10; }
         .x-link-btn:hover { background: #fff; color: #000; transform: scale(1.1); }
-
         .card-caption { padding: 12px 5px; cursor: pointer; }
-        .caption-name { font-size: 14px; font-weight: 800; color: #fff; }
+        .caption-name { font-size: 14px; font-weight: 800; }
         .caption-sub { font-size: 11px; color: var(--dim); margin-top: 4px; }
 
-        /* Others */
-        .stories-tray { display: flex; gap: 20px; overflow-x: auto; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); scrollbar-width: none; }
-        .story-node .ring { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--pink)); padding: 2px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-        .story-node img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid #000; }
-        .hero-section { padding: 60px 40px; background: radial-gradient(circle at top right, rgba(0,242,255,0.1), transparent); border-radius: 20px; margin: 20px; }
-        .sort-group { display: flex; gap: 5px; background: #1a1a1c; padding: 4px; border-radius: 12px; }
-        .sort-tool { background: none; border: none; color: #555; padding: 10px; width: 40px; border-radius: 8px; cursor: pointer; }
-        .sort-tool.active { background: #2a2a2c; color: var(--cyan); }
+        /* Dialog & Modal */
+        .diag-screen { padding: 60px 20px; display: flex; flex-direction: column; align-items: center; min-height: 80vh; }
+        .diag-modal { background: #111; padding: 40px; border-radius: 24px; max-width: 600px; text-align: center; border: 1px solid #222; }
+        .diag-select-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 20px; }
+        .diag-choice { background: #1a1a1c; border: 1px solid #333; color: #fff; padding: 15px 10px; border-radius: 12px; font-size: 11px; font-weight: 800; cursor: pointer; }
+        .diag-img { width: 100%; border-radius: 20px; margin: 20px 0; cursor: pointer; }
         .modal-full { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 3000; display: flex; align-items: center; justify-content: center; }
         .modal-full img { max-height: 95vh; max-width: 95%; object-fit: contain; }
+
+        /* Others */
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1500; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .overlay.is-visible { opacity: 1; pointer-events: auto; }
+        .nav-divider { font-size: 10px; font-weight: 800; color: #333; margin: 30px 0 10px 20px; letter-spacing: 0.2em; }
+        .sort-group { display: flex; gap: 5px; background: #1a1a1c; padding: 4px; border-radius: 12px; }
+        .sort-tool { background: none; border: none; color: #555; padding: 10px; width: 40px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+        .sort-tool.active { background: #2a2a2c; color: var(--cyan); }
       `}</style>
     </div>
   );
