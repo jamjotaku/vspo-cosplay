@@ -1,7 +1,7 @@
 {
-  "name": "vspo-cosplay-all-in-one",
+  "name": "vspo-cosplay-hub",
   "version": "1.0.0",
-  "description": "Vspo! Cosplay Archive - Universal Platform",
+  "description": "Vspo! Cosplay Archive - Unified Platform",
   "main": "main.js",
   "scripts": {
     "dev": "next dev",
