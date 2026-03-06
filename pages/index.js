@@ -25,8 +25,6 @@ export default function Home() {
   const [modalImage, setModalImage] = useState(null);
   const [stories, setStories] = useState([]);
   const [activeStory, setActiveStory] = useState(null);
-  const [diagStep, setDiagStep] = useState(0); 
-  const [diagResult, setDiagResult] = useState(null);
   const storyTimer = useRef(null);
 
   useEffect(() => {
@@ -45,7 +43,7 @@ export default function Home() {
           setAllData(formatted);
 
           const today = new Date().toISOString().slice(0, 10);
-          const cacheKey = `v_daily_final_${today}`;
+          const cacheKey = `v_stories_${today}`;
           const cached = localStorage.getItem(cacheKey);
           if (cached) setStories(JSON.parse(cached));
           else {
@@ -71,16 +69,12 @@ export default function Home() {
   }, []);
 
   const aggregated = useMemo(() => {
-    const cos = {}; const evs = {};
+    const cos = {};
     allData.forEach(d => {
       if (!cos[d.cosplayer]) cos[d.cosplayer] = { count: 0, latest: d.image };
       cos[d.cosplayer].count++;
-      if (d.event) {
-        if (!evs[d.event]) evs[d.event] = { count: 0, latest: d.image };
-        evs[d.event].count++;
-      }
     });
-    return { cos, evs };
+    return { cos };
   }, [allData]);
 
   const stats = useMemo(() => {
@@ -92,7 +86,7 @@ export default function Home() {
     const memberCounts = {};
     myPhotos.forEach(d => { memberCounts[d.member] = (memberCounts[d.member] || 0) + 1; });
     const getSns = (kw) => { const k = Object.keys(prof).find(key => kw.some(w => key.toLowerCase().includes(w))); return k ? prof[k].trim() : null; };
-    return { total: myPhotos.length, breakdown: memberCounts, sns: { twitter: getSns(['twitter', 'x', '𝕏']), insta: getSns(['insta', 'instagram']), tiktok: getSns(['tiktok']), fantia: getSns(['fantia']) } };
+    return { total: myPhotos.length, breakdown: memberCounts, sns: { twitter: getSns(['twitter', 'x', '𝕏']), insta: getSns(['insta', 'instagram']) } };
   }, [activeFilters.cosplayer, allData, profileData]);
 
   useEffect(() => {
@@ -127,49 +121,9 @@ export default function Home() {
     <>
       <Head>
         <title>VSPO! COSPLAY ARCHIVE</title>
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;800&display=swap" rel="stylesheet" />
       </Head>
-
-      <div className={`overlay ${isMenuOpen ? 'open' : ''}`} onClick={() => setIsMenuOpen(false)}></div>
-      <aside className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
-        <div className="sidebar-header"><span className="sidebar-title">MENU</span><button className="close-btn" onClick={() => setIsMenuOpen(false)}>&times;</button></div>
-        
-        <div className="menu-group">
-          <div className="menu-label">NAVIGATE</div>
-          <div className="menu-item" onClick={() => {setViewMode('home'); setActiveFilters({member:null,cosplayer:null,event:null,text:""}); setIsMenuOpen(false);}}>
-            <i className="fas fa-home"></i> ホーム
-          </div>
-          <div className="menu-item" onClick={() => {setViewMode('directory'); setIsMenuOpen(false);}}>
-            <i className="fas fa-users"></i> レイヤー名鑑
-          </div>
-          <div className="menu-item" onClick={() => {setViewMode('events'); setIsMenuOpen(false);}}>
-            <i className="fas fa-calendar-alt"></i> イベントまとめ
-          </div>
-        </div>
-
-        <div className="menu-group">
-          <div className="menu-label">TOOLS & ANALYSIS</div>
-          <Link href="/chronicle">
-            <div className="menu-item special-item-map">
-              <i className="fas fa-project-diagram"></i> Cos-Chronicle Map
-            </div>
-          </Link>
-          <Link href="/tracker">
-            <div className="menu-item special-item-tracker">
-              <i className="fas fa-cut"></i> Costume Tracker
-            </div>
-          </Link>
-          <div className="menu-item" onClick={() => {setDiagStep(1); setIsMenuOpen(false);}}>
-            <i className="fas fa-magic"></i> 推しフォト診断
-          </div>
-        </div>
-
-        <div className="sidebar-footer">
-          <div className="version-tag">VSPO! ARCHIVE PLATFORM v1.0</div>
-        </div>
-      </aside>
 
       <header>
         <div className="header-left">
@@ -181,16 +135,31 @@ export default function Home() {
         </div>
         <div className="header-right">
           <div className="search-box">
-            <i className="fas fa-search search-icon"></i>
+            <i className="fas fa-search"></i>
             <input type="text" className="search-input" placeholder="Search..." onChange={(e) => setActiveFilters(prev => ({...prev, text: e.target.value.toLowerCase()}))} />
           </div>
         </div>
       </header>
 
+      <div className={`overlay ${isMenuOpen ? 'open' : ''}`} onClick={() => setIsMenuOpen(false)}></div>
+      <aside className={`sidebar ${isMenuOpen ? 'open' : ''}`}>
+        <div className="sidebar-header"><span className="sidebar-title">MENU</span><button className="close-btn" onClick={() => setIsMenuOpen(false)}>&times;</button></div>
+        <div className="menu-group">
+          <div className="menu-label">NAVIGATE</div>
+          <div className="menu-item" onClick={() => {setViewMode('home'); setActiveFilters({member:null,cosplayer:null,event:null,text:""}); setIsMenuOpen(false);}}><i className="fas fa-home"></i> ホーム</div>
+          <div className="menu-item" onClick={() => {setViewMode('directory'); setIsMenuOpen(false);}}><i className="fas fa-users"></i> レイヤー名鑑</div>
+        </div>
+        <div className="menu-group">
+          <div className="menu-label">TOOLS</div>
+          <Link href="/chronicle"><div className="menu-item special-item-map"><i className="fas fa-project-diagram"></i> Chronicle Map</div></Link>
+          <Link href="/tracker"><div className="menu-item special-item-tracker"><i className="fas fa-cut"></i> Costume Tracker</div></Link>
+        </div>
+      </aside>
+
       <main>
         {viewMode === 'home' && (
           <>
-            {!activeFilters.member && !activeFilters.cosplayer && !activeFilters.event && !activeFilters.text && (
+            {!activeFilters.member && !activeFilters.cosplayer && !activeFilters.text && (
               <div className="stories-container">
                 {stories.map((s, idx) => (
                   <div key={s.member} className="story-item" onClick={() => setActiveStory({ memberIndex: idx, slideIndex: 0 })}>
@@ -204,11 +173,10 @@ export default function Home() {
             {activeFilters.cosplayer && stats && (
               <div className="dashboard-container">
                 <div className="profile-header-main">
-                  <h2 className="profile-name"><i className="fas fa-user-check"></i> {activeFilters.cosplayer}</h2>
+                  <h2 className="profile-name">{activeFilters.cosplayer}</h2>
                   <div className="profile-actions">
-                    {stats.sns.twitter && <a href={stats.sns.twitter} target="_blank" rel="noreferrer" className="btn-sns">Twitter</a>}
-                    {stats.sns.insta && <a href={stats.sns.insta} target="_blank" rel="noreferrer" className="btn-sns btn-insta">Insta</a>}
-                    <button className="btn-share-profile" onClick={() => setActiveFilters(p => ({...p, cosplayer:null}))}><i className="fas fa-times"></i> Close</button>
+                    {stats.sns.twitter && <a href={stats.sns.twitter} target="_blank" className="btn-sns">Twitter</a>}
+                    <button className="btn-share-profile" onClick={() => setActiveFilters(p => ({...p, cosplayer:null}))}>Close</button>
                   </div>
                 </div>
                 <div className="member-breakdown-box">
@@ -222,12 +190,9 @@ export default function Home() {
                 <span className={`member-chip ${!activeFilters.member ? 'active' : ''}`} onClick={() => setActiveFilters(p => ({...p, member:null}))}>🏠 All</span>
                 {memberOrder.map(m => <span key={m} className={`member-chip ${activeFilters.member === m ? 'active' : ''}`} onClick={() => setActiveFilters(p => ({...p, member:m}))}>{memberIcons[m]} {m}</span>)}
               </div>
-              <div className="utility-deck">
-                <div className="sort-group">
-                  <button className={`sort-btn ${currentSort === 'old' ? 'active' : ''}`} onClick={() => setCurrentSort('old')}>⬇️ 登録順</button>
-                  <button className={`sort-btn ${currentSort === 'new' ? 'active' : ''}`} onClick={() => setCurrentSort('new')}>✨ 新着順</button>
-                  <button className={`sort-btn ${currentSort === 'random' ? 'active' : ''}`} onClick={() => setCurrentSort('random')}>🔀 シャッフル</button>
-                </div>
+              <div className="sort-group">
+                <button className={`sort-btn ${currentSort === 'new' ? 'active' : ''}`} onClick={() => setCurrentSort('new')}>✨ 新着順</button>
+                <button className={`sort-btn ${currentSort === 'random' ? 'active' : ''}`} onClick={() => setCurrentSort('random')}>🔀 シャッフル</button>
               </div>
             </div>
 
@@ -235,7 +200,7 @@ export default function Home() {
               {filteredData.slice(0, displayLimit).map((item) => (
                 <div key={item._id} className="card">
                   <div className="card-img-area" onClick={() => setModalImage(item)}>
-                    <img src={getTwitterUrl(item.image, 'medium')} alt={item.member} loading="lazy" />
+                    <img src={getTwitterUrl(item.image, 'medium')} alt="" loading="lazy" />
                   </div>
                   <div className="card-meta" onClick={() => setActiveFilters(prev => ({...prev, cosplayer: item.cosplayer}))}>
                     <img src={getTwitterUrl(item.image, 'thumb')} className="card-avatar" alt="" />
@@ -252,7 +217,7 @@ export default function Home() {
 
         {viewMode === 'directory' && (
           <div className="special-view">
-            <h2 className="profile-name"><i className="fas fa-users"></i> レイヤー名鑑</h2>
+            <h2 className="profile-name">レイヤー名鑑</h2>
             <div className="dir-grid">
               {Object.keys(aggregated.cos).sort((a,b) => aggregated.cos[b].count - aggregated.cos[a].count).map(name => (
                 <div key={name} className="dir-card" onClick={() => {setActiveFilters(p => ({...p, cosplayer: name})); setViewMode('home');}}>
@@ -265,7 +230,22 @@ export default function Home() {
         )}
       </main>
 
-      {/* モーダル類 */}
+      {activeStory && (
+        <div className="story-viewer" onClick={() => setActiveStory(null)}>
+          <div className="story-progress-bar">
+            {stories[activeStory.memberIndex].images.map((_, i) => (
+              <div key={i} className="story-progress-segment"><div className="story-progress-fill" style={{ width: i <= activeStory.slideIndex ? '100%' : '0%', transition: i === activeStory.slideIndex ? 'width 4s linear' : 'none' }}></div></div>
+            ))}
+          </div>
+          <div className="story-content" onClick={e => e.stopPropagation()}>
+            <img src={getTwitterUrl(stories[activeStory.memberIndex].images[activeStory.slideIndex].image, 'large')} className="story-main-img" alt="" />
+            <div className="story-header-info">{memberIcons[stories[activeStory.memberIndex].member]} {stories[activeStory.memberIndex].member}</div>
+            <div className="story-nav left" onClick={() => setActiveStory(prev => ({...prev, slideIndex: Math.max(0, prev.slideIndex - 1)}))}></div>
+            <div className="story-nav right" onClick={nextSlide}></div>
+          </div>
+        </div>
+      )}
+
       {modalImage && <div className="modal open" onClick={() => setModalImage(null)}><img src={getTwitterUrl(modalImage.image, 'large')} alt="" /></div>}
 
       <style jsx global>{`
@@ -276,31 +256,69 @@ export default function Home() {
           --text-sub: #aaaaaa;
           --primary: #00f2ff;
           --secondary: #ff00ff;
-          --grad-main: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
           --header-height: 60px;
-          --chip-bg: #272727;
         }
-        body { margin: 0; background: var(--bg-color); color: var(--text-color); font-family: 'Montserrat', sans-serif; padding-top: var(--header-height); }
-        header { position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height); background: rgba(15, 15, 15, 0.95); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05); box-sizing: border-box;}
+
+        body { margin: 0; background-color: var(--bg-color); color: var(--text-color); font-family: 'Montserrat', sans-serif; padding-top: var(--header-height); }
+        
+        header { 
+          position: fixed; top: 0; left: 0; width: 100%; height: var(--header-height); background: rgba(15,15,15,0.95); 
+          display: flex; align-items: center; justify-content: space-between; padding: 0 15px; z-index: 1000; border-bottom: 1px solid #222; box-sizing: border-box;
+        }
         .site-title { font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-        .site-logo-icon { background: var(--grad-main); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--sidebar-bg); z-index: 2000; transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1); padding: 20px; border-right: 1px solid #222; box-sizing: border-box; display: flex; flex-direction: column; }
+        .site-logo-icon { background: linear-gradient(135deg, var(--primary), var(--secondary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--sidebar-bg); z-index: 2000; transition: 0.3s; padding: 20px; border-right: 1px solid #222; box-sizing: border-box; display: flex; flex-direction: column; }
         .sidebar.open { left: 0; }
-        .menu-group { margin-bottom: 30px; }
-        .menu-label { font-size: 0.65rem; font-weight: 800; color: #555; letter-spacing: 0.1em; margin-bottom: 10px; padding-left: 15px; }
-        .menu-item { display: flex; align-items: center; gap: 15px; padding: 12px 15px; border-radius: 10px; color: #fff; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: 0.2s; }
-        .menu-item:hover { background: rgba(255,255,255,0.05); }
-        .special-item-map { color: var(--primary); background: rgba(0, 242, 255, 0.03); margin-bottom: 8px; }
-        .special-item-tracker { color: var(--secondary); background: rgba(255, 0, 255, 0.03); }
         .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1500; display: none; }
         .overlay.open { display: block; }
-        .masonry-grid { column-count: 2; column-gap: 16px; padding: 15px; }
+        
+        .menu-group { margin-bottom: 30px; }
+        .menu-label { font-size: 0.65rem; font-weight: 800; color: #555; letter-spacing: 0.1em; margin-bottom: 10px; padding-left: 15px; }
+        .menu-item { display: flex; align-items: center; gap: 15px; padding: 12px 15px; border-radius: 10px; cursor: pointer; font-weight: bold; font-size: 0.9rem; }
+        .menu-item:hover { background: rgba(255,255,255,0.05); }
+        .special-item-map { color: var(--primary); background: rgba(0,242,255,0.05); }
+        .special-item-tracker { color: var(--secondary); background: rgba(255,0,255,0.05); }
+
+        .stories-container { display: flex; gap: 12px; overflow-x: auto; padding: 15px; border-bottom: 1px solid #222; }
+        .story-item { width: 64px; flex-shrink: 0; cursor: pointer; text-align: center; }
+        .story-ring { width: 60px; height: 60px; border-radius: 50%; background: linear-gradient(135deg, var(--primary), var(--secondary)); display: flex; align-items: center; justify-content: center; margin: 0 auto; }
+        .story-img { width: 54px; height: 54px; border-radius: 50%; border: 2px solid #000; object-fit: cover; }
+        .story-name { font-size: 0.6rem; color: #aaa; margin-top: 5px; display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+
+        .masonry-grid { column-count: 2; column-gap: 16px; padding: 15px; width: 100%; box-sizing: border-box; }
         @media (min-width: 600px) { .masonry-grid { column-count: 3; } }
-        .card { break-inside: avoid; margin-bottom: 24px; }
+        @media (min-width: 1000px) { .masonry-grid { column-count: 4; } }
+
+        .card { break-inside: avoid; margin-bottom: 24px; width: 100%; }
         .card-img-area { border-radius: 12px; overflow: hidden; background: #202020; cursor: pointer; }
-        .card-img-area img { width: 100%; height: auto; display: block; }
+        .card-img-area img { width: 100%; height: auto; display: block; transition: 0.3s; }
+        .card-meta { display: flex; gap: 10px; margin-top: 10px; align-items: center; padding: 0 5px; }
+        .card-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+        .card-title { font-size: 0.85rem; font-weight: 700; }
+        .card-subtitle { font-size: 0.75rem; color: var(--text-sub); }
+
+        .dashboard-container { padding: 20px; background: #111; margin: 15px; border-radius: 15px; border: 1px solid #222; }
+        .profile-header-main { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .profile-name { margin: 0; font-size: 1.5rem; font-weight: 800; }
+        .member-breakdown-box { display: flex; gap: 8px; flex-wrap: wrap; }
+        .member-bd-chip { background: #222; padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; }
+
+        .top-area { padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+        .chips-container { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 5px; }
+        .member-chip { background: #222; padding: 6px 14px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+        .member-chip.active { background: #eee; color: #000; font-weight: bold; }
+
         .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; display: none; align-items: center; justify-content: center; }
         .modal.open { display: flex; }
+        .modal img { max-height: 90vh; max-width: 95%; object-fit: contain; }
+
+        .story-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 5000; }
+        .story-progress-bar { position: absolute; top: 15px; left: 0; width: 100%; display: flex; gap: 4px; padding: 0 10px; box-sizing: border-box; }
+        .story-progress-segment { flex: 1; height: 2px; background: rgba(255,255,255,0.2); }
+        .story-progress-fill { height: 100%; background: #fff; width: 0; }
+        .story-content { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; position: relative; }
+        .story-main-img { max-height: 100%; max-width: 100%; object-fit: contain; }
       `}</style>
     </>
   );
