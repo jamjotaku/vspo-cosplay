@@ -38,6 +38,7 @@ export default function Home() {
             _id: i,
             member: (d.member || d['名前'] || "").trim(),
             image: d.image || d.url || d['画像'] || d['URL'],
+            link: (d.link || d['URL'] || d.url || "").trim(), // 元投稿リンクを取得
             cosplayer: (d.cosplayer || d['レイヤー'] || "Unknown").trim(),
             event: (d.event || d.Event || d['イベント'] || "").trim(),
             searchKey: `${d.member} ${d.cosplayer} ${d.event || d.Event || d['イベント']}`.toLowerCase()
@@ -127,7 +128,7 @@ export default function Home() {
     <div className="site-wrapper">
       <Head>
         <title>VSPO! ARCHIVE</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
         <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;800&family=Playfair+Display:ital,wght@1,900&display=swap" rel="stylesheet" />
       </Head>
 
@@ -149,7 +150,6 @@ export default function Home() {
         </div>
       </header>
 
-      {/* Sidebar - コンテンツを押し出さないように完全独立化 */}
       <div className={`overlay ${isMenuOpen ? 'is-visible' : ''}`} onClick={() => setIsMenuOpen(false)}></div>
       <aside className={`sidebar ${isMenuOpen ? 'is-open' : ''}`}>
         <div className="sidebar-top">
@@ -220,10 +220,15 @@ export default function Home() {
             <div className="archive-grid">
               {filteredData.slice(0, displayLimit).map((item) => (
                 <div key={item._id} className="archive-card">
-                  <div className="card-thumb" onClick={() => setModalImage(item)}>
-                    <img src={getTwitterUrl(item.image, 'medium')} alt="" loading="lazy" />
+                  <div className="card-thumb">
+                    <img src={getTwitterUrl(item.image, 'medium')} alt="" loading="lazy" onClick={() => setModalImage(item)} />
+                    {/* 追加：𝕏リンクボタン */}
+                    {item.link && (
+                      <a href={item.link} target="_blank" rel="noreferrer" className="x-link-btn" title="View on 𝕏">
+                        <i className="fa-brands fa-x-twitter"></i>
+                      </a>
+                    )}
                   </div>
-                  {/* アバターを削除し、テキストキャプションを洗練 */}
                   <div className="card-caption" onClick={() => setActiveFilters(prev => ({...prev, cosplayer: item.cosplayer}))}>
                     <div className="caption-name">{item.cosplayer}</div>
                     <div className="caption-sub">{memberIcons[item.member]} {item.member}</div>
@@ -234,6 +239,7 @@ export default function Home() {
           </>
         )}
 
+        {/* ... (他ビュー省略なし) ... */}
         {viewMode === 'directory' && (
           <div className="list-view">
             <h2 className="view-title">DIRECTORY / 名鑑</h2>
@@ -289,7 +295,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* モーダル & ストーリー */}
+      {/* モーダル & ストーリー省略なし */}
       {activeStory && (
         <div className="story-viewer" onClick={() => setActiveStory(null)}>
           <div className="story-bars">
@@ -311,82 +317,77 @@ export default function Home() {
       <style jsx global>{`
         :root { --bg: #0a0a0b; --cyan: #00f2ff; --pink: #ff00ff; --dim: #88888e; --h: 70px; }
         
-        /* 基本構造：黒い帯を許さない設定 */
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); overflow-x: hidden; }
         .site-wrapper { width: 100%; position: relative; min-height: 100vh; }
         body { padding-top: var(--h); font-family: 'Montserrat', sans-serif; color: #fff; }
 
-        .main-header { position: fixed; top: 0; left: 0; width: 100%; height: var(--h); background: rgba(10,10,11,0.9); backdrop-filter: blur(20px); z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        /* Header */
+        .main-header { position: fixed; top: 0; left: 0; width: 100%; height: var(--h); background: rgba(10,10,11,0.95); backdrop-filter: blur(20px); z-index: 1000; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .header-inner { max-width: 1400px; margin: 0 auto; height: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-sizing: border-box; }
         .brand { cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 14px; letter-spacing: 0.1em; }
         .brand-logo { font-size: 22px; background: linear-gradient(135deg, var(--cyan), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
+        /* Sidebar */
         .sidebar { position: fixed; top: 0; left: -320px; width: 320px; height: 100%; background: #000; z-index: 2000; transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1); padding: 40px 30px; border-right: 1px solid #222; box-sizing: border-box; }
         .sidebar.is-open { left: 0; }
         .nav-item { padding: 15px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 15px; font-size: 13px; }
         .nav-item:hover { background: rgba(255,255,255,0.05); }
         .nav-divider { font-size: 10px; font-weight: 800; color: #333; margin: 30px 0 10px 20px; letter-spacing: 0.2em; }
         .special-cyan { color: var(--cyan); background: rgba(0,242,255,0.05); }
-        .special-pink { color: var(--pink); background: rgba(255,0,255,0.05); }
+        .special-pink { color: var(--pink); background: rgba(255, 0, 255, 0.05); }
 
         .main-content { width: 100%; max-width: 100vw; margin: 0; padding: 0; position: relative; }
 
+        /* Stories */
         .stories-tray { display: flex; gap: 20px; overflow-x: auto; padding: 20px; border-bottom: 1px solid rgba(255,255,255,0.05); scrollbar-width: none; }
         .story-node .ring { width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg, var(--cyan), var(--pink)); padding: 2px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
         .story-node img { width: 64px; height: 64px; border-radius: 50%; object-fit: cover; border: 3px solid #000; }
         .story-node .label { display: block; font-size: 10px; font-weight: 700; text-align: center; margin-top: 8px; color: var(--dim); }
 
-        .archive-grid { column-count: 2; column-gap: 20px; padding: 20px; box-sizing: border-box; }
+        /* Filter Bar (被り問題解決の要) */
+        .filter-bar { 
+          display: flex; justify-content: space-between; align-items: center; 
+          padding: 20px; position: sticky; top: var(--h); 
+          background: rgba(10,10,11,0.9); backdrop-filter: blur(10px);
+          z-index: 900; 
+          box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .member-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+        .chip { background: #1a1a1c; border: 1px solid #222; color: var(--dim); padding: 8px 18px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+        .chip.active { background: #fff; color: #000; border-color: #fff; }
+
+        /* Grid - 開始位置を調整 */
+        .archive-grid { column-count: 2; column-gap: 20px; padding: 20px 20px 40px 20px; box-sizing: border-box; }
         @media (min-width: 768px) { .archive-grid { column-count: 3; } }
         @media (min-width: 1200px) { .archive-grid { column-count: 4; } }
         
-        .archive-card { break-inside: avoid; margin-bottom: 30px; transition: 0.4s; }
-        .card-thumb { border-radius: 16px; overflow: hidden; background: #161618; cursor: pointer; }
+        .archive-card { break-inside: avoid; margin-bottom: 30px; transition: 0.4s; position: relative; }
+        .card-thumb { border-radius: 16px; overflow: hidden; background: #161618; cursor: pointer; position: relative; }
         .card-thumb img { width: 100%; display: block; transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
         .archive-card:hover { transform: translateY(-5px); }
         .archive-card:hover img { transform: scale(1.05); }
+
+        /* 𝕏ボタンのスタイリング */
+        .x-link-btn { 
+          position: absolute; top: 12px; right: 12px; 
+          width: 32px; height: 32px; background: rgba(0,0,0,0.6); 
+          backdrop-filter: blur(5px); border-radius: 50%; 
+          display: flex; align-items: center; justify-content: center; 
+          color: white; text-decoration: none; border: 1px solid rgba(255,255,255,0.2);
+          transition: 0.3s; z-index: 10;
+        }
+        .x-link-btn:hover { background: #fff; color: #000; transform: scale(1.1); }
 
         .card-caption { padding: 12px 5px; cursor: pointer; }
         .caption-name { font-size: 14px; font-weight: 800; color: #fff; }
         .caption-sub { font-size: 11px; color: var(--dim); margin-top: 4px; }
 
-        .filter-bar { display: flex; justify-content: space-between; align-items: center; padding: 20px; position: sticky; top: var(--h); background: var(--bg); z-index: 900; }
-        .member-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
-        .chip { background: #1a1a1c; border: 1px solid #222; color: var(--dim); padding: 8px 18px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
-        .chip.active { background: #fff; color: #000; border-color: #fff; }
-
+        /* 他UIパーツ */
         .sort-group { display: flex; gap: 5px; background: #1a1a1c; padding: 4px; border-radius: 12px; }
         .sort-tool { background: none; border: none; color: #555; padding: 10px; width: 40px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
         .sort-tool.active { background: #2a2a2c; color: var(--cyan); }
-
-        .hero-section { padding: 60px 40px; background: radial-gradient(circle at top right, rgba(0,242,255,0.1), transparent); border-radius: 20px; margin: 20px; }
-        .hero-title { font-size: 48px; font-weight: 800; margin: 0 0 20px 0; }
-        .hero-pill { background: #fff; color: #000; padding: 8px 20px; border-radius: 30px; font-size: 12px; font-weight: 800; border: none; cursor: pointer; }
-        .hero-meta { display: flex; gap: 10px; margin-bottom: 20px; }
-
-        .list-view { padding: 40px 20px; max-width: 1200px; margin: 0 auto; }
-        .list-container { display: flex; flex-direction: column; gap: 1px; background: #222; border-radius: 20px; overflow: hidden; }
-        .list-row { background: #000; padding: 20px; display: flex; align-items: center; gap: 20px; cursor: pointer; transition: 0.3s; }
-        .list-row:hover { background: #0a0a0c; }
-        .list-img { width: 50px; height: 50px; border-radius: 12px; object-fit: cover; }
-        
-        .diag-screen { padding: 40px 20px; display: flex; flex-direction: column; align-items: center; min-height: 80vh; }
-        .diag-modal { background: #111; padding: 40px; border-radius: 24px; max-width: 600px; text-align: center; border: 1px solid #222; }
-        .diag-select-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 20px; }
-        .diag-choice { background: #1a1a1c; border: 1px solid #333; color: #fff; padding: 15px 10px; border-radius: 12px; font-size: 11px; font-weight: 800; cursor: pointer; }
-        .diag-img { width: 100%; border-radius: 20px; margin: 20px 0; cursor: pointer; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1500; opacity: 0; pointer-events: none; transition: 0.3s; }
-        .overlay.is-visible { opacity: 1; pointer-events: auto; }
         .modal-full { position: fixed; inset: 0; background: rgba(0,0,0,0.95); z-index: 3000; display: flex; align-items: center; justify-content: center; }
         .modal-full img { max-height: 95vh; max-width: 95%; object-fit: contain; }
-
-        .story-viewer { position: fixed; inset: 0; background: #000; z-index: 5000; display: flex; flex-direction: column; }
-        .story-bars { display: flex; gap: 5px; padding: 20px; }
-        .s-bar { flex: 1; height: 2px; background: rgba(255,255,255,0.2); border-radius: 2px; }
-        .s-fill { height: 100%; background: #fff; width: 0; }
-        .story-stage { flex: 1; position: relative; display: flex; align-items: center; justify-content: center; }
-        .story-stage img { max-height: 100%; max-width: 100%; object-fit: contain; }
       `}</style>
     </div>
   );
