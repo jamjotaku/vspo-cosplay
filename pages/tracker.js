@@ -2,8 +2,10 @@ import React, { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import { supabase } from '../lib/supabaseClient';
 
-// 監督専用の衣装マスタCSV（別シート）
 const MASTER_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSAruZ3gKMni3ipy08kB8iVkpwlUTlpOro_TvCO4ilZaDeUvdlwVEqYqcsLtbSu5gV0ZhqeRJhDSY0-/pub?output=csv";
+
+// ユーザーIDを内部用メール形式に変換するユーティリティ
+const formatUserId = (id) => `${id}@vspo-internal.local`;
 
 export default function Tracker() {
   const [masterData, setMasterData] = useState([]);
@@ -60,21 +62,36 @@ export default function Tracker() {
     }, { onConflict: 'user_id, master_id' });
   };
 
-  const handleLogin = async () => {
-    const email = prompt("ログイン用Emailを入力してください");
-    if (!email) return;
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin + '/tracker' }
+  // 【新規アカウント作成】
+  const handleSignUp = async () => {
+    const userId = prompt("希望するユーザーIDを入力してください");
+    const password = prompt("パスワードを入力してください (6文字以上)");
+    if (!userId || !password) return;
+    const { data, error } = await supabase.auth.signUp({
+      email: formatUserId(userId),
+      password: password,
     });
-    if (error) alert(error.message);
-    else alert("ログイン用メールを送信しました！");
+    if (error) alert("登録エラー: " + error.message);
+    else alert("アカウント作成完了！");
+  };
+
+  // 【ログイン】
+  const handleSignIn = async () => {
+    const userId = prompt("ユーザーIDを入力してください");
+    const password = prompt("パスワードを入力してください");
+    if (!userId || !password) return;
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: formatUserId(userId),
+      password: password,
+    });
+    if (error) alert("ログインエラー: IDまたはパスワードが違います");
+    else alert("ログインに成功しました！");
   };
 
   const addPart = () => {
     if (!selectedItem) return;
     const id = selectedItem.Master_ID;
-    const partName = prompt("追加するパーツ名を入力してください (例: ウィッグ、上着)");
+    const partName = prompt("追加するパーツ名を入力してください");
     if (!partName) return;
     const newParts = [...(userProgress[id]?.parts || []), { name: partName, percent: 0 }];
     const newProgress = { ...userProgress, [id]: { parts: newParts } };
@@ -123,11 +140,14 @@ export default function Tracker() {
           <div className="brand-logo">VSPO! TRACKER</div>
           {user ? (
             <div className="user-info">
-              <span className="user-email">{user.email.split('@')[0]}</span>
+              <span className="user-email">ID: {user.email.split('@')[0]}</span>
               <button onClick={() => supabase.auth.signOut()} className="auth-btn">LOGOUT</button>
             </div>
           ) : (
-            <button onClick={handleLogin} className="auth-btn login">LOGIN TO SAVE</button>
+            <div className="auth-group" style={{ display: 'flex', gap: '5px' }}>
+              <button onClick={handleSignIn} className="auth-btn login" style={{ flex: 1 }}>LOGIN</button>
+              <button onClick={handleSignUp} className="auth-btn" style={{ flex: 1, background: '#1a1a1d' }}>SIGN UP</button>
+            </div>
           )}
         </div>
         <div className="item-list">
@@ -185,54 +205,33 @@ export default function Tracker() {
       <style jsx global>{`
         body { margin: 0; background: #050507; color: #eee; font-family: 'Montserrat', sans-serif; overflow: hidden; }
         .tracker-root { display: flex; height: 100vh; width: 100vw; }
-        
         .sidebar { width: 260px; background: #0a0a0c; border-right: 1px solid #1a1a1c; flex-shrink: 0; display: flex; flex-direction: column; }
         .sidebar-header { padding: 25px 20px; border-bottom: 1px solid #1a1a1c; }
         .brand-logo { font-weight: 800; font-size: 14px; letter-spacing: 0.2em; color: #00f2ff; margin-bottom: 15px; }
-        
         .auth-btn { width: 100%; padding: 10px; background: transparent; border: 1px solid #333; color: #ccc; cursor: pointer; border-radius: 6px; font-size: 10px; font-weight: 800; transition: 0.3s; }
         .auth-btn.login { background: #00f2ff; color: #000; border: none; }
-        .user-info { display: flex; flex-direction: column; gap: 8px; }
-        .user-email { font-size: 10px; color: #666; font-weight: 800; }
-
         .item-list { flex: 1; overflow-y: auto; padding: 10px; }
-        .costume-item { padding: 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; border: 1px solid transparent; transition: 0.2s; }
-        .costume-item:hover { background: rgba(255,255,255,0.03); }
+        .costume-item { padding: 15px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; border: 1px solid transparent; }
         .costume-item.active { background: #111114; border-color: #00f2ff; box-shadow: 0 0 15px rgba(0,242,255,0.1); }
         .mem-name { font-size: 13px; font-weight: 800; }
-        .cos-type { font-size: 10px; color: #555; margin-top: 4px; }
-
+        .cos-type { font-size: 10px; color: #555; }
         .viewer-area { flex: 1; display: flex; flex-direction: column; background: #000; position: relative; overflow: hidden; }
         .info-bar { padding: 15px 25px; background: rgba(10,10,12,0.95); backdrop-filter: blur(10px); z-index: 10; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #1a1a1c; }
         .info-bar h2 { font-size: 18px; margin: 0; font-weight: 800; }
-        .info-bar .slash { color: #00f2ff; margin: 0 10px; }
-        .info-bar .type { color: #888; font-weight: 300; }
-        .controls-hint { font-size: 9px; color: #444; letter-spacing: 0.1em; }
-
+        .slash { color: #00f2ff; margin: 0 10px; }
+        .type { color: #888; font-weight: 300; }
         .image-stage { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; background: radial-gradient(circle at center, #111 0%, #000 100%); }
-        .ref-image { max-width: 85%; height: auto; transition: transform 0.05s linear; filter: drop-shadow(0 0 30px rgba(0,0,0,1)); }
-
-        .progress-panel { width: 340px; background: #0a0a0c; border-left: 1px solid #1a1a1c; display: flex; flex-direction: column; flex-shrink: 0; }
+        .ref-image { max-width: 85%; height: auto; transition: transform 0.05s linear; }
+        .progress-panel { width: 340px; background: #0a0a0c; border-left: 1px solid #1a1a1c; display: flex; flex-direction: column; }
         .panel-header { padding: 25px; display: flex; justify-content: space-between; align-items: center; }
-        .status-label { font-size: 10px; font-weight: 800; letter-spacing: 0.1em; color: #666; }
-        .total-badge { background: #ff00ff; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; box-shadow: 0 0 15px rgba(255,0,255,0.3); }
-        
+        .total-badge { background: #ff00ff; color: #fff; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; }
         .total-bar-container { width: 100%; height: 2px; background: #1a1a1c; }
-        .total-bar-fill { height: 100%; background: #ff00ff; transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1); box-shadow: 0 0 10px #ff00ff; }
-        
-        .progress-content { flex: 1; overflow-y: auto; padding: 25px; }
-        .add-btn { width: 100%; padding: 12px; background: transparent; border: 1px dashed #333; color: #555; border-radius: 8px; cursor: pointer; margin-bottom: 25px; font-size: 11px; font-weight: 800; transition: 0.3s; }
-        .add-btn:hover { border-color: #00f2ff; color: #00f2ff; background: rgba(0,242,255,0.02); }
-        
+        .total-bar-fill { height: 100%; background: #ff00ff; transition: 0.6s; }
+        .add-btn { width: 100%; padding: 12px; background: transparent; border: 1px dashed #333; color: #555; border-radius: 8px; cursor: pointer; margin-bottom: 25px; font-size: 11px; font-weight: 800; }
         .part-card { background: #111114; padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid #1a1a1c; }
         .part-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .part-name { font-size: 12px; font-weight: 800; }
-        .part-percent { font-size: 12px; color: #00f2ff; font-weight: 800; }
-        .del-mini { background: none; border: none; color: #333; cursor: pointer; font-size: 20px; transition: 0.3s; }
-        .del-mini:hover { color: #ff00ff; }
-        
+        .part-percent { color: #00f2ff; font-weight: 800; }
         .p-slider { width: 100%; cursor: pointer; accent-color: #00f2ff; }
-        .guest-msg { text-align: center; padding: 60px 20px; color: #444; font-size: 11px; line-height: 1.6; }
         .loading { display: flex; height: 100vh; align-items: center; justify-content: center; background: #000; color: #00f2ff; font-weight: 800; letter-spacing: 0.3em; }
       `}</style>
     </div>
