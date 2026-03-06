@@ -37,7 +37,7 @@ export default function Home() {
           const formatted = res.data.filter(d => d.image || d.url || d['画像'] || d['URL']).map((d, i) => ({
             _id: i,
             member: (d.member || d['名前'] || "").trim(),
-            image: d.image || d.url || d['画像'] || d['URL'],
+            image: d.image || d['url'] || d['画像'] || d['URL'],
             link: (d.link || d['URL'] || d.url || "").trim(),
             cosplayer: (d.cosplayer || d['レイヤー'] || "Unknown").trim(),
             event: (d.event || d.Event || d['イベント'] || "").trim(),
@@ -150,6 +150,7 @@ export default function Home() {
         </div>
       </header>
 
+      {/* Sidebar & Overlay */}
       <div className={`overlay ${isMenuOpen ? 'is-visible' : ''}`} onClick={() => setIsMenuOpen(false)}></div>
       <aside className={`sidebar ${isMenuOpen ? 'is-open' : ''}`}>
         <div className="sidebar-top">
@@ -163,14 +164,7 @@ export default function Home() {
           <div className="nav-divider">PRO TOOLS</div>
           <Link href="/chronicle"><div className="nav-item special-cyan"><i className="fas fa-project-diagram"></i> CHRONICLE MAP</div></Link>
           <Link href="/tracker"><div className="nav-item special-pink"><i className="fas fa-cut"></i> COSTUME TRACKER</div></Link>
-          
-          {/* 追加：推し活ログ（OSHIGOTO LOG）への導線 */}
-          <Link href="/log">
-            <div className="nav-item special-gold">
-              <i className="fas fa-journal-whills"></i> OSHIGOTO LOG
-            </div>
-          </Link>
-          
+          <Link href="/log"><div className="nav-item special-gold"><i className="fas fa-journal-whills"></i> OSHIGOTO LOG</div></Link>
           <div className="nav-item" onClick={() => {setDiagStep(1); setIsMenuOpen(false);}}><i className="fas fa-magic"></i> 推しフォト診断</div>
         </div>
       </aside>
@@ -178,6 +172,7 @@ export default function Home() {
       <main className="main-content">
         {viewMode === 'home' && diagStep === 0 && (
           <>
+            {/* Stories */}
             {!activeFilters.member && !activeFilters.cosplayer && !activeFilters.event && !activeFilters.text && (
               <div className="stories-tray">
                 {stories.map((s, idx) => (
@@ -189,6 +184,7 @@ export default function Home() {
               </div>
             )}
 
+            {/* Hero Section */}
             {(activeFilters.cosplayer || activeFilters.event) && (
               <div className="hero-section">
                 <div className="hero-content">
@@ -209,7 +205,8 @@ export default function Home() {
               </div>
             )}
 
-            <div className="filter-wrapper-sticky">
+            {/* Sticky Filter & Sort Bar */}
+            <div className="sticky-ui-container">
               <div className="filter-bar">
                 <div className="member-chips">
                   <button className={`chip ${!activeFilters.member ? 'active' : ''}`} onClick={() => setActiveFilters(p => ({...p, member:null}))}>ALL</button>
@@ -227,13 +224,14 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Photo Grid - display:grid で安定化 */}
             <div className="archive-grid">
               {filteredData.slice(0, displayLimit).map((item) => (
                 <div key={item._id} className="archive-card">
                   <div className="card-thumb">
                     <img src={getTwitterUrl(item.image, 'medium')} alt="" loading="lazy" onClick={() => setModalImage(item)} />
                     {item.link && (
-                      <a href={item.link} target="_blank" rel="noreferrer" className="x-link-btn" title="View on 𝕏">
+                      <a href={item.link} target="_blank" rel="noreferrer" className="x-link-btn">
                         <i className="fa-brands fa-x-twitter"></i>
                       </a>
                     )}
@@ -248,35 +246,22 @@ export default function Home() {
           </>
         )}
 
-        {/* リスト・診断ビュー等は省略なしで完全維持 */}
-        {viewMode === 'directory' && (
+        {/* List Views & Diagnostic Tool (完全維持) */}
+        {(viewMode === 'directory' || viewMode === 'events') && (
           <div className="list-view">
-            <h2 className="view-title">DIRECTORY / 名鑑</h2>
+            <h2 className="view-title">{viewMode === 'directory' ? 'DIRECTORY / 名鑑' : 'EVENTS / まとめ'}</h2>
             <div className="list-container">
-              {Object.keys(aggregated.cos).sort((a,b) => aggregated.cos[b].count - aggregated.cos[a].count).map(name => (
-                <div key={name} className="list-row" onClick={() => {setActiveFilters(p => ({...p, cosplayer: name})); setViewMode('home');}}>
-                  <img src={getTwitterUrl(aggregated.cos[name].latest, 'thumb')} alt="" className="list-img" />
-                  <div className="list-info"><div className="list-name">{name}</div><div className="list-meta">{aggregated.cos[name].count} 作品</div></div>
+              {Object.keys(viewMode === 'directory' ? aggregated.cos : aggregated.evs).sort((a,b) => (viewMode === 'directory' ? aggregated.cos[b].count - aggregated.cos[a].count : aggregated.evs[b].count - aggregated.evs[a].count)).map(key => (
+                <div key={key} className="list-row" onClick={() => {setActiveFilters(p => ({...p, [viewMode === 'directory' ? 'cosplayer' : 'event']: key})); setViewMode('home');}}>
+                  <img src={getTwitterUrl((viewMode === 'directory' ? aggregated.cos[key] : aggregated.evs[key]).latest, 'thumb')} alt="" className="list-img" />
+                  <div className="list-info"><div className="list-name">{key}</div><div className="list-meta">{(viewMode === 'directory' ? aggregated.cos[key] : aggregated.evs[key]).count} 作品</div></div>
                   <i className="fas fa-chevron-right"></i>
                 </div>
               ))}
             </div>
           </div>
         )}
-        {viewMode === 'events' && (
-          <div className="list-view">
-            <h2 className="view-title">EVENTS / まとめ</h2>
-            <div className="list-container">
-              {Object.keys(aggregated.evs).sort((a,b) => aggregated.evs[b].count - aggregated.evs[a].count).map(ev => (
-                <div key={ev} className="list-row" onClick={() => {setActiveFilters(p => ({...p, event: ev})); setViewMode('home');}}>
-                  <img src={getTwitterUrl(aggregated.evs[ev].latest, 'thumb')} alt="" className="list-img" />
-                  <div className="list-info"><div className="list-name">{ev}</div><div className="list-meta">{aggregated.evs[ev].count} 作品</div></div>
-                  <i className="fas fa-chevron-right"></i>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+
         {diagStep > 0 && (
           <div className="diag-screen">
             {diagStep === 1 ? (
@@ -302,7 +287,7 @@ export default function Home() {
         )}
       </main>
 
-      {/* ストーリー ＆ モーダル */}
+      {/* Modals */}
       {activeStory && (
         <div className="story-viewer" onClick={() => setActiveStory(null)}>
           <div className="story-bars">
@@ -322,66 +307,74 @@ export default function Home() {
 
       <style jsx global>{`
         :root { --bg: #0a0a0b; --cyan: #00f2ff; --pink: #ff00ff; --gold: #ffcc00; --dim: #88888e; --h: 70px; }
+        
+        /* 1. 基本レイアウト：黒い帯を消し、コンテンツを中央化 */
         html, body { margin: 0; padding: 0; width: 100%; height: 100%; background: var(--bg); overflow-x: hidden; }
-        .site-wrapper { width: 100%; position: relative; min-height: 100vh; }
+        .site-wrapper { width: 100%; min-height: 100vh; display: block; }
         body { padding-top: var(--h); font-family: 'Montserrat', sans-serif; color: #fff; }
 
-        /* Header */
-        .main-header { position: fixed; top: 0; left: 0; width: 100%; height: var(--h); background: rgba(10,10,11,0.98); backdrop-filter: blur(25px); z-index: 1100; border-bottom: 1px solid rgba(255,255,255,0.08); }
+        /* 2. ヘッダー：被り防止のため不透明度をMAXに */
+        .main-header { position: fixed; top: 0; left: 0; width: 100%; height: var(--h); background: #0a0a0b; z-index: 2000; border-bottom: 1px solid #222; }
         .header-inner { max-width: 1400px; margin: 0 auto; height: 100%; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; box-sizing: border-box; }
         .brand { cursor: pointer; display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 14px; letter-spacing: 0.1em; }
         .brand-logo { font-size: 22px; background: linear-gradient(135deg, var(--cyan), var(--pink)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-        .search-pill { background: rgba(255,255,255,0.05); border-radius: 30px; padding: 8px 15px; display: flex; align-items: center; gap: 10px; border: 1px solid transparent; width: 180px; transition: 0.3s; }
-        .search-pill:focus-within { border-color: var(--cyan); width: 260px; }
+        .search-pill { background: #161618; border-radius: 30px; padding: 8px 15px; display: flex; align-items: center; gap: 10px; width: 200px; }
         .search-pill input { background: none; border: none; color: #fff; outline: none; font-size: 13px; width: 100%; }
+        .menu-icon-btn { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; }
 
-        /* Sidebar & Special Items */
-        .sidebar { position: fixed; top: 0; left: -320px; width: 320px; height: 100%; background: #000; z-index: 2000; transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1); padding: 40px 30px; border-right: 1px solid #222; box-sizing: border-box; }
-        .sidebar.is-open { left: 0; }
-        .nav-item { padding: 15px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 15px; font-size: 13px; transition: 0.2s; }
-        .nav-item:hover { background: rgba(255,255,255,0.05); }
-        .special-cyan { color: var(--cyan); background: rgba(0,242,255,0.03); margin-bottom: 5px; }
-        .special-pink { color: var(--pink); background: rgba(255,0,255,0.03); margin-bottom: 5px; }
-        .special-gold { color: var(--gold); background: rgba(255,204,0,0.03); }
-
-        /* Filter Bar Sticky Fix */
-        .filter-wrapper-sticky { position: sticky; top: var(--h); z-index: 1000; background: var(--bg); }
-        .filter-bar { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: rgba(10,10,11,0.95); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,255,255,0.05); box-shadow: 0 15px 30px rgba(0,0,0,0.4); }
+        /* 3. フィルターバー：ヘッダーの下にピタッと固定し、画像が被らないように背景を固定 */
+        .sticky-ui-container { position: sticky; top: var(--h); z-index: 1000; background: #0a0a0b; padding: 15px 20px; border-bottom: 1px solid #222; }
+        .filter-bar { max-width: 1400px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; }
         .member-chips { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
-        .chip { background: #1a1a1c; border: 1px solid #222; color: var(--dim); padding: 8px 18px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; transition: 0.3s; }
-        .chip.active { background: #fff; color: #000; border-color: #fff; }
+        .chip { background: #1a1a1c; border: 1px solid #222; color: var(--dim); padding: 8px 18px; border-radius: 10px; font-size: 12px; font-weight: 800; cursor: pointer; white-space: nowrap; }
+        .chip.active { background: #fff; color: #000; }
 
-        /* Archive Grid & Cards */
-        .archive-grid { column-count: 2; column-gap: 20px; padding: 20px; box-sizing: border-box; }
-        @media (min-width: 768px) { .archive-grid { column-count: 3; } }
-        @media (min-width: 1200px) { .archive-grid { column-count: 4; } }
-        .archive-card { break-inside: avoid; margin-bottom: 30px; transition: 0.4s; position: relative; }
-        .card-thumb { border-radius: 16px; overflow: hidden; background: #161618; cursor: pointer; position: relative; }
-        .card-thumb img { width: 100%; display: block; transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
+        /* 4. 写真グリッド：もっとも安定する Grid レイアウトを採用 */
+        .main-content { width: 100%; max-width: 1400px; margin: 0 auto; }
+        .archive-grid { 
+          display: grid; 
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
+          gap: 30px; 
+          padding: 30px 20px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        @media (max-width: 600px) { .archive-grid { grid-template-columns: repeat(2, 1fr); gap: 15px; padding: 15px; } }
+
+        .archive-card { width: 100%; transition: 0.4s; position: relative; }
+        .card-thumb { position: relative; border-radius: 16px; overflow: hidden; background: #161618; line-height: 0; }
+        .card-thumb img { width: 100%; height: auto; display: block; transition: 0.6s; cursor: pointer; }
         .archive-card:hover { transform: translateY(-5px); }
         .archive-card:hover img { transform: scale(1.05); }
-        .x-link-btn { position: absolute; top: 12px; right: 12px; width: 32px; height: 32px; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; z-index: 10; }
+
+        /* 5. 𝕏ボタン：画像内に美しく配置 */
+        .x-link-btn { position: absolute; top: 12px; right: 12px; width: 34px; height: 34px; background: rgba(0,0,0,0.7); backdrop-filter: blur(5px); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; border: 1px solid rgba(255,255,255,0.2); transition: 0.3s; z-index: 10; font-size: 14px; text-decoration: none; }
         .x-link-btn:hover { background: #fff; color: #000; transform: scale(1.1); }
+
         .card-caption { padding: 12px 5px; cursor: pointer; }
-        .caption-name { font-size: 14px; font-weight: 800; }
+        .caption-name { font-size: 14px; font-weight: 800; color: #fff; }
         .caption-sub { font-size: 11px; color: var(--dim); margin-top: 4px; }
 
-        /* Dialog & Modal */
-        .diag-screen { padding: 60px 20px; display: flex; flex-direction: column; align-items: center; min-height: 80vh; }
-        .diag-modal { background: #111; padding: 40px; border-radius: 24px; max-width: 600px; text-align: center; border: 1px solid #222; }
-        .diag-select-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-top: 20px; }
-        .diag-choice { background: #1a1a1c; border: 1px solid #333; color: #fff; padding: 15px 10px; border-radius: 12px; font-size: 11px; font-weight: 800; cursor: pointer; }
-        .diag-img { width: 100%; border-radius: 20px; margin: 20px 0; cursor: pointer; }
-        .modal-full { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 3000; display: flex; align-items: center; justify-content: center; }
-        .modal-full img { max-height: 95vh; max-width: 95%; object-fit: contain; }
+        /* Sidebar (完全独立) */
+        .sidebar { position: fixed; top: 0; left: -320px; width: 320px; height: 100%; background: #000; z-index: 3000; transition: 0.4s cubic-bezier(0.19, 1, 0.22, 1); padding: 40px 30px; border-right: 1px solid #222; box-sizing: border-box; }
+        .sidebar.is-open { left: 0; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 2500; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .overlay.is-visible { opacity: 1; pointer-events: auto; }
+        .nav-item { padding: 15px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 15px; font-size: 13px; transition: 0.2s; }
+        .nav-item:hover { background: rgba(255,255,255,0.05); }
+        .special-cyan { color: var(--cyan); background: rgba(0,242,255,0.05); }
+        .special-pink { color: var(--pink); background: rgba(255,0,255,0.05); }
+        .special-gold { color: var(--gold); background: rgba(255,204,0,0.05); }
 
         /* Others */
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1500; opacity: 0; pointer-events: none; transition: 0.3s; }
-        .overlay.is-visible { opacity: 1; pointer-events: auto; }
-        .nav-divider { font-size: 10px; font-weight: 800; color: #333; margin: 30px 0 10px 20px; letter-spacing: 0.2em; }
+        .stories-tray { display: flex; gap: 20px; overflow-x: auto; padding: 20px; border-bottom: 1px solid #222; scrollbar-width: none; }
+        .hero-section { padding: 60px 40px; background: radial-gradient(circle at top right, rgba(0,242,255,0.1), transparent); border-radius: 24px; margin: 20px; border: 1px solid #222; }
+        .hero-title { font-size: 48px; font-weight: 800; margin: 0 0 20px 0; }
         .sort-group { display: flex; gap: 5px; background: #1a1a1c; padding: 4px; border-radius: 12px; }
-        .sort-tool { background: none; border: none; color: #555; padding: 10px; width: 40px; border-radius: 8px; cursor: pointer; transition: 0.3s; }
+        .sort-tool { background: none; border: none; color: #555; padding: 10px; width: 40px; border-radius: 8px; cursor: pointer; }
         .sort-tool.active { background: #2a2a2c; color: var(--cyan); }
+        .modal-full { position: fixed; inset: 0; background: rgba(0,0,0,0.98); z-index: 4000; display: flex; align-items: center; justify-content: center; }
+        .modal-full img { max-height: 95vh; max-width: 95%; object-fit: contain; }
       `}</style>
     </div>
   );
