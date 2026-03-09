@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import * as d3 from 'd3';
 import Papa from 'papaparse';
 
@@ -12,12 +13,9 @@ export default function ChroniclePage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [timeFilter, setTimeFilter] = useState(100); 
 
-  // 1. データの取得と計算（ここは変更なし）
   useEffect(() => {
     Papa.parse(CSV_URL, {
-      download: true,
-      header: true,
-      skipEmptyLines: true,
+      download: true, header: true, skipEmptyLines: true,
       complete: (results) => {
         const raw = results.data.filter(d => (d.member || d['名前']) && (d.cosplayer || d['レイヤー']));
         const nodes = [];
@@ -42,10 +40,7 @@ export default function ChroniclePage() {
           });
 
           links.push({ 
-            source: cName, 
-            target: mName, 
-            index: i,
-            date: d.date || "Unknown Date",
+            source: cName, target: mName, index: i, date: d.date || "2026.XX.XX",
             originalData: { ...d, member: mName, cosplayer: cName, image: img }
           });
         });
@@ -54,7 +49,6 @@ export default function ChroniclePage() {
     });
   }, []);
 
-  // 2. D3.js エンジン（軽量化チューニング済み）
   useEffect(() => {
     if (!svgRef.current || data.nodes.length === 0) return;
 
@@ -64,93 +58,74 @@ export default function ChroniclePage() {
     svg.selectAll("*").remove();
 
     const g = svg.append("g");
-    const zoom = d3.zoom().scaleExtent([0.1, 5]).on("zoom", (e) => g.attr("transform", e.transform));
+    const zoom = d3.zoom().scaleExtent([0.2, 4]).on("zoom", (e) => g.attr("transform", e.transform));
     svg.call(zoom);
 
     const filteredLinks = data.links.filter(l => l.index <= (data.links.length * (timeFilter / 100)));
     const activeIds = new Set(filteredLinks.flatMap(l => [l.source.id || l.source, l.target.id || l.target]));
     const filteredNodes = data.nodes.filter(n => activeIds.has(n.id));
 
-    // ノードサイズのスケール（衝突判定を軽くするため範囲を少し調整）
-    const radiusScale = d3.scaleSqrt()
-      .domain([1, d3.max(data.nodes, d => d.degree)])
-      .range([6, 30]);
+    const radiusScale = d3.scaleSqrt().domain([1, 50]).range([8, 35]);
 
-    // --- 【軽量化ポイント：シミュレーションの高速鎮座】 ---
     const simulation = d3.forceSimulation(filteredNodes)
-      .force("link", d3.forceLink(filteredLinks).id(d => d.id).distance(110).strength(0.5))
-      .force("charge", d3.forceManyBody().strength(-250))
+      .force("link", d3.forceLink(filteredLinks).id(d => d.id).distance(150).strength(0.3))
+      .force("charge", d3.forceManyBody().strength(-400))
       .force("center", d3.forceCenter(width / 2, height / 2))
-      .force("collision", d3.forceCollide().radius(d => radiusScale(d.degree) + 3))
-      .velocityDecay(0.3) // 摩擦を増やして早く止める
-      .alphaDecay(0.06)   // 冷却速度を上げて計算時間を短縮
-      .alphaMin(0.02);    // 微細な計算を切り捨てる
+      .force("collision", d3.forceCollide().radius(d => radiusScale(d.degree) + 10))
+      .alphaDecay(0.05);
 
-    // リンク描画
+    // 接続線（光の糸）
     const link = g.append("g")
-      .attr("class", "links")
       .selectAll("line")
       .data(filteredLinks)
       .join("line")
-      .attr("stroke", "#ffffff15") // 透明度を下げて描画負荷軽減
-      .attr("stroke-width", 0.8);
+      .attr("stroke", "rgba(255,255,255,0.05)")
+      .attr("stroke-width", 0.5);
 
-    // ノード描画
+    // ノード（硝子の球体）
     const node = g.append("g")
-      .attr("class", "nodes")
       .selectAll("g")
       .data(filteredNodes)
       .join("g")
-      .attr("class", "node-group")
       .on("click", (e, d) => {
         const related = filteredLinks.filter(l => l.source.id === d.id || l.target.id === d.id);
-        const latest = related[related.length - 1];
-        setSelectedNode({ ...d, detail: latest?.originalData });
+        setSelectedNode({ ...d, detail: related[related.length - 1]?.originalData });
         setIsSidebarOpen(true);
       })
       .on("mouseenter", function(e, d) {
-        // ホバー時に名前を表示
-        d3.select(this).select("text").style("display", "block").style("opacity", 1);
-        
-        const neighbors = new Set([d.id]);
-        filteredLinks.forEach(l => {
-          if (l.source.id === d.id) neighbors.add(l.target.id);
-          if (l.target.id === d.id) neighbors.add(l.source.id);
-        });
-
-        node.style("opacity", n => neighbors.has(n.id) ? 1 : 0.05);
-        link.style("opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.02);
-        link.attr("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? "#00f2ff" : "#fff");
+        d3.select(this).select("text").style("opacity", 1);
+        node.style("opacity", n => (n.id === d.id) ? 1 : 0.1);
+        link.style("stroke", l => (l.source.id === d.id || l.target.id === d.id) ? "#00f2ff" : "rgba(255,255,255,0.05)")
+            .style("stroke-width", l => (l.source.id === d.id || l.target.id === d.id) ? 1.5 : 0.5)
+            .style("opacity", l => (l.source.id === d.id || l.target.id === d.id) ? 1 : 0.05);
       })
       .on("mouseleave", function() {
-        // 重要でないノードの名前を再び隠す
-        node.select("text").style("display", d => d.degree > 15 ? "block" : "none");
+        node.select("text").style("opacity", d => d.degree > 15 ? 0.8 : 0);
         node.style("opacity", 1);
-        link.style("opacity", 1);
-        link.attr("stroke", "#ffffff15");
+        link.style("stroke", "rgba(255,255,255,0.05)").style("stroke-width", 0.5).style("opacity", 1);
       })
       .call(d3.drag()
-        .on("start", (e, d) => { if (!e.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+        .on("start", (e, d) => { if (!e.active) simulation.alphaTarget(0.2).restart(); d.fx = d.x; d.fy = d.y; })
         .on("drag", (e, d) => { d.fx = e.x; d.fy = e.y; })
         .on("end", (e, d) => { if (!e.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; }));
 
-    // 円（ドロップシャドウの適用を限定）
     node.append("circle")
       .attr("r", d => radiusScale(d.degree))
-      .attr("fill", d => d.group === 'member' ? "#00f2ff" : "#ff00ff")
-      .attr("filter", d => d.degree > 12 ? "drop-shadow(0 0 10px rgba(0,242,255,0.4))" : "none");
+      .attr("fill", d => d.group === 'member' ? "rgba(0, 242, 255, 0.2)" : "rgba(255, 0, 255, 0.2)")
+      .attr("stroke", d => d.group === 'member' ? "#00f2ff" : "#ff00ff")
+      .attr("stroke-width", 1.5)
+      .style("filter", "drop-shadow(0 0 8px rgba(0, 242, 255, 0.4))");
 
-    // --- 【軽量化ポイント：ラベルの初期表示制限】 ---
     node.append("text")
       .text(d => d.id)
-      .attr("x", d => radiusScale(d.degree) + 6)
-      .attr("y", 4)
+      .attr("x", d => radiusScale(d.degree) + 10)
+      .attr("y", 5)
       .attr("fill", "#fff")
-      .attr("font-size", d => Math.max(10, radiusScale(d.degree) / 1.6) + "px")
+      .attr("font-size", "11px")
       .attr("font-weight", "800")
       .style("pointer-events", "none")
-      .style("text-shadow", "0 0 5px #000")
-      .style("display", d => d.degree > 15 ? "block" : "none"); // 重要ノードのみ表示
+      .style("opacity", d => d.degree > 15 ? 0.8 : 0)
+      .style("text-shadow", "0 0 10px #000");
 
     simulation.on("tick", () => {
       link.attr("x1", d => d.source.x).attr("y1", d => d.source.y)
@@ -162,87 +137,110 @@ export default function ChroniclePage() {
   }, [data, timeFilter]);
 
   return (
-    <div className="chronicle-root">
+    <div className="c-root">
       <Head>
-        <title>VSPO! Cos-Chronicle Map</title>
-        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,900&family=Montserrat:wght@300;800&display=swap" rel="stylesheet" />
+        <title>CHRONICLE // VSPO! HUB</title>
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+        <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,900&family=Montserrat:wght@100;400;700;800&display=swap" rel="stylesheet" />
       </Head>
 
-      <div className="ui-overlay">
-        <div className="brand-header">
-          <h1>VSPO! COS-CHRONICLE</h1>
-          <p>INTERACTIVE ARCHIVE RELATIONSHIP MAP</p>
+      {/* --- UI OVERLAY --- */}
+      <div className="c-ui-header">
+        <Link href="/"><div className="c-back-btn"><i className="fas fa-chevron-left"></i> PORTAL</div></Link>
+        <div className="c-brand-block">
+          <h1>VSPO! CHRONICLE</h1>
+          <p>SYSTEM_VERSION // 2.6.0_STARKILLER</p>
         </div>
       </div>
 
-      <svg ref={svgRef} style={{ width: '100vw', height: '100vh', background: '#050507' }}></svg>
+      <svg ref={svgRef} className="c-svg-canvas"></svg>
 
-      <aside className={`editorial-sidebar ${isSidebarOpen ? 'is-open' : ''}`}>
-        <button className="close-x" onClick={() => setIsSidebarOpen(false)}>&times;</button>
+      {/* --- EDITORIAL SIDEBAR (Glass Concept) --- */}
+      <aside className={`c-sidebar ${isSidebarOpen ? 'is-open' : ''}`}>
+        <button className="c-close" onClick={() => setIsSidebarOpen(false)}>&times;</button>
         {selectedNode && selectedNode.detail && (
-          <div className="sidebar-inner">
-            <div className="mag-card">
+          <div className="c-sidebar-inner">
+            <div className="c-mag-card">
               <img src={selectedNode.detail.image} alt="" />
-              <div className="card-overlay">
-                <span className="issue-tag">CHRONICLE / ARCHIVE</span>
-                <h1 className="member-name">{selectedNode.detail.member}</h1>
-                <div className="footer-info">
-                  <span className="label">MODEL / </span>
-                  <span className="cos-name">{selectedNode.detail.cosplayer}</span>
+              <div className="c-card-glow"></div>
+              <div className="c-card-ui">
+                <span className="c-tag">DEEP_ARCHIVE / 0.1</span>
+                <h1 className="c-member-name">{selectedNode.detail.member}</h1>
+                <div className="c-footer">
+                  <span className="c-lab">COPLAYED_BY //</span>
+                  <span className="c-val">{selectedNode.detail.cosplayer}</span>
                 </div>
               </div>
             </div>
-            <div className="data-table">
-              <div className="data-row"><span className="h">TOTAL ARCHIVES</span><span className="v">{selectedNode.degree} Entries</span></div>
-              <div className="data-row"><span className="h">LAST OBSERVED</span><span className="v">{selectedNode.detail.date}</span></div>
-              <a href={selectedNode.detail.link} target="_blank" rel="noreferrer" className="action-btn">OPEN ORIGINAL POST</a>
+            <div className="c-data-box">
+              <div className="c-row"><span className="h">CONNECTION_DEGREE</span><span className="v">{selectedNode.degree} Nodes</span></div>
+              <div className="c-row"><span className="h">CHRONICLE_DATE</span><span className="v">{selectedNode.detail.date}</span></div>
+              <a href={selectedNode.detail.link} target="_blank" rel="noreferrer" className="c-action-btn">ACCESS_ORIGINAL_LOG</a>
             </div>
           </div>
         )}
       </aside>
 
-      <footer className="chronicle-ui">
-        <div className="time-display">
-          <span className="label">TIMELINE PROGRESSION</span>
-          <span className="value">{Math.floor(timeFilter)}% / {data.links.length} TOTAL SESSIONS</span>
+      {/* --- TIMELINE SCANNER --- */}
+      <footer className="c-footer-ui">
+        <div className="c-time-info">
+          <span className="c-lab">CHRONOLOGICAL_SCAN_PROGRESS</span>
+          <span className="c-progress-val">{timeFilter}%</span>
         </div>
-        <input type="range" min="1" max="100" value={timeFilter} onChange={e => setTimeFilter(e.target.value)} className="history-slider" />
+        <div className="c-slider-wrap">
+          <input type="range" min="1" max="100" value={timeFilter} onChange={e => setTimeFilter(e.target.value)} />
+          <div className="c-slider-fill" style={{ width: `${timeFilter}%` }}></div>
+        </div>
       </footer>
 
       <style jsx global>{`
-        body { margin: 0; background: #050507; color: white; font-family: 'Montserrat', sans-serif; overflow: hidden; }
-        .chronicle-root { width: 100vw; height: 100vh; position: relative; }
-        .brand-header { position: absolute; top: 30px; left: 30px; z-index: 10; pointer-events: none; }
-        .brand-header h1 { font-size: 18px; font-weight: 800; letter-spacing: 0.3em; margin: 0; color: #00f2ff; }
-        .brand-header p { font-size: 8px; font-weight: 300; letter-spacing: 0.1em; opacity: 0.5; margin: 5px 0 0 0; }
-        .node-group { cursor: pointer; }
-        line { pointer-events: none; }
-        .editorial-sidebar {
-          position: fixed; right: 0; top: 0; width: 400px; height: 100%; background: rgba(8, 8, 10, 0.98);
-          border-left: 1px solid #333; transform: translateX(100%); transition: 0.7s cubic-bezier(0.19, 1, 0.22, 1);
-          z-index: 1000; padding: 40px 30px; box-sizing: border-box; box-shadow: -20px 0 60px rgba(0,0,0,0.9);
+        :root { --v-cyan: #00f2ff; --v-magenta: #ff00ff; }
+        body { margin: 0; background: #000; color: #fff; font-family: 'Montserrat', sans-serif; overflow: hidden; }
+        
+        .c-root { width: 100vw; height: 100vh; position: relative; }
+        .c-svg-canvas { width: 100%; height: 100%; background: radial-gradient(circle at center, #0a0a0c 0%, #000 100%); }
+
+        /* HEADER */
+        .c-ui-header { position: absolute; top: 40px; left: 40px; z-index: 100; display:flex; gap:40px; align-items:flex-start; }
+        .c-back-btn { background: rgba(255,255,255,0.05); backdrop-filter:blur(15px); border:1px solid rgba(255,255,255,0.1); padding:10px 20px; border-radius:4px; font-size:10px; font-weight:800; letter-spacing:0.2em; cursor:pointer; }
+        .c-back-btn:hover { border-color: var(--v-cyan); color: var(--v-cyan); }
+        .c-brand-block h1 { font-size: 20px; font-weight: 800; letter-spacing: 0.3em; margin: 0; color: #fff; }
+        .c-brand-block p { font-size: 8px; color: #333; letter-spacing: 0.1em; margin-top: 5px; }
+
+        /* SIDEBAR (Glassmorphism) */
+        .c-sidebar {
+          position: fixed; right: 0; top: 0; width: 420px; height: 100%; 
+          background: rgba(5, 5, 5, 0.85); backdrop-filter: blur(30px);
+          border-left: 1px solid rgba(255,255,255,0.05); transform: translateX(100%); 
+          transition: 0.8s cubic-bezier(0.19, 1, 0.22, 1); z-index: 2000; padding: 60px 40px; box-sizing: border-box;
         }
-        .editorial-sidebar.is-open { transform: translateX(0); }
-        .close-x { position: absolute; top: 20px; left: 20px; background: none; border: none; color: #555; font-size: 32px; cursor: pointer; }
-        .mag-card { width: 100%; aspect-ratio: 2/3; position: relative; border-radius: 12px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.8); margin-bottom: 40px; }
-        .mag-card img { width: 100%; height: 100%; object-fit: cover; }
-        .card-overlay {
-          position: absolute; top: 0; left: 0; width: 100%; height: 100%; padding: 30px; box-sizing: border-box;
-          display: flex; flex-direction: column; justify-content: space-between;
-          background: linear-gradient(to bottom, rgba(0,0,0,0.5), transparent, rgba(0,0,0,0.9));
-        }
-        .issue-tag { font-size: 9px; font-weight: 800; border-left: 3px solid #00f2ff; padding-left: 12px; }
-        .member-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 42px; margin: 0; line-height: 0.85; }
-        .cos-name { font-size: 20px; font-weight: 800; color: #fff; }
-        .data-table { display: flex; flex-direction: column; gap: 15px; }
-        .data-row { display: flex; justify-content: space-between; border-bottom: 1px solid #222; padding-bottom: 8px; }
-        .data-row .h { font-size: 10px; color: #666; font-weight: 800; }
-        .data-row .v { font-size: 12px; color: #fff; font-weight: 800; }
-        .action-btn { display: block; width: 100%; text-align: center; border: 1px solid #00f2ff; color: #00f2ff; padding: 15px; border-radius: 8px; font-size: 11px; font-weight: 800; text-decoration: none; margin-top: 20px; }
-        .chronicle-ui { position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%); width: 60%; z-index: 500; text-align: center; }
-        .time-display .label { font-size: 10px; letter-spacing: 0.4em; color: #00f2ff; font-weight: 800; display: block; margin-bottom: 5px; }
-        .time-display .value { font-size: 14px; font-weight: 300; opacity: 0.6; }
-        .history-slider { width: 100%; height: 4px; accent-color: #00f2ff; cursor: pointer; margin-top: 15px; }
+        .c-sidebar.is-open { transform: translateX(0); box-shadow: -50px 0 100px rgba(0,0,0,0.9); }
+        .c-close { position: absolute; top: 20px; left: 20px; background: none; border: none; color: #333; font-size: 32px; cursor: pointer; }
+
+        .c-mag-card { width: 100%; aspect-ratio: 2/3; position: relative; border-radius: 4px; overflow: hidden; margin-bottom: 50px; border: 1px solid rgba(255,255,255,0.1); }
+        .c-mag-card img { width: 100%; height: 100%; object-fit: cover; }
+        .c-card-glow { position:absolute; inset:0; background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.8)); }
+        .c-card-ui { position: absolute; inset: 0; padding: 30px; display: flex; flex-direction: column; justify-content: flex-end; }
+        .c-tag { font-size: 9px; font-weight: 800; color: var(--v-cyan); letter-spacing: 0.2em; margin-bottom: 15px; border-left: 2px solid var(--v-cyan); padding-left: 10px; }
+        .c-member-name { font-family: 'Playfair Display', serif; font-style: italic; font-size: 48px; margin: 0; line-height: 0.9; color: #fff; }
+        .c-footer { margin-top: 20px; font-size: 11px; }
+        .c-lab { color: #444; font-weight: 800; margin-right: 10px; }
+
+        .c-data-box { border-top: 1px solid #111; padding-top: 30px; }
+        .c-row { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .c-row .h { font-size: 9px; color: #444; font-weight: 800; letter-spacing: 0.1em; }
+        .c-row .v { font-size: 12px; color: #fff; font-weight: 400; }
+        .c-action-btn { display: block; width: 100%; text-align: center; border: 1px solid var(--v-cyan); color: var(--v-cyan); padding: 18px; border-radius: 2px; font-size: 10px; font-weight: 800; text-decoration: none; margin-top: 30px; transition: 0.3s; }
+        .c-action-btn:hover { background: var(--v-cyan); color: #000; }
+
+        /* FOOTER SLIDER */
+        .c-footer-ui { position: absolute; bottom: 50px; left: 50%; transform: translateX(-50%); width: 500px; text-align: center; }
+        .c-time-info { display: flex; justify-content: space-between; margin-bottom: 15px; }
+        .c-time-info .c-lab { font-size: 9px; letter-spacing: 0.2em; color: #333; }
+        .c-progress-val { font-size: 14px; font-weight: 100; color: var(--v-cyan); }
+        .c-slider-wrap { position: relative; height: 2px; background: #111; }
+        .c-slider-wrap input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 10; }
+        .c-slider-fill { position: absolute; top: 0; left: 0; height: 100%; background: var(--v-cyan); box-shadow: 0 0 10px var(--v-cyan); transition: 0.2s; }
       `}</style>
     </div>
   );
