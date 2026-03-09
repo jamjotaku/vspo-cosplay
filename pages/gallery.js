@@ -41,9 +41,12 @@ export default function Gallery() {
 
   useEffect(() => {
     let res = [...allData].filter(d => (!activeFilters.member || d.member === activeFilters.member) && (!activeFilters.text || d.searchKey.includes(activeFilters.text)));
+    
+    // 全ソートロジックの適用
     if (currentSort === 'new') res.sort((a,b)=>b._id - a._id);
     else if (currentSort === 'old') res.sort((a,b)=>a._id - b._id);
     else if (currentSort === 'random') res.sort(() => Math.random() - 0.5);
+    
     setFilteredData(res);
   }, [allData, activeFilters, currentSort]);
 
@@ -55,7 +58,7 @@ export default function Gallery() {
       <Head>
         <title>COLLECTION // VSPO! HUB</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&family=Playfair+Display:ital,wght@1,900&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&display=swap" rel="stylesheet" />
       </Head>
 
       <header className="g-header">
@@ -63,13 +66,13 @@ export default function Gallery() {
           <Link href="/"><div className="g-back-btn">PORTAL</div></Link>
           <div className="g-brand-title">THE ARCHIVE</div>
           <div className="g-search-wrap">
-            <input type="text" placeholder="Explore..." onChange={e=>setActiveFilters(p=>({...p, text:e.target.value.toLowerCase()}))} />
+            <input type="text" placeholder="Explore Archives..." onChange={e=>setActiveFilters(p=>({...p, text:e.target.value.toLowerCase()}))} />
           </div>
         </div>
       </header>
 
       <main className="g-main">
-        {/* STORIES (Scrollbar Hidden) */}
+        {/* STORIES (no-scrollbar) */}
         <div className="g-stories-shelf no-scrollbar">
           {stories.map((s, idx) => (
             <div key={idx} className="s-node" onClick={()=>setActiveStory({memberIndex:idx, slideIndex:0})}>
@@ -79,7 +82,7 @@ export default function Gallery() {
           ))}
         </div>
 
-        {/* STICKY BAR (Scrollbar Hidden) */}
+        {/* STICKY BAR (NEW / OLD / SHUFFLE) */}
         <div className="g-sticky-bar">
           <div className="g-chips no-scrollbar">
             <button className={!activeFilters.member?'active':''} onClick={()=>setActiveFilters(p=>({...p,member:null}))}>ALL</button>
@@ -89,11 +92,12 @@ export default function Gallery() {
           </div>
           <div className="g-sort">
             <button className={currentSort==='new'?'active':''} onClick={()=>setCurrentSort('new')}>NEW</button>
+            <button className={currentSort==='old'?'active':''} onClick={()=>setCurrentSort('old')}>OLD</button>
             <button className={currentSort==='random'?'active':''} onClick={()=>setCurrentSort('random')}>SHUFFLE</button>
           </div>
         </div>
 
-        {/* GRID */}
+        {/* PHOTO GRID */}
         <div className="g-grid">
           {filteredData.slice(0, displayLimit).map((item) => (
             <div key={item._id} className="g-card">
@@ -135,14 +139,8 @@ export default function Gallery() {
         body { margin:0; background:#050505; color:#fff; font-family:'Montserrat', sans-serif; overflow-x: hidden; }
         button { background: none; border: none; padding: 0; color: inherit; font: inherit; cursor: pointer; outline: inherit; }
 
-        /* スクロールバー非表示のための共通クラス */
-        .no-scrollbar {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;     /* Firefox */
-        }
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;             /* Chrome, Safari and Opera */
-        }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
         .g-header { position:fixed; top:0; left:0; width:100%; height:80px; background:#050505; z-index:2000; border-bottom:1px solid #111; display:flex; align-items:center; justify-content:space-between; padding:0 40px; box-sizing:border-box; }
         .g-back-btn { font-size:12px; font-weight:800; color:#444; letter-spacing: 0.1em; transition: 0.3s; }
@@ -152,10 +150,9 @@ export default function Gallery() {
         .g-search-wrap input:focus { border-color: #00f2ff; width: 220px; }
 
         .g-main { padding-top: 80px; }
-        
         .g-stories-shelf { display:flex; gap:25px; padding:25px 40px; overflow-x:auto; border-bottom:1px solid #111; background: #050505; }
         .s-node { text-align:center; cursor:pointer; flex-shrink:0; }
-        .s-ring { width:68px; height:68px; border-radius:50%; border:2px solid #111; padding:2px; transition: 0.3s; box-shadow: 0 0 10px rgba(0,242,255,0); }
+        .s-ring { width:68px; height:68px; border-radius:50%; border:2px solid #111; padding:2px; transition: 0.3s; }
         .s-ring img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
         .s-node:hover .s-ring { border-color: #00f2ff; box-shadow: 0 0 15px rgba(0,242,255,0.3); }
         .s-node label { display:block; font-size:10px; margin-top:10px; color:#555; font-weight: 700; letter-spacing: 0.05em; }
