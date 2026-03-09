@@ -55,10 +55,9 @@ export default function Gallery() {
       <Head>
         <title>COLLECTION // VSPO! HUB</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;700;800&family=Playfair+Display:ital,wght@1,900&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&family=Playfair+Display:ital,wght@1,900&display=swap" rel="stylesheet" />
       </Head>
 
-      {/* --- FIXED HEADER --- */}
       <header className="g-header">
         <div className="g-header-inner">
           <Link href="/"><div className="g-back-btn"><i className="fas fa-chevron-left"></i> PORTAL</div></Link>
@@ -71,7 +70,6 @@ export default function Gallery() {
 
       <main className="g-main">
         <div className="g-container">
-          {/* STORIES SECTION (Sub-header area) */}
           <div className="g-stories-shelf">
             {stories.map((s, idx) => (
               <div key={idx} className="s-node" onClick={()=>setActiveStory({memberIndex:idx, slideIndex:0})}>
@@ -84,7 +82,6 @@ export default function Gallery() {
             ))}
           </div>
 
-          {/* STICKY FILTER & SORT BAR */}
           <div className="g-sticky-bar">
             <div className="g-bar-inner">
               <div className="g-chips">
@@ -100,7 +97,6 @@ export default function Gallery() {
             </div>
           </div>
 
-          {/* GRID VIEW */}
           <div className="magazine-grid">
             {filteredData.slice(0, displayLimit).map((item, idx) => {
               const isFeatured = idx % 12 === 7;
@@ -122,16 +118,35 @@ export default function Gallery() {
         </div>
       </main>
 
-      {/* --- STORY VIEWER --- */}
+      {/* --- STORY VIEWER (視認性改善版) --- */}
       {activeStory && (
         <div className="sv-root" onClick={()=>setActiveStory(null)}>
-          <div className="sv-prog">{stories[activeStory.memberIndex].images.map((_,i)=>(<div key={i} className="sv-seg"><div className="sv-fill" style={{width:i<=activeStory.slideIndex?'100%':'0%', transition:i===activeStory.slideIndex?'4s linear':'none'}}></div></div>))}</div>
-          <div className="sv-stage" onClick={e=>e.stopPropagation()}>
-            <img src={getTwitterUrl(stories[activeStory.memberIndex].images[activeStory.slideIndex].image, 'large')} alt="" />
-            <div className="sv-label">{stories[activeStory.memberIndex].member}</div>
-            <div className="sv-hit l" onClick={()=>setActiveStory(p=>({...p, slideIndex:Math.max(0, p.slideIndex-1)}))}></div>
-            <div className="sv-hit r" onClick={next}></div>
+          {/* 上部のUI保護用グラデーション */}
+          <div className="sv-top-shadow"></div>
+          
+          <div className="sv-prog">
+            {stories[activeStory.memberIndex].images.map((_,i)=>(
+              <div key={i} className="sv-seg">
+                <div className="sv-fill" style={{width:i < activeStory.slideIndex ? '100%' : (i === activeStory.slideIndex ? '100%' : '0%'), transition:i===activeStory.slideIndex?'4s linear':'none'}}></div>
+              </div>
+            ))}
           </div>
+
+          <div className="sv-stage" onClick={e=>e.stopPropagation()}>
+            <img src={getTwitterUrl(stories[activeStory.memberIndex].images[activeStory.slideIndex].image, 'large')} alt="" className="sv-main-img" />
+            
+            {/* メンバー名ラベルの視認性強化 */}
+            <div className="sv-label-box">
+              {memberIcons[stories[activeStory.memberIndex].member]} {stories[activeStory.memberIndex].member}
+            </div>
+
+            {/* ナビゲーションヒットエリア */}
+            <div className="sv-hit-left" onClick={() => setActiveStory(p => ({...p, slideIndex: Math.max(0, p.slideIndex - 1)}))}></div>
+            <div className="sv-hit-right" onClick={next}></div>
+          </div>
+
+          {/* 閉じるボタンを明示的に配置 */}
+          <button className="sv-close-btn" onClick={() => setActiveStory(null)}>&times;</button>
         </div>
       )}
       
@@ -141,47 +156,42 @@ export default function Gallery() {
         :root { --g-accent: #00f2ff; --g-bg: #050505; --header-h: 90px; }
         body { margin:0; background:var(--g-bg); color:#fff; font-family:'Montserrat', sans-serif; }
 
-        /* FIXED HEADER */
         .g-header { position:fixed; top:0; left:0; width:100%; height:var(--header-h); background:rgba(5,5,5,0.95); backdrop-filter:blur(20px); z-index:2000; border-bottom:1px solid #111; }
         .g-header-inner { max-width:1600px; margin:0 auto; height:100%; display:flex; align-items:center; justify-content:space-between; padding:0 40px; }
         .g-brand-title { font-family:'Playfair Display', serif; font-size:24px; font-weight:900; letter-spacing:0.1em; }
-
-        /* MAIN AREA (Heavy padding to prevent overlap) */
-        .g-main { padding-top: calc(var(--header-h) + 20px); }
-        .g-container { max-width:1600px; margin:0 auto; }
-
-        /* STORIES SHELF (Positioned safely below header) */
+        
+        .g-main { padding-top: calc(var(--header-h) + 10px); }
         .g-stories-shelf { display:flex; gap:30px; padding:20px 40px 40px; overflow-x:auto; scrollbar-width:none; border-bottom:1px solid #111; }
-        .s-node { text-align:center; cursor:pointer; flex-shrink:0; }
-        .s-ring { width:80px; height:80px; border-radius:50%; padding:3px; background:#111; border:1px solid #222; position:relative; }
-        .s-ring img { width:100%; height:100%; border-radius:50%; object-fit:cover; z-index:2; position:relative; }
-        .s-glow-ring { position:absolute; inset:-2px; border-radius:50%; border: 2px solid var(--g-accent); opacity:0; transition:0.4s; }
-        .s-node:hover .s-glow-ring { opacity:1; box-shadow:0 0 15px var(--g-accent); }
-        .s-node label { display:block; font-size:11px; font-weight:700; color:#666; margin-top:12px; }
+        
+        /* STORY VIEWER: IMPROVED */
+        .sv-root { position:fixed; inset:0; background:#000; z-index:9000; display:flex; flex-direction:column; }
+        .sv-top-shadow { position:absolute; top:0; left:0; right:0; height:120px; background:linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%); z-index:9100; pointer-events:none; }
+        
+        .sv-prog { display:flex; gap:6px; padding:20px 20px 10px; position:relative; z-index:9200; }
+        .sv-seg { flex:1; height:3px; background:rgba(255,255,255,0.25); border-radius:10px; overflow:hidden; }
+        .sv-fill { height:100%; background:#fff; width:0; box-shadow: 0 0 8px #fff; }
 
-        /* STICKY BAR */
+        .sv-stage { flex:1; position:relative; display:flex; align-items:center; justify-content:center; background:#000; overflow:hidden; }
+        .sv-main-img { max-height:100%; max-width:100%; width:auto; height:auto; object-fit:contain; z-index:9050; }
+        
+        .sv-label-box { 
+          position:absolute; top:20px; left:20px; z-index:9200; 
+          background:rgba(255,255,255,0.1); backdrop-filter:blur(10px); 
+          padding:10px 20px; border-radius:50px; border:1px solid rgba(255,255,255,0.2);
+          font-weight:800; font-size:16px; color:#fff; text-shadow:0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .sv-hit-left, .sv-hit-right { position:absolute; top:0; bottom:0; width:45%; z-index:9300; cursor:pointer; }
+        .sv-hit-left { left:0; } .sv-hit-right { right:0; }
+        
+        .sv-close-btn { position:absolute; top:15px; right:15px; z-index:9400; background:none; border:none; color:#fff; font-size:40px; cursor:pointer; opacity:0.6; transition:0.3s; }
+        .sv-close-btn:hover { opacity:1; scale:1.1; }
+
+        /* Other Styles */
         .g-sticky-bar { position:sticky; top:var(--header-h); background:rgba(5,5,5,0.95); backdrop-filter:blur(20px); z-index:1500; border-bottom:1px solid #111; padding:15px 40px; }
-        .g-bar-inner { display:flex; justify-content:space-between; align-items:center; }
-        .g-chips { display:flex; gap:15px; overflow-x:auto; scrollbar-width:none; }
-        .g-chips button { background:none; border:none; color:#333; font-size:11px; font-weight:800; cursor:pointer; transition:0.3s; }
-        .g-chips button.active { color:#fff; text-shadow:0 0 10px var(--g-accent); }
-
-        .g-sort-controls { display:flex; align-items:center; gap:10px; background:rgba(255,255,255,0.03); padding:5px 15px; border-radius:4px; border:1px solid #111; }
-        .g-sort-controls button { background:none; border:none; color:#444; font-size:10px; font-weight:800; cursor:pointer; }
-        .g-sort-controls button.active { color:var(--g-accent); }
-
-        /* GRID */
         .magazine-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(350px, 1fr)); gap:60px; padding:60px 40px; }
         .mag-card.featured { grid-column: span 2; }
-        .mag-media { position:relative; overflow:hidden; border-radius:4px; box-shadow:0 30px 60px rgba(0,0,0,0.5); }
-        .mag-media img { width:100%; height:auto; cursor:pointer; transition:1.2s cubic-bezier(0.19,1,0.22,1); }
-        .mag-card:hover img { transform:scale(1.05); }
-
-        /* STORY VIEWER (Top layer) */
-        .sv-root { position:fixed; inset:0; background:#000; z-index:5000; display:flex; flex-direction:column; }
-        .sv-stage img { max-height:100%; max-width:100%; object-fit:contain; }
-        
-        .g-modal-full { position:fixed; inset:0; background:rgba(0,0,0,0.98); z-index:6000; display:flex; align-items:center; justify-content:center; }
+        .g-modal-full { position:fixed; inset:0; background:rgba(0,0,0,0.98); z-index:9999; display:flex; align-items:center; justify-content:center; }
         .g-modal-full img { max-height:95vh; object-fit:contain; }
       `}</style>
     </div>
