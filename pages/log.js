@@ -8,9 +8,10 @@ export default function OshigotoLog() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
-  
-  // 入力フォームの状態
   const [formData, setFormData] = useState({ date: '', event: '', venue: '', note: '' });
+
+  // ポータルと共通の輝度設定（将来的に共有Stateにするとベスト）
+  const [brightness] = useState(0.8);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -45,166 +46,164 @@ export default function OshigotoLog() {
       updated_at: new Date()
     });
 
-    if (error) {
-      alert("保存エラー: " + error.message);
-    } else {
+    if (error) alert("保存エラー: " + error.message);
+    else {
       setFormData({ date: '', event: '', venue: '', note: '' });
       setShowAdd(false);
       fetchLogs();
     }
   };
 
-  if (loading) return <div className="loading">SYNCING MEMORIES...</div>;
+  if (loading) return <div className="l-loading">SYNCING_MEMORIES...</div>;
 
   return (
-    <div className="log-root">
+    <div className="l-root" style={{ '--v-bright': brightness }}>
       <Head>
-        <title>OSHIGOTO LOG | VSPO! HUB</title>
+        <title>MEMORY_LOG // VSPO! HUB</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;700;800&display=swap" rel="stylesheet" />
+        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;700;800&display=swap" rel="stylesheet" />
       </Head>
 
-      <nav className="log-nav">
-        <Link href="/">
-          <div className="back-btn"><i className="fas fa-arrow-left"></i> BACK TO ARCHIVE</div>
-        </Link>
-      </nav>
-
-      <div className="container">
-        <header className="log-header">
-          <div className="title-block">
-            <span className="badge">CHRONICLES</span>
-            <h1>OSHIGOTO LOG</h1>
-            <p>推し事の軌跡を、一冊のアーカイブに。</p>
-          </div>
+      {/* --- FIXED HEADER (Galleryと統一) --- */}
+      <header className="l-header">
+        <div className="l-header-inner">
+          <Link href="/"><div className="l-back-btn"><i className="fas fa-chevron-left"></i> PORTAL</div></Link>
+          <div className="l-brand-title">LOGS <span>The Chronicle</span></div>
           {user && (
-            <button className="add-trigger" onClick={() => setShowAdd(true)}>
-              <i className="fas fa-pen-nib"></i> 過去の記録を綴る
+            <button className="l-add-trigger" onClick={() => setShowAdd(true)}>
+              <i className="fas fa-pen-nib"></i> RECORD
             </button>
           )}
-        </header>
+        </div>
+      </header>
 
+      <main className="l-container">
         {!user ? (
-          <div className="login-prompt">
+          <div className="l-prompt">
             <i className="fas fa-lock"></i>
-            <p>ログインすると、自分専用の参戦日記を作成できます。</p>
-            <Link href="/tracker"><button className="login-jump">ログインページへ</button></Link>
+            <p>記憶の同期には認証が必要です</p>
+            <Link href="/tracker"><button className="l-login-btn">GO TO AUTH</button></Link>
           </div>
         ) : (
-          <div className="timeline">
+          <div className="l-timeline">
             {logs.length > 0 ? (
               logs.map((log) => (
-                <div key={log.id} className="log-card">
-                  <div className="card-side">
-                    <div className="dot"></div>
-                    <div className="date-display">
+                <div key={log.id} className="l-item">
+                  <div className="l-side">
+                    <div className="l-dot"></div>
+                    <div className="l-date">
                       <span className="year">{log.event_date.split('-')[0]}</span>
                       <span className="day">{log.event_date.split('-')[1]}.{log.event_date.split('-')[2]}</span>
                     </div>
                   </div>
-                  <div className="card-main">
-                    <div className="card-header">
-                      <h2 className="event-name">{log.event_name}</h2>
-                      <div className="venue-tag"><i className="fas fa-map-marker-alt"></i> {log.venue || "会場未設定"}</div>
+                  <div className="l-content-glass">
+                    <div className="l-card-head">
+                      <span className="l-venue"><i className="fas fa-map-marker-alt"></i> {log.venue || "DIGITAL BASE"}</span>
+                      <h2 className="l-event-name">{log.event_name}</h2>
                     </div>
-                    <div className="card-body">
-                      <p className="note-text">{log.memory_note}</p>
+                    <div className="l-card-body">
+                      <p className="l-note">{log.memory_note}</p>
+                    </div>
+                    {/* 画像ピン留め用スロット (将来の機能) */}
+                    <div className="l-photo-pin">
+                      <i className="fas fa-camera"></i> NO_IMAGE_PINNED
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <div className="empty-state">
-                <i className="fas fa-ghost"></i>
-                <p>まだ思い出が登録されていません。<br/>「綴る」ボタンから最初の記録を追加しましょう。</p>
-              </div>
+              <div className="l-empty">NO_MEMORIES_RECORDED</div>
             )}
           </div>
         )}
-      </div>
+      </main>
 
-      {/* 追加フォームモーダル */}
+      {/* --- ADD MODAL (System Configと統一) --- */}
       {showAdd && (
-        <div className="modal-overlay" onClick={() => setShowAdd(false)}>
-          <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <div className="modal-head">
-              <h3>綴る / NEW MEMORY</h3>
-              <button className="close-x" onClick={() => setShowAdd(false)}>&times;</button>
+        <div className="m-overlay" onClick={() => setShowAdd(false)}>
+          <div className="m-card" onClick={e => e.stopPropagation()}>
+            <div className="m-head">
+              <h3>NEW_RECORD</h3>
+              <button className="m-close" onClick={() => setShowAdd(false)}>&times;</button>
             </div>
-            <form onSubmit={handleSave}>
-              <div className="input-row">
-                <label>開催日</label>
+            <form onSubmit={handleSave} className="m-form">
+              <div className="m-field">
+                <label>DATE</label>
                 <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} required />
               </div>
-              <div className="input-row">
-                <label>イベント名称</label>
-                <input type="text" placeholder="例: C103 / ぶいすぽ文化祭" value={formData.event} onChange={e => setFormData({...formData, event: e.target.value})} required />
+              <div className="m-field">
+                <label>EVENT_NAME</label>
+                <input type="text" placeholder="VGGC 11th / Comic Market..." value={formData.event} onChange={e => setFormData({...formData, event: e.target.value})} required />
               </div>
-              <div className="input-row">
-                <label>会場</label>
-                <input type="text" placeholder="例: 東京ビッグサイト / 幕張メッセ" value={formData.venue} onChange={e => setFormData({...formData, venue: e.target.value})} />
+              <div className="m-field">
+                <label>VENUE</label>
+                <input type="text" placeholder="Makuhari Messe..." value={formData.venue} onChange={e => setFormData({...formData, venue: e.target.value})} />
               </div>
-              <div className="input-row">
-                <label>記録・思い出</label>
-                <textarea placeholder="あの時の熱量や、衣装の感想を自由に記録..." value={formData.note} onChange={e => setFormData({...formData, note: e.target.value})} />
+              <div className="m-field">
+                <label>MEMORY_NOTE</label>
+                <textarea rows="4" placeholder="Record your precious moment here..." value={formData.note} onChange={e => setFormData({...formData, note: e.target.value})} />
               </div>
-              <button type="submit" className="submit-btn">この記憶をアーカイブする</button>
+              <button type="submit" className="m-submit">ARCHIVE_RECORD</button>
             </form>
           </div>
         </div>
       )}
 
-      <style jsx>{`
-        .log-root { background: #050507; min-height: 100vh; color: #fff; font-family: 'Montserrat', sans-serif; padding-bottom: 100px; }
-        .log-nav { padding: 30px 40px; }
-        .back-btn { font-size: 11px; font-weight: 800; color: #555; cursor: pointer; transition: 0.3s; letter-spacing: 0.1em; }
-        .back-btn:hover { color: var(--cyan); }
+      <style jsx global>{`
+        :root { --v-cyan: #00f2ff; --v-glass: rgba(255, 255, 255, 0.03); }
+        body { margin:0; background:#050505; color:#fff; font-family:'Montserrat', sans-serif; }
         
-        .container { max-width: 900px; margin: 0 auto; padding: 0 20px; }
-        
-        .log-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 80px; }
-        .badge { font-size: 10px; font-weight: 800; color: #ff00ff; letter-spacing: 0.3em; margin-bottom: 10px; display: block; border-left: 2px solid #ff00ff; padding-left: 15px; }
-        h1 { font-size: 48px; font-weight: 800; margin: 0; letter-spacing: -0.02em; }
-        .log-header p { color: #666; margin-top: 10px; font-size: 14px; }
-        
-        .add-trigger { background: #fff; color: #000; border: none; padding: 15px 30px; border-radius: 40px; font-weight: 800; font-size: 13px; cursor: pointer; transition: 0.3s; }
-        .add-trigger:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,242,255,0.3); background: #00f2ff; }
+        .l-header { position:fixed; top:0; left:0; width:100%; height:90px; background:rgba(5,5,5,0.9); backdrop-filter:blur(20px); z-index:2000; border-bottom:1px solid #111; }
+        .l-header-inner { max-width:1200px; margin:0 auto; height:100%; display:flex; align-items:center; justify-content:space-between; padding:0 40px; }
+        .l-back-btn { font-size:11px; font-weight:800; color:#444; letter-spacing:0.2em; cursor:pointer; transition:0.3s; }
+        .l-back-btn:hover { color:#fff; }
+        .l-brand-title { font-size:18px; font-weight:800; letter-spacing:0.1em; }
+        .l-brand-title span { font-size:10px; font-weight:400; color:#333; margin-left:10px; letter-spacing:0.2em; }
+        .l-add-trigger { background:#fff; color:#000; border:none; padding:10px 25px; border-radius:4px; font-weight:800; font-size:11px; cursor:pointer; transition:0.3s; }
+        .l-add-trigger:hover { background:var(--v-cyan); box-shadow:0 0 20px var(--v-cyan); transform:translateY(-2px); }
 
-        .timeline { position: relative; padding-left: 20px; }
-        .timeline::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 1px; background: linear-gradient(to bottom, #222, #111); }
+        .l-container { max-width:1000px; margin:0 auto; padding:150px 40px 100px; }
         
-        .log-card { display: flex; gap: 40px; margin-bottom: 60px; position: relative; }
-        .card-side { width: 80px; flex-shrink: 0; text-align: right; }
-        .dot { position: absolute; left: -4px; top: 10px; width: 9px; height: 9px; background: #ff00ff; border-radius: 50%; box-shadow: 0 0 15px #ff00ff; }
-        .date-display { display: flex; flex-direction: column; }
-        .year { font-size: 12px; font-weight: 800; color: #333; }
-        .day { font-size: 18px; font-weight: 800; color: #666; }
-
-        .card-main { flex: 1; background: #0f0f12; border: 1px solid #1a1a1c; border-radius: 20px; padding: 30px; transition: 0.3s; }
-        .card-main:hover { border-color: #333; transform: translateX(10px); background: #121216; }
+        .l-timeline { position:relative; padding-left:40px; }
+        .l-timeline::before { content:''; position:absolute; left:0; top:0; bottom:0; width:1px; background:linear-gradient(to bottom, transparent, #222 10%, #222 90%, transparent); }
         
-        .event-name { font-size: 22px; font-weight: 800; margin: 0 0 10px 0; color: #00f2ff; }
-        .venue-tag { font-size: 12px; font-weight: 700; color: #555; display: flex; align-items: center; gap: 8px; }
-        .note-text { color: #aaa; line-height: 1.8; font-size: 15px; margin-top: 20px; white-space: pre-wrap; }
-
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 2000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
-        .modal-content { background: #0a0a0c; width: 90%; max-width: 500px; padding: 40px; border-radius: 30px; border: 1px solid #222; }
-        .modal-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-        .modal-head h3 { font-size: 16px; font-weight: 800; letter-spacing: 0.1em; }
-        .close-x { background: none; border: none; color: #555; font-size: 30px; cursor: pointer; }
+        .l-item { display:flex; gap:60px; margin-bottom:80px; position:relative; }
+        .l-side { width:80px; flex-shrink:0; text-align:right; }
+        .l-dot { position:absolute; left:-4.5px; top:12px; width:10px; height:10px; background:var(--v-cyan); border-radius:50%; box-shadow:0 0 15px var(--v-cyan); z-index:10; }
         
-        .input-row { margin-bottom: 25px; }
-        .input-row label { display: block; font-size: 10px; font-weight: 800; color: #555; margin-bottom: 10px; letter-spacing: 0.1em; }
-        input, textarea { width: 100%; background: #141417; border: 1px solid #222; border-radius: 12px; padding: 15px; color: #fff; outline: none; transition: 0.3s; }
-        input:focus, textarea:focus { border-color: #00f2ff; background: #1a1a1e; }
-        textarea { height: 120px; resize: none; font-family: inherit; }
-        .submit-btn { width: 100%; padding: 18px; border-radius: 15px; border: none; background: linear-gradient(135deg, #00f2ff, #ff00ff); color: #fff; font-weight: 800; cursor: pointer; margin-top: 10px; transition: 0.3s; }
-        .submit-btn:hover { transform: scale(1.02); box-shadow: 0 0 20px rgba(0,242,255,0.4); }
+        .l-date { display:flex; flex-direction:column; opacity:calc(var(--v-bright)*0.5); }
+        .year { font-size:11px; font-weight:800; color:#444; }
+        .day { font-size:20px; font-weight:200; color:#fff; }
 
-        .loading { display: flex; height: 100vh; align-items: center; justify-content: center; background: #000; color: #00f2ff; font-weight: 800; letter-spacing: 0.3em; }
-        .empty-state, .login-prompt { text-align: center; padding: 100px 0; color: #333; }
-        .empty-state i, .login-prompt i { font-size: 40px; margin-bottom: 20px; color: #111; }
-        .login-jump { background: #222; color: #fff; border: none; padding: 12px 24px; border-radius: 20px; font-weight: 800; margin-top: 20px; cursor: pointer; }
+        .l-content-glass { 
+          flex:1; background:var(--v-glass); backdrop-filter:blur(15px); 
+          border:1px solid rgba(255,255,255,0.08); border-radius:4px; padding:40px; 
+          transition:0.4s cubic-bezier(0.19, 1, 0.22, 1); 
+        }
+        .l-content-glass:hover { background:rgba(255,255,255,0.06); border-color:rgba(255,255,255,0.2); transform:translateX(10px); }
+        
+        .l-venue { font-size:9px; font-weight:800; color:var(--v-cyan); letter-spacing:0.2em; text-transform:uppercase; margin-bottom:15px; display:block; }
+        .l-event-name { font-size:24px; font-weight:400; margin:0 0 20px 0; color:rgba(255,255,255,calc(0.4+var(--v-bright)*0.6)); letter-spacing:0.05em; }
+        .l-note { color:#888; line-height:1.8; font-size:14px; white-space:pre-wrap; }
+        
+        .l-photo-pin { margin-top:30px; border-top:1px solid #111; padding-top:20px; font-size:9px; font-weight:800; color:#222; letter-spacing:0.1em; display:flex; align-items:center; gap:10px; }
+
+        /* MODAL */
+        .m-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.9); backdrop-filter:blur(20px); z-index:5000; display:flex; align-items:center; justify-content:center; }
+        .m-card { background:#0a0a0b; width:480px; padding:40px; border:1px solid #1a1a1c; border-radius:4px; }
+        .m-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; }
+        .m-head h3 { font-size:12px; font-weight:800; letter-spacing:0.2em; color:#444; }
+        .m-close { background:none; border:none; color:#fff; font-size:30px; cursor:pointer; }
+        
+        .m-field { margin-bottom:25px; }
+        .m-field label { display:block; font-size:9px; font-weight:800; color:#333; margin-bottom:12px; letter-spacing:0.1em; }
+        input, textarea { width:100%; background:#111; border:1px solid #222; border-radius:2px; padding:15px; color:#fff; outline:none; font-family:inherit; }
+        input:focus, textarea:focus { border-color:var(--v-cyan); }
+        .m-submit { width:100%; padding:18px; background:var(--v-cyan); color:#000; border:none; font-weight:800; font-size:11px; cursor:pointer; margin-top:10px; }
+        
+        .l-loading { display:flex; height:100vh; align-items:center; justify-content:center; background:#000; color:var(--v-cyan); font-weight:800; letter-spacing:0.3em; }
+        .l-prompt, .l-empty { text-align:center; padding:100px 0; color:#222; }
+        .l-login-btn { background:#111; color:#fff; border:1px solid #222; padding:12px 24px; border-radius:4px; font-weight:800; margin-top:20px; font-size:10px; cursor:pointer; }
       `}</style>
     </div>
   );
