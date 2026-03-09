@@ -12,7 +12,6 @@ export default function Portal() {
   const [time, setTime] = useState(new Date());
   const [isConfigOpen, setIsConfigOpen] = useState(false);
   
-  // Widget Data
   const [nextMission, setNextMission] = useState(null);
   const [latestArchive, setLatestArchive] = useState(null);
   const [productionProgress, setProductionProgress] = useState(45);
@@ -25,8 +24,8 @@ export default function Portal() {
     const saved = localStorage.getItem('v_portal_final_v3');
     if (saved) setConfig(JSON.parse(saved));
 
-    const savedProgress = localStorage.getItem('v_total_progress');
-    if (savedProgress) setProductionProgress(parseInt(savedProgress));
+    const savedProgress = localStorage.getItem('v_total_progress') || 45;
+    setProductionProgress(parseInt(savedProgress));
 
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
@@ -65,27 +64,16 @@ export default function Portal() {
 
   return (
     <div className="p-root" style={{ '--v-bright': config.brightness }}>
-      <Head>
-        <title>COMMAND_CENTER // VSPO! HUB</title>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
-        <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@100;400;700;800&family=Playfair+Display:ital,wght@1,900&display=swap" rel="stylesheet" />
-      </Head>
+      <Head><title>COMMAND_CENTER // VSPO! HUB</title></Head>
 
-      {/* BACKGROUND DECORATIONS (Click-through enabled) */}
       {config.grain && <div className="p-grain"></div>}
       <div className="p-ambient">
-        {config.glow && featured && (
-          <div className="p-glow-wrap" key={featured.image}>
-            <img src={featured.image || featured.url} alt="" />
-          </div>
-        )}
+        {config.glow && featured && <div className="p-glow-wrap" key={featured.image}><img src={featured.image || featured.url} alt="" /></div>}
         <div className="p-mask"></div>
       </div>
 
       <main className="p-main-layer">
         <div className="p-grid">
-          
-          {/* LEFT: PRODUCTION PANEL */}
           <div className="p-wing-left">
             <div className="p-glass-panel">
               <span className="p-tag">PRODUCTION_STATUS</span>
@@ -95,26 +83,22 @@ export default function Portal() {
               </div>
               <div className="p-meta">UNIT_ID: {user ? user.email.split('@')[0] : "GUEST_LINK"}</div>
             </div>
-            
             <button className="p-config-btn" onClick={() => setIsConfigOpen(true)}>
               <i className="fas fa-sliders-h"></i> CONFIG_SYSTEM
             </button>
           </div>
 
-          {/* CENTER: CHRONO UNIT */}
           <div className="p-chrono-core">
             <div className="p-clock">{time.toLocaleTimeString('en-US', { hour12: false })}</div>
             <div className="p-date">{time.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}</div>
           </div>
 
-          {/* RIGHT: MULTI-WIDGET STACK */}
           <div className="p-wing-right">
             <div className="p-stack">
-              
-              {/* FEATURED ARCHIVE WIDGET */}
               {featured && (
                 <div className="p-featured-card">
                   <div className="p-featured-media">
+                    {/* 修正：object-fit containで全身を表示 */}
                     <img src={featured.image || featured.url} alt="" key={featured.image} />
                   </div>
                   <div className="p-featured-info">
@@ -124,24 +108,14 @@ export default function Portal() {
                   </div>
                 </div>
               )}
-
-              {/* MISSION / LOG FEED */}
               <div className="p-feed-panel">
-                <div className="p-feed-row mission">
-                  <span className="p-feed-tag">NEXT_MISSION</span>
-                  <p>{nextMission ? nextMission.event_name : 'STANDBY_MODE'}</p>
-                </div>
-                <div className="p-feed-row">
-                  <span className="p-feed-tag">LAST_RECORD</span>
-                  <p>{latestArchive ? latestArchive.event_name : 'NO_RECENT_DATA'}</p>
-                </div>
+                <div className="p-feed-row mission"><span className="p-feed-tag">NEXT_MISSION</span><p>{nextMission ? nextMission.event_name : 'STANDBY_MODE'}</p></div>
+                <div className="p-feed-row"><span className="p-feed-tag">LAST_RECORD</span><p>{latestArchive ? latestArchive.event_name : 'NO_RECENT_DATA'}</p></div>
               </div>
-
             </div>
           </div>
         </div>
 
-        {/* BOTTOM DOCK */}
         <nav className="p-dock">
           <Link href="/gallery"><div className="p-dock-item"><i className="fas fa-th-large"></i><span>GALLERY</span></div></Link>
           <Link href="/log"><div className="p-dock-item"><i className="fas fa-history"></i><span>LOGS</span></div></Link>
@@ -150,18 +124,30 @@ export default function Portal() {
         </nav>
       </main>
 
-      {/* CONFIG MODAL */}
+      {/* --- CONFIG MODAL (UIフルカスタマイズ版) --- */}
       {isConfigOpen && (
         <div className="p-modal-overlay" onClick={() => setIsConfigOpen(false)}>
           <div className="p-modal-card" onClick={e => e.stopPropagation()}>
             <div className="p-modal-head">
               <h3>SYSTEM_CONFIGURATION</h3>
-              <button onClick={() => setIsConfigOpen(false)}>&times;</button>
+              <button onClick={() => setIsConfigOpen(false)} className="close-btn">&times;</button>
             </div>
             <div className="p-modal-body">
-              <div className="p-modal-row"><label>AMBIENT_GLOW</label><input type="checkbox" checked={config.glow} onChange={e => setConfig({...config, glow: e.target.checked})} /></div>
-              <div className="p-modal-row"><label>MASTER_BRIGHTNESS</label><input type="range" min="0.2" max="1" step="0.1" value={config.brightness} onChange={e => setConfig({...config, brightness: parseFloat(e.target.value)})} /></div>
-              <div className="p-modal-row"><label>INTERVAL (ms)</label><input type="number" step="1000" value={config.interval} onChange={e => setConfig({...config, interval: parseInt(e.target.value)})} /></div>
+              <div className="p-modal-row">
+                <label>AMBIENT_GLOW</label>
+                <div className="custom-check">
+                  <input type="checkbox" id="glow" checked={config.glow} onChange={e => setConfig({...config, glow: e.target.checked})} />
+                  <label htmlFor="glow"></label>
+                </div>
+              </div>
+              <div className="p-modal-row">
+                <label>MASTER_BRIGHTNESS</label>
+                <input type="range" min="0.2" max="1" step="0.1" value={config.brightness} onChange={e => setConfig({...config, brightness: parseFloat(e.target.value)})} className="custom-slider" />
+              </div>
+              <div className="p-modal-row">
+                <label>INTERVAL (ms)</label>
+                <input type="number" step="1000" value={config.interval} onChange={e => setConfig({...config, interval: parseInt(e.target.value)})} className="custom-input" />
+              </div>
             </div>
             <button className="p-modal-save" onClick={() => { localStorage.setItem('v_portal_final_v2', JSON.stringify(config)); setIsConfigOpen(false); }}>APPLY_CHANGES</button>
           </div>
@@ -172,67 +158,72 @@ export default function Portal() {
         :root { --v-cyan: #00f2ff; --v-magenta: #ff00ff; }
         body { margin:0; background:#000; color:#fff; font-family:'Montserrat', sans-serif; overflow:hidden; }
 
-        /* DECORATIONS: pointer-events: none is CRITICAL */
         .p-grain { position:fixed; inset:0; background:url('https://grainy-gradients.vercel.app/noise.svg'); opacity:0.05; pointer-events:none; z-index:900; }
         .p-ambient { position:absolute; inset:0; z-index:1; pointer-events:none; }
         .p-glow-wrap { position:absolute; inset:-10%; filter:blur(120px); opacity:calc(0.5 * var(--v-bright)); transition:3s; }
         .p-glow-wrap img { width:100%; height:100%; object-fit:cover; }
-        .p-mask { position:absolute; inset:0; background:radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.5) 60%, #000 95%); }
+        .p-mask { position:absolute; inset:0; background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.5) 60%, #000 95%); }
 
-        /* INTERFACE LAYER */
         .p-main-layer { position:relative; height:100vh; width:100vw; z-index:10; display:flex; flex-direction:column; }
         .p-grid { flex:1; display:grid; grid-template-columns: 380px 1fr 380px; padding:60px; box-sizing:border-box; align-items:center; }
 
-        /* WIDGETS COMMON */
         .p-glass-panel, .p-featured-card, .p-feed-panel { background:rgba(255,255,255,0.05); backdrop-filter:blur(30px); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:25px; margin-bottom:30px; }
         .p-tag { font-size:9px; font-weight:800; color:#888; letter-spacing:0.2em; display:block; margin-bottom:15px; }
 
-        /* LEFT WING */
         .p-progress-wrap { position:relative; height:2px; background:rgba(255,255,255,0.1); display:flex; align-items:center; }
-        .p-progress-bar { height:100%; background:var(--v-magenta); box-shadow:0 0 15px var(--v-magenta); transition:1s ease; }
+        .p-progress-bar { height:100%; background:var(--v-magenta); box-shadow:0 0 15px var(--v-magenta); }
         .p-progress-val { position:absolute; right:0; top:-18px; font-size:10px; font-weight:800; color:var(--v-magenta); }
-        .p-meta { font-size:9px; color:#555; font-weight:800; margin-top:20px; letter-spacing:0.1em; }
+        .p-meta { font-size:9px; color:#555; font-weight:800; margin-top:20px; }
         
-        .p-config-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#999; padding:12px 25px; font-size:10px; font-weight:800; border-radius:4px; cursor:pointer; transition:0.3s; }
-        .p-config-btn:hover { background:#fff; color:#000; border-color:#fff; }
+        .p-config-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#999; padding:12px 25px; font-size:10px; font-weight:800; border-radius:4px; cursor:pointer; }
+        .p-config-btn:hover { background:#fff; color:#000; }
 
-        /* CHRONO CORE */
-        .p-chrono-core { text-align:center; }
-        .p-clock { font-size:120px; font-weight:100; letter-spacing:-0.05em; line-height:1; }
-        .p-date { font-size:12px; font-weight:800; color:#444; letter-spacing:0.5em; margin-top:20px; }
+        .p-clock { font-size:120px; font-weight:100; text-align:center; }
+        .p-date { font-size:12px; font-weight:800; color:#444; letter-spacing:0.5em; margin-top:20px; text-align:center; }
 
-        /* RIGHT WING */
-        .p-stack { display:flex; flex-direction:column; gap:20px; }
+        /* FEATURED IMAGE FIX:全体表示 */
         .p-featured-card { padding:0; overflow:hidden; }
-        .p-featured-media { height:200px; overflow:hidden; border-bottom:1px solid rgba(255,255,255,0.05); }
-        .p-featured-media img { width:100%; height:100%; object-fit:cover; transition: 5s ease; animation: slow-zoom 20s infinite alternate; }
+        .p-featured-media { height:240px; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; }
+        .p-featured-media img { max-width:100%; max-height:100%; object-fit:contain; }
         .p-featured-info { padding:20px; }
-        .p-featured-info h3 { margin:0; font-size:18px; font-weight:400; letter-spacing:0.05em; }
+        .p-featured-info h3 { margin:0; font-size:18px; font-weight:400; color:#eee; }
         .p-featured-info p { margin:8px 0 0; font-size:10px; font-weight:800; color:#555; }
 
         .p-feed-panel { display:flex; flex-direction:column; gap:20px; margin-bottom:0; }
         .p-feed-tag { font-size:8px; font-weight:800; color:var(--v-cyan); letter-spacing:0.2em; display:block; margin-bottom:5px; }
         .p-feed-row p { margin:0; font-size:13px; color:#eee; }
 
-        /* DOCK */
         .p-dock { position:fixed; bottom:40px; left:50%; transform:translateX(-50%); display:flex; gap:10px; background:rgba(255,255,255,0.05); backdrop-filter:blur(30px); padding:8px; border-radius:50px; border:1px solid rgba(255,255,255,0.1); z-index:100; }
-        .p-dock-item { padding:12px 25px; border-radius:40px; display:flex; align-items:center; gap:12px; cursor:pointer; transition:0.3s; color:#666; }
+        .p-dock-item { padding:12px 25px; border-radius:40px; color:#666; transition:0.3s; cursor:pointer; }
         .p-dock-item:hover { color:#fff; background:rgba(255,255,255,0.1); }
-        .p-dock-item span { font-size:10px; font-weight:800; display:none; }
-        .p-dock-item:hover span { display:block; }
 
-        /* MODAL */
-        .p-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(20px); z-index:1000; display:flex; align-items:center; justify-content:center; }
-        .p-modal-card { background:#0a0a0b; width:450px; padding:40px; border:1px solid #222; border-radius:4px; box-shadow: 0 50px 100px rgba(0,0,0,0.8); }
-        .p-modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; }
-        .p-modal-head h3 { font-size:12px; font-weight:800; color:#fff; margin:0; }
-        .p-modal-head button { background:none; border:none; color:#444; font-size:30px; cursor:pointer; }
-        .p-modal-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; }
-        .p-modal-row label { font-size:9px; font-weight:800; color:#666; }
+        /* --- CONFIG CUSTOM UI --- */
+        .p-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(20px); z-index:2000; display:flex; align-items:center; justify-content:center; }
+        .p-modal-card { background:#0a0a0b; width:450px; padding:40px; border:1px solid #222; border-radius:4px; }
+        .p-modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; border-bottom:1px solid #111; padding-bottom:15px; }
+        .p-modal-head h3 { font-size:12px; font-weight:800; color:#eee; margin:0; letter-spacing:0.1em; }
+        .close-btn { background:none; border:none; color:#444; font-size:30px; cursor:pointer; }
+
+        .p-modal-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
+        .p-modal-row label { font-size:10px; font-weight:800; color:#666; letter-spacing:0.1em; }
+
+        /* Custom Checkbox */
+        .custom-check { position:relative; width:20px; height:20px; }
+        .custom-check input { opacity:0; position:absolute; }
+        .custom-check label { position:absolute; inset:0; border:2px solid #333; border-radius:2px; cursor:pointer; }
+        .custom-check input:checked + label { border-color:var(--v-cyan); background:rgba(0,242,255,0.1); }
+        .custom-check input:checked + label::after { content:'✓'; position:absolute; top:-2px; left:3px; color:var(--v-cyan); font-size:14px; }
+
+        /* Custom Slider */
+        .custom-slider { -webkit-appearance:none; width:150px; height:2px; background:#222; outline:none; }
+        .custom-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; background:var(--v-magenta); border-radius:50%; box-shadow:0 0 10px var(--v-magenta); cursor:pointer; }
+
+        /* Custom Input */
+        .custom-input { background:#111; border:1px solid #222; color:var(--v-cyan); padding:8px 12px; font-family:inherit; font-size:12px; text-align:right; width:100px; outline:none; }
+        .custom-input:focus { border-color:var(--v-cyan); }
+
         .p-modal-save { width:100%; padding:20px; background:var(--v-cyan); color:#000; font-weight:800; border:none; margin-top:20px; cursor:pointer; transition:0.3s; }
-        .p-modal-save:hover { background:#fff; box-shadow: 0 0 30px var(--v-cyan); }
-
-        @keyframes slow-zoom { from { transform:scale(1); } to { transform:scale(1.1); } }
+        .p-modal-save:hover { background:#fff; box-shadow:0 0 30px var(--v-cyan); }
       `}</style>
     </div>
   );
