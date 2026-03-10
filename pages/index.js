@@ -3,9 +3,11 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
 
+// アーカイブ画像取得用URL
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 
 export default function Portal() {
+  // --- STATE_MANAGEMENT ---
   const [allData, setAllData] = useState([]);
   const [featured, setFeatured] = useState(null);
   const [user, setUser] = useState(null);
@@ -15,8 +17,7 @@ export default function Portal() {
   const [nextMission, setNextMission] = useState(null);
   const [latestArchive, setLatestArchive] = useState(null);
   const [productionProgress, setProductionProgress] = useState(45);
-
-  // --- BIO_RESONANCE_STATS ---
+  
   const [pulseStats, setPulseStats] = useState({ avgFervor: 0, lastDays: 0, hasSpark: false });
   const canvasRef = useRef(null);
 
@@ -24,31 +25,44 @@ export default function Portal() {
     glow: true, grain: true, interval: 15000, brightness: 0.8
   });
 
+  // --- INITIALIZATION ---
   useEffect(() => {
+    // 1. 設定のロード
     const saved = localStorage.getItem('v_portal_final_v3');
     if (saved) setConfig(JSON.parse(saved));
 
     const savedProgress = localStorage.getItem('v_total_progress') || 45;
     setProductionProgress(parseInt(savedProgress));
 
+    // 2. 認証 & ログ取得
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) fetchLogWidgets(session.user.id);
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) fetchLogWidgets(currentUser.id);
     });
 
+    // 3. 時計の始動
     const clock = setInterval(() => setTime(new Date()), 1000);
+
+    // 4. CSV（画像）データの取得
     const fetchAll = async () => {
       const Papa = (await import('papaparse')).default;
-      Papa.parse(CSV_URL, { download: true, header: true, complete: (res) => {
-        const data = res.data.filter(d => d.image || d.url);
-        setAllData(data);
-        setFeatured(data[Math.floor(Math.random() * data.length)]);
-      }});
+      Papa.parse(CSV_URL, {
+        download: true,
+        header: true,
+        complete: (res) => {
+          const data = res.data.filter(d => d.image || d.url);
+          setAllData(data);
+          setFeatured(data[Math.floor(Math.random() * data.length)]);
+        }
+      });
     };
     fetchAll();
+
     return () => clearInterval(clock);
   }, []);
 
+  // --- FEATURED_IMAGE_ROTATION ---
   useEffect(() => {
     if (allData.length === 0) return;
     const timer = setInterval(() => {
@@ -57,42 +71,55 @@ export default function Portal() {
     return () => clearInterval(timer);
   }, [allData, config.interval]);
 
+  // --- DATA_FETCHING_LOGIC (SQL同期) ---
   const fetchLogWidgets = async (userId) => {
     const today = new Date().toISOString().split('T')[0];
-    const { data } = await supabase
+    
+    // user_idカラムがSQL側に追加されていることが前提
+    const { data, error } = await supabase
       .from('fan_logs')
       .select('*')
-      .eq('user_id', userId)
+      .eq('user_id', userId) 
       .order('event_date', { ascending: true });
 
+    if (error) {
+      console.error("DATA_SYNC_ERROR:", error.message);
+      return;
+    }
+
     if (data && data.length > 0) {
+      // 右翼：ミッションフィードの更新
       setNextMission(data.find(l => l.event_date > today));
       const archives = [...data].reverse().filter(l => l.event_date <= today);
       setLatestArchive(archives[0]);
 
-      // --- PULSE_DATA_CALCULATION ---
+      // 中央：鼓動（PULSE）解析
       const recent = archives.slice(0, 10);
       const avg = recent.reduce((acc, cur) => acc + cur.fervor_score, 0) / (recent.length || 1);
       const lastDate = new Date(archives[0].event_date);
       const diffDays = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24));
-      const spark = recent.some(d => d.is_first_spark);
-
-      setPulseStats({ avgFervor: avg, lastDays: diffDays, hasSpark: spark });
+      
+      setPulseStats({
+        avgFervor: avg,
+        lastDays: diffDays,
+        hasSpark: recent.some(d => d.is_first_spark)
+      });
     }
   };
 
-  // --- PULSE_WAVE_ENGINE ---
+  // --- REALTIME_CANVAS_ENGINE ---
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    if (!canvas || !pulseStats.avgFervor) return;
     const ctx = canvas.getContext('2d');
     let animationFrameId;
     let offset = 0;
 
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      const amplitude = pulseStats.avgFervor * 12; 
-      const frequency = 0.015 + (1 / (pulseStats.lastDays + 1)) * 0.04;
+      
+      const amplitude = pulseStats.avgFervor * 12; // 熱量に比例
+      const frequency = 0.015 + (1 / (pulseStats.lastDays + 1)) * 0.04; // 頻度に比例
       
       ctx.beginPath();
       ctx.lineWidth = 2;
@@ -102,32 +129,43 @@ export default function Portal() {
 
       for (let x = 0; x < canvas.width; x++) {
         const y = canvas.height / 2 + amplitude * Math.sin(x * frequency + offset);
-        const noise = pulseStats.hasSpark ? (Math.random() - 0.5) * 8 : 0;
+        const noise = pulseStats.hasSpark ? (Math.random() - 0.5) * 10 : 0; // スパーク時のノイズ
         if (x === 0) ctx.moveTo(x, y + noise);
         else ctx.lineTo(x, y + noise);
       }
+      
       ctx.stroke();
       offset -= 0.08;
       animationFrameId = requestAnimationFrame(render);
     };
+
     render();
     return () => cancelAnimationFrame(animationFrameId);
   }, [pulseStats]);
 
   return (
     <div className="p-root" style={{ '--v-bright': config.brightness }}>
-      <Head><title>COMMAND_CENTER // VSPO! HUB</title></Head>
+      <Head>
+        <title>COMMAND_CENTER // VSPO! HUB</title>
+        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&family=Montserrat:wght@100;400;900&display=swap" rel="stylesheet" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+      </Head>
 
       {config.grain && <div className="p-grain"></div>}
+      
       <div className="p-ambient">
-        {config.glow && featured && <div className="p-glow-wrap" key={featured.image}><img src={featured.image || featured.url} alt="" /></div>}
+        {config.glow && featured && (
+          <div className="p-glow-wrap" key={featured.image}>
+            <img src={featured.image || featured.url} alt="" />
+          </div>
+        )}
         <div className="p-mask"></div>
       </div>
 
       <main className="p-main-layer">
         <div className="p-grid">
           
-          {/* LEFT_WING */}
+          {/* LEFT_WING: PRODUCTION_STATS */}
           <div className="p-wing-left">
             <div className="p-glass-panel">
               <span className="p-tag">PRODUCTION_STATUS</span>
@@ -142,25 +180,28 @@ export default function Portal() {
             </button>
           </div>
 
-          {/* CHRONO_CORE & BIO_PULSE */}
+          {/* CHRONO_CORE & BIO_MONITOR */}
           <div className="p-chrono-core">
             <div className="p-clock">{time.toLocaleTimeString('en-US', { hour12: false })}</div>
             <div className="p-date">{time.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}</div>
             
-            {/* BIO_RESONANCE_MONITOR (心臓部) */}
             <div className="p-pulse-monitor">
               <canvas ref={canvasRef} width={600} height={120} />
               <div className="p-pulse-info">
-                <div className="p-pulse-stat"><span>FERVOR_AVG</span> {pulseStats.avgFervor.toFixed(1)}</div>
-                <div className="p-pulse-stat"><span>LAST_SCAN</span> {pulseStats.lastDays}D_AGO</div>
-                <div className="p-pulse-stat" style={{ color: pulseStats.hasSpark ? 'var(--v-cyan)' : '#444' }}>
-                  <span>SPARK_SIGNAL</span> {pulseStats.hasSpark ? 'DETECTED' : 'STABLE'}
+                <div className="p-pulse-stat">
+                  <span>FERVOR_AVG</span> <strong>{pulseStats.avgFervor.toFixed(1)}</strong>
+                </div>
+                <div className="p-pulse-stat">
+                  <span>LAST_SCAN</span> <strong>{pulseStats.lastDays}D_AGO</strong>
+                </div>
+                <div className="p-pulse-stat spark-status" style={{ color: pulseStats.hasSpark ? 'var(--v-cyan)' : '#444' }}>
+                  <span>SPARK_SIGNAL</span> <strong>{pulseStats.hasSpark ? 'DETECTED' : 'STABLE'}</strong>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* RIGHT_WING */}
+          {/* RIGHT_WING: MISSION_FEED */}
           <div className="p-wing-right">
             <div className="p-stack">
               {featured && (
@@ -176,8 +217,14 @@ export default function Portal() {
                 </div>
               )}
               <div className="p-feed-panel">
-                <div className="p-feed-row mission"><span className="p-feed-tag">NEXT_MISSION</span><p>{nextMission ? nextMission.event_name : 'STANDBY_MODE'}</p></div>
-                <div className="p-feed-row"><span className="p-feed-tag">LAST_RECORD</span><p>{latestArchive ? latestArchive.event_name : 'NO_RECENT_DATA'}</p></div>
+                <div className="p-feed-row mission">
+                  <span className="p-feed-tag">NEXT_MISSION</span>
+                  <p>{nextMission ? nextMission.event_name : 'STANDBY_MODE'}</p>
+                </div>
+                <div className="p-feed-row">
+                  <span className="p-feed-tag">LAST_RECORD</span>
+                  <p>{latestArchive ? latestArchive.event_name : 'NO_RECENT_DATA'}</p>
+                </div>
               </div>
             </div>
           </div>
@@ -192,7 +239,7 @@ export default function Portal() {
         </nav>
       </main>
 
-      {/* --- CONFIG MODAL (UIフルカスタマイズ版) --- */}
+      {/* --- CONFIG_MODAL --- */}
       {isConfigOpen && (
         <div className="p-modal-overlay" onClick={() => setIsConfigOpen(false)}>
           <div className="p-modal-card" onClick={e => e.stopPropagation()}>
@@ -235,26 +282,28 @@ export default function Portal() {
         .p-main-layer { position:relative; height:100vh; width:100vw; z-index:10; display:flex; flex-direction:column; }
         .p-grid { flex:1; display:grid; grid-template-columns: 380px 1fr 380px; padding:60px; box-sizing:border-box; align-items:center; }
 
-        .p-glass-panel, .p-featured-card, .p-feed-panel { background:rgba(255,255,255,0.05); backdrop-filter:blur(30px); border:1px solid rgba(255,255,255,0.1); border-radius:4px; padding:25px; margin-bottom:30px; }
-        .p-tag { font-size:9px; font-weight:800; color:#888; letter-spacing:0.2em; display:block; margin-bottom:15px; }
+        .p-glass-panel, .p-featured-card, .p-feed-panel { background:rgba(255,255,255,0.03); backdrop-filter:blur(30px); border:1px solid rgba(255,255,255,0.08); border-radius:4px; padding:25px; margin-bottom:30px; }
+        .p-tag { font-size:9px; font-weight:800; color:#444; letter-spacing:0.2em; display:block; margin-bottom:15px; }
 
         .p-progress-wrap { position:relative; height:2px; background:rgba(255,255,255,0.1); display:flex; align-items:center; }
-        .p-progress-bar { height:100%; background:var(--v-magenta); box-shadow:0 0 15px var(--v-magenta); }
+        .p-progress-bar { height:100%; background:var(--v-magenta); box-shadow:0 0-15px var(--v-magenta); }
         .p-progress-val { position:absolute; right:0; top:-18px; font-size:10px; font-weight:800; color:var(--v-magenta); }
-        .p-meta { font-size:9px; color:#555; font-weight:800; margin-top:20px; }
+        .p-meta { font-size:9px; color:#555; font-weight:800; margin-top:20px; font-family: 'JetBrains Mono'; }
         
-        .p-config-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#999; padding:12px 25px; font-size:10px; font-weight:800; border-radius:4px; cursor:pointer; }
+        .p-config-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#999; padding:12px 25px; font-size:10px; font-weight:800; border-radius:4px; cursor:pointer; font-family: 'JetBrains Mono'; }
         .p-config-btn:hover { background:#fff; color:#000; }
 
         .p-chrono-core { display: flex; flex-direction: column; align-items: center; }
-        .p-clock { font-size:120px; font-weight:100; text-align:center; letter-spacing: -0.02em; }
-        .p-date { font-size:12px; font-weight:800; color:#444; letter-spacing:0.5em; margin: 10px 0 40px; text-align:center; }
+        .p-clock { font-size:120px; font-weight:100; text-align:center; letter-spacing: -0.05em; }
+        .p-date { font-size:12px; font-weight:800; color:#333; letter-spacing:0.5em; margin: 10px 0 40px; text-align:center; }
 
         /* PULSE_MONITOR_STYLE */
         .p-pulse-monitor { width: 600px; position: relative; }
-        .p-pulse-info { display: flex; justify-content: space-between; margin-top: 15px; padding: 0 20px; }
-        .p-pulse-stat { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 800; color: #eee; }
-        .p-pulse-stat span { color: #333; margin-right: 8px; font-size: 9px; }
+        .p-pulse-info { display: flex; justify-content: space-between; margin-top: 25px; padding: 0 40px; }
+        .p-pulse-stat { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 800; color: #fff; text-align: center; }
+        .p-pulse-stat span { color: #444; margin-bottom: 8px; font-size: 9px; display: block; letter-spacing: 0.1em; }
+        .p-pulse-stat strong { font-size: 18px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+        .spark-status strong { color: var(--v-cyan); text-shadow: 0 0 10px var(--v-cyan); }
 
         .p-featured-card { padding:0; overflow:hidden; }
         .p-featured-media { height:240px; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; }
@@ -265,21 +314,21 @@ export default function Portal() {
 
         .p-feed-panel { display:flex; flex-direction:column; gap:20px; margin-bottom:0; }
         .p-feed-tag { font-size:8px; font-weight:800; color:var(--v-cyan); letter-spacing:0.2em; display:block; margin-bottom:5px; }
-        .p-feed-row p { margin:0; font-size:13px; color:#eee; }
+        .p-feed-row p { margin:0; font-size:14px; color:#fff; font-weight: 400; line-height: 1.4; }
 
         .p-dock { position:fixed; bottom:40px; left:50%; transform:translateX(-50%); display:flex; gap:10px; background:rgba(255,255,255,0.05); backdrop-filter:blur(30px); padding:8px; border-radius:50px; border:1px solid rgba(255,255,255,0.1); z-index:100; }
         .p-dock-item { padding:12px 25px; border-radius:40px; color:#666; transition:0.3s; cursor:pointer; display: flex; align-items: center; gap: 10px; }
         .p-dock-item:hover { color:#fff; background:rgba(255,255,255,0.1); }
-        .p-dock-item span { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; }
+        .p-dock-item span { font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 800; }
 
         /* CONFIG MODAL */
         .p-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(20px); z-index:2000; display:flex; align-items:center; justify-content:center; }
-        .p-modal-card { background:#0a0a0b; width:450px; padding:40px; border:1px solid #222; border-radius:4px; }
+        .p-modal-card { background:#0a0a0b; width:450px; padding:40px; border:1px solid #222; border-radius:4px; box-shadow: 0 0 100px #000; }
         .p-modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; border-bottom:1px solid #111; padding-bottom:15px; }
-        .p-modal-head h3 { font-size:12px; font-weight:800; color:#eee; margin:0; letter-spacing:0.1em; }
+        .p-modal-head h3 { font-family: 'JetBrains Mono'; font-size:12px; font-weight:800; color:#eee; margin:0; }
         .close-btn { background:none; border:none; color:#444; font-size:30px; cursor:pointer; }
         .p-modal-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
-        .p-modal-row label { font-size:10px; font-weight:800; color:#666; letter-spacing:0.1em; }
+        .p-modal-row label { font-family: 'JetBrains Mono'; font-size:10px; font-weight:800; color:#666; }
         .custom-check { position:relative; width:20px; height:20px; }
         .custom-check input { opacity:0; position:absolute; }
         .custom-check label { position:absolute; inset:0; border:2px solid #333; border-radius:2px; cursor:pointer; }
@@ -287,8 +336,8 @@ export default function Portal() {
         .custom-check input:checked + label::after { content:'✓'; position:absolute; top:-2px; left:3px; color:var(--v-cyan); font-size:14px; }
         .custom-slider { -webkit-appearance:none; width:150px; height:2px; background:#222; outline:none; }
         .custom-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; background:var(--v-magenta); border-radius:50%; box-shadow:0 0 10px var(--v-magenta); cursor:pointer; }
-        .custom-input { background:#111; border:1px solid #222; color:var(--v-cyan); padding:8px 12px; font-family:inherit; font-size:12px; text-align:right; width:100px; outline:none; }
-        .p-modal-save { width:100%; padding:20px; background:var(--v-cyan); color:#000; font-weight:800; border:none; margin-top:20px; cursor:pointer; transition:0.3s; }
+        .custom-input { background:#111; border:1px solid #222; color:var(--v-cyan); padding:8px 12px; font-family: 'JetBrains Mono'; font-size:12px; text-align:right; width:100px; outline:none; }
+        .p-modal-save { width:100%; padding:20px; background:var(--v-cyan); color:#000; font-family: 'JetBrains Mono'; font-weight:800; border:none; margin-top:20px; cursor:pointer; transition:0.3s; }
         .p-modal-save:hover { background:#fff; box-shadow:0 0 30px var(--v-cyan); }
       `}</style>
     </div>
