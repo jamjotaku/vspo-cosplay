@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
@@ -15,6 +15,10 @@ export default function Portal() {
   const [nextMission, setNextMission] = useState(null);
   const [latestArchive, setLatestArchive] = useState(null);
   const [productionProgress, setProductionProgress] = useState(45);
+
+  // --- BIO_RESONANCE_STATS ---
+  const [pulseStats, setPulseStats] = useState({ avgFervor: 0, lastDays: 0, hasSpark: false });
+  const canvasRef = useRef(null);
 
   const [config, setConfig] = useState({
     glow: true, grain: true, interval: 15000, brightness: 0.8
@@ -55,12 +59,60 @@ export default function Portal() {
 
   const fetchLogWidgets = async (userId) => {
     const today = new Date().toISOString().split('T')[0];
-    const { data } = await supabase.from('fan_logs').select('*').eq('user_id', userId).order('event_date', { ascending: true });
-    if (data) {
+    const { data } = await supabase
+      .from('fan_logs')
+      .select('*')
+      .eq('user_id', userId)
+      .order('event_date', { ascending: true });
+
+    if (data && data.length > 0) {
       setNextMission(data.find(l => l.event_date > today));
-      setLatestArchive([...data].reverse().find(l => l.event_date <= today));
+      const archives = [...data].reverse().filter(l => l.event_date <= today);
+      setLatestArchive(archives[0]);
+
+      // --- PULSE_DATA_CALCULATION ---
+      const recent = archives.slice(0, 10);
+      const avg = recent.reduce((acc, cur) => acc + cur.fervor_score, 0) / (recent.length || 1);
+      const lastDate = new Date(archives[0].event_date);
+      const diffDays = Math.floor((new Date() - lastDate) / (1000 * 60 * 60 * 24));
+      const spark = recent.some(d => d.is_first_spark);
+
+      setPulseStats({ avgFervor: avg, lastDays: diffDays, hasSpark: spark });
     }
   };
+
+  // --- PULSE_WAVE_ENGINE ---
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+    let offset = 0;
+
+    const render = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const amplitude = pulseStats.avgFervor * 12; 
+      const frequency = 0.015 + (1 / (pulseStats.lastDays + 1)) * 0.04;
+      
+      ctx.beginPath();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = pulseStats.hasSpark ? '#00f2ff' : '#ff00ff';
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = ctx.strokeStyle;
+
+      for (let x = 0; x < canvas.width; x++) {
+        const y = canvas.height / 2 + amplitude * Math.sin(x * frequency + offset);
+        const noise = pulseStats.hasSpark ? (Math.random() - 0.5) * 8 : 0;
+        if (x === 0) ctx.moveTo(x, y + noise);
+        else ctx.lineTo(x, y + noise);
+      }
+      ctx.stroke();
+      offset -= 0.08;
+      animationFrameId = requestAnimationFrame(render);
+    };
+    render();
+    return () => cancelAnimationFrame(animationFrameId);
+  }, [pulseStats]);
 
   return (
     <div className="p-root" style={{ '--v-bright': config.brightness }}>
@@ -74,6 +126,8 @@ export default function Portal() {
 
       <main className="p-main-layer">
         <div className="p-grid">
+          
+          {/* LEFT_WING */}
           <div className="p-wing-left">
             <div className="p-glass-panel">
               <span className="p-tag">PRODUCTION_STATUS</span>
@@ -88,17 +142,30 @@ export default function Portal() {
             </button>
           </div>
 
+          {/* CHRONO_CORE & BIO_PULSE */}
           <div className="p-chrono-core">
             <div className="p-clock">{time.toLocaleTimeString('en-US', { hour12: false })}</div>
             <div className="p-date">{time.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}</div>
+            
+            {/* BIO_RESONANCE_MONITOR (心臓部) */}
+            <div className="p-pulse-monitor">
+              <canvas ref={canvasRef} width={600} height={120} />
+              <div className="p-pulse-info">
+                <div className="p-pulse-stat"><span>FERVOR_AVG</span> {pulseStats.avgFervor.toFixed(1)}</div>
+                <div className="p-pulse-stat"><span>LAST_SCAN</span> {pulseStats.lastDays}D_AGO</div>
+                <div className="p-pulse-stat" style={{ color: pulseStats.hasSpark ? 'var(--v-cyan)' : '#444' }}>
+                  <span>SPARK_SIGNAL</span> {pulseStats.hasSpark ? 'DETECTED' : 'STABLE'}
+                </div>
+              </div>
+            </div>
           </div>
 
+          {/* RIGHT_WING */}
           <div className="p-wing-right">
             <div className="p-stack">
               {featured && (
                 <div className="p-featured-card">
                   <div className="p-featured-media">
-                    {/* 修正：object-fit containで全身を表示 */}
                     <img src={featured.image || featured.url} alt="" key={featured.image} />
                   </div>
                   <div className="p-featured-info">
@@ -114,6 +181,7 @@ export default function Portal() {
               </div>
             </div>
           </div>
+
         </div>
 
         <nav className="p-dock">
@@ -149,7 +217,7 @@ export default function Portal() {
                 <input type="number" step="1000" value={config.interval} onChange={e => setConfig({...config, interval: parseInt(e.target.value)})} className="custom-input" />
               </div>
             </div>
-            <button className="p-modal-save" onClick={() => { localStorage.setItem('v_portal_final_v2', JSON.stringify(config)); setIsConfigOpen(false); }}>APPLY_CHANGES</button>
+            <button className="p-modal-save" onClick={() => { localStorage.setItem('v_portal_final_v3', JSON.stringify(config)); setIsConfigOpen(false); }}>APPLY_CHANGES</button>
           </div>
         </div>
       )}
@@ -178,10 +246,16 @@ export default function Portal() {
         .p-config-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#999; padding:12px 25px; font-size:10px; font-weight:800; border-radius:4px; cursor:pointer; }
         .p-config-btn:hover { background:#fff; color:#000; }
 
-        .p-clock { font-size:120px; font-weight:100; text-align:center; }
-        .p-date { font-size:12px; font-weight:800; color:#444; letter-spacing:0.5em; margin-top:20px; text-align:center; }
+        .p-chrono-core { display: flex; flex-direction: column; align-items: center; }
+        .p-clock { font-size:120px; font-weight:100; text-align:center; letter-spacing: -0.02em; }
+        .p-date { font-size:12px; font-weight:800; color:#444; letter-spacing:0.5em; margin: 10px 0 40px; text-align:center; }
 
-        /* FEATURED IMAGE FIX:全体表示 */
+        /* PULSE_MONITOR_STYLE */
+        .p-pulse-monitor { width: 600px; position: relative; }
+        .p-pulse-info { display: flex; justify-content: space-between; margin-top: 15px; padding: 0 20px; }
+        .p-pulse-stat { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 800; color: #eee; }
+        .p-pulse-stat span { color: #333; margin-right: 8px; font-size: 9px; }
+
         .p-featured-card { padding:0; overflow:hidden; }
         .p-featured-media { height:240px; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; }
         .p-featured-media img { max-width:100%; max-height:100%; object-fit:contain; }
@@ -194,34 +268,26 @@ export default function Portal() {
         .p-feed-row p { margin:0; font-size:13px; color:#eee; }
 
         .p-dock { position:fixed; bottom:40px; left:50%; transform:translateX(-50%); display:flex; gap:10px; background:rgba(255,255,255,0.05); backdrop-filter:blur(30px); padding:8px; border-radius:50px; border:1px solid rgba(255,255,255,0.1); z-index:100; }
-        .p-dock-item { padding:12px 25px; border-radius:40px; color:#666; transition:0.3s; cursor:pointer; }
+        .p-dock-item { padding:12px 25px; border-radius:40px; color:#666; transition:0.3s; cursor:pointer; display: flex; align-items: center; gap: 10px; }
         .p-dock-item:hover { color:#fff; background:rgba(255,255,255,0.1); }
+        .p-dock-item span { font-size: 11px; font-weight: 800; letter-spacing: 0.1em; }
 
-        /* --- CONFIG CUSTOM UI --- */
+        /* CONFIG MODAL */
         .p-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(20px); z-index:2000; display:flex; align-items:center; justify-content:center; }
         .p-modal-card { background:#0a0a0b; width:450px; padding:40px; border:1px solid #222; border-radius:4px; }
         .p-modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; border-bottom:1px solid #111; padding-bottom:15px; }
         .p-modal-head h3 { font-size:12px; font-weight:800; color:#eee; margin:0; letter-spacing:0.1em; }
         .close-btn { background:none; border:none; color:#444; font-size:30px; cursor:pointer; }
-
         .p-modal-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
         .p-modal-row label { font-size:10px; font-weight:800; color:#666; letter-spacing:0.1em; }
-
-        /* Custom Checkbox */
         .custom-check { position:relative; width:20px; height:20px; }
         .custom-check input { opacity:0; position:absolute; }
         .custom-check label { position:absolute; inset:0; border:2px solid #333; border-radius:2px; cursor:pointer; }
         .custom-check input:checked + label { border-color:var(--v-cyan); background:rgba(0,242,255,0.1); }
         .custom-check input:checked + label::after { content:'✓'; position:absolute; top:-2px; left:3px; color:var(--v-cyan); font-size:14px; }
-
-        /* Custom Slider */
         .custom-slider { -webkit-appearance:none; width:150px; height:2px; background:#222; outline:none; }
         .custom-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; background:var(--v-magenta); border-radius:50%; box-shadow:0 0 10px var(--v-magenta); cursor:pointer; }
-
-        /* Custom Input */
         .custom-input { background:#111; border:1px solid #222; color:var(--v-cyan); padding:8px 12px; font-family:inherit; font-size:12px; text-align:right; width:100px; outline:none; }
-        .custom-input:focus { border-color:var(--v-cyan); }
-
         .p-modal-save { width:100%; padding:20px; background:var(--v-cyan); color:#000; font-weight:800; border:none; margin-top:20px; cursor:pointer; transition:0.3s; }
         .p-modal-save:hover { background:#fff; box-shadow:0 0 30px var(--v-cyan); }
       `}</style>
