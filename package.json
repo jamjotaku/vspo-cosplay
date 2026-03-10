@@ -31,6 +31,7 @@
     "papaparse": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "recharts": "^3.8.0",
     "tesseract.js": "^7.0.0"
   },
   "devDependencies": {

@@ -71,11 +71,9 @@ export default function Portal() {
     return () => clearInterval(timer);
   }, [allData, config.interval]);
 
-  // --- DATA_FETCHING_LOGIC (SQL同期) ---
+  // --- DATA_FETCHING_LOGIC ---
   const fetchLogWidgets = async (userId) => {
     const today = new Date().toISOString().split('T')[0];
-    
-    // user_idカラムがSQL側に追加されていることが前提
     const { data, error } = await supabase
       .from('fan_logs')
       .select('*')
@@ -88,12 +86,12 @@ export default function Portal() {
     }
 
     if (data && data.length > 0) {
-      // 右翼：ミッションフィードの更新
+      // 右翼フィード
       setNextMission(data.find(l => l.event_date > today));
       const archives = [...data].reverse().filter(l => l.event_date <= today);
       setLatestArchive(archives[0]);
 
-      // 中央：鼓動（PULSE）解析
+      // 鼓動（PULSE）解析
       const recent = archives.slice(0, 10);
       const avg = recent.reduce((acc, cur) => acc + cur.fervor_score, 0) / (recent.length || 1);
       const lastDate = new Date(archives[0].event_date);
@@ -117,9 +115,8 @@ export default function Portal() {
 
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
-      const amplitude = pulseStats.avgFervor * 12; // 熱量に比例
-      const frequency = 0.015 + (1 / (pulseStats.lastDays + 1)) * 0.04; // 頻度に比例
+      const amplitude = pulseStats.avgFervor * 12; 
+      const frequency = 0.015 + (1 / (pulseStats.lastDays + 1)) * 0.04;
       
       ctx.beginPath();
       ctx.lineWidth = 2;
@@ -129,16 +126,14 @@ export default function Portal() {
 
       for (let x = 0; x < canvas.width; x++) {
         const y = canvas.height / 2 + amplitude * Math.sin(x * frequency + offset);
-        const noise = pulseStats.hasSpark ? (Math.random() - 0.5) * 10 : 0; // スパーク時のノイズ
+        const noise = pulseStats.hasSpark ? (Math.random() - 0.5) * 10 : 0;
         if (x === 0) ctx.moveTo(x, y + noise);
         else ctx.lineTo(x, y + noise);
       }
-      
       ctx.stroke();
       offset -= 0.08;
       animationFrameId = requestAnimationFrame(render);
     };
-
     render();
     return () => cancelAnimationFrame(animationFrameId);
   }, [pulseStats]);
@@ -165,7 +160,7 @@ export default function Portal() {
       <main className="p-main-layer">
         <div className="p-grid">
           
-          {/* LEFT_WING: PRODUCTION_STATS */}
+          {/* LEFT_WING */}
           <div className="p-wing-left">
             <div className="p-glass-panel">
               <span className="p-tag">PRODUCTION_STATUS</span>
@@ -188,12 +183,8 @@ export default function Portal() {
             <div className="p-pulse-monitor">
               <canvas ref={canvasRef} width={600} height={120} />
               <div className="p-pulse-info">
-                <div className="p-pulse-stat">
-                  <span>FERVOR_AVG</span> <strong>{pulseStats.avgFervor.toFixed(1)}</strong>
-                </div>
-                <div className="p-pulse-stat">
-                  <span>LAST_SCAN</span> <strong>{pulseStats.lastDays}D_AGO</strong>
-                </div>
+                <div className="p-pulse-stat"><span>FERVOR_AVG</span> <strong>{pulseStats.avgFervor.toFixed(1)}</strong></div>
+                <div className="p-pulse-stat"><span>LAST_SCAN</span> <strong>{pulseStats.lastDays}D_AGO</strong></div>
                 <div className="p-pulse-stat spark-status" style={{ color: pulseStats.hasSpark ? 'var(--v-cyan)' : '#444' }}>
                   <span>SPARK_SIGNAL</span> <strong>{pulseStats.hasSpark ? 'DETECTED' : 'STABLE'}</strong>
                 </div>
@@ -201,7 +192,7 @@ export default function Portal() {
             </div>
           </div>
 
-          {/* RIGHT_WING: MISSION_FEED */}
+          {/* RIGHT_WING */}
           <div className="p-wing-right">
             <div className="p-stack">
               {featured && (
@@ -231,11 +222,13 @@ export default function Portal() {
 
         </div>
 
+        {/* --- DOCK_NAVIGATION: ANALYTICS搭載 --- */}
         <nav className="p-dock">
           <Link href="/gallery"><div className="p-dock-item"><i className="fas fa-th-large"></i><span>GALLERY</span></div></Link>
           <Link href="/log"><div className="p-dock-item"><i className="fas fa-history"></i><span>LOGS</span></div></Link>
           <Link href="/tracker"><div className="p-dock-item"><i className="fas fa-compass"></i><span>TRACKER</span></div></Link>
           <Link href="/chronicle"><div className="p-dock-item"><i className="fas fa-project-diagram"></i><span>CHRONICLE</span></div></Link>
+          <Link href="/analytics"><div className="p-dock-item"><i className="fas fa-chart-line"></i><span>ANALYTICS</span></div></Link>
         </nav>
       </main>
 
@@ -286,7 +279,7 @@ export default function Portal() {
         .p-tag { font-size:9px; font-weight:800; color:#444; letter-spacing:0.2em; display:block; margin-bottom:15px; }
 
         .p-progress-wrap { position:relative; height:2px; background:rgba(255,255,255,0.1); display:flex; align-items:center; }
-        .p-progress-bar { height:100%; background:var(--v-magenta); box-shadow:0 0-15px var(--v-magenta); }
+        .p-progress-bar { height:100%; background:var(--v-magenta); box-shadow:0 0 15px var(--v-magenta); }
         .p-progress-val { position:absolute; right:0; top:-18px; font-size:10px; font-weight:800; color:var(--v-magenta); }
         .p-meta { font-size:9px; color:#555; font-weight:800; margin-top:20px; font-family: 'JetBrains Mono'; }
         
@@ -297,7 +290,6 @@ export default function Portal() {
         .p-clock { font-size:120px; font-weight:100; text-align:center; letter-spacing: -0.05em; }
         .p-date { font-size:12px; font-weight:800; color:#333; letter-spacing:0.5em; margin: 10px 0 40px; text-align:center; }
 
-        /* PULSE_MONITOR_STYLE */
         .p-pulse-monitor { width: 600px; position: relative; }
         .p-pulse-info { display: flex; justify-content: space-between; margin-top: 25px; padding: 0 40px; }
         .p-pulse-stat { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 800; color: #fff; text-align: center; }
@@ -321,7 +313,6 @@ export default function Portal() {
         .p-dock-item:hover { color:#fff; background:rgba(255,255,255,0.1); }
         .p-dock-item span { font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 800; }
 
-        /* CONFIG MODAL */
         .p-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(20px); z-index:2000; display:flex; align-items:center; justify-content:center; }
         .p-modal-card { background:#0a0a0b; width:450px; padding:40px; border:1px solid #222; border-radius:4px; box-shadow: 0 0 100px #000; }
         .p-modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; border-bottom:1px solid #111; padding-bottom:15px; }
