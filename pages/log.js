@@ -1,18 +1,18 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createWorker } from 'tesseract.js';
 import { supabase } from '../lib/supabaseClient';
 
-export default function GrandResonanceArchive() {
+export default function ResonanceHudV3() {
   const [user, setUser] = useState(null);
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
 
-  // --- フォームステート (全機能統合) ---
+  // --- State Management ---
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     event: '', venue: '', category: 'STAGE', fervor: 3, note: '', is_first_spark: false
@@ -29,234 +29,205 @@ export default function GrandResonanceArchive() {
 
   useEffect(() => { if (user) fetchLogs(); }, [user]);
 
-  // 1. 全データ取得 (リレーション含む)
   const fetchLogs = async () => {
-    const { data, error } = await supabase
-      .from('fan_logs')
-      .select('*, log_encounters(*, cosplayer_master(name))')
-      .order('event_date', { ascending: false });
-    if (!error) setLogs(data || []);
+    const { data } = await supabase.from('fan_logs').select('*, log_encounters(*, cosplayer_master(name))').order('event_date', { ascending: false });
+    setLogs(data || []);
   };
 
-  // 2. 120点のサジェスト (最後の日付を表示)
   const fetchNames = async (input, encId) => {
-    if (input.length < 1) {
-      setSuggestions(prev => ({ ...prev, [encId]: [] }));
-      return;
-    }
-    const { data } = await supabase
-      .from('cosplayer_master')
-      .select(`id, name, fan_logs(event_date)`)
-      .ilike('name', `%${input}%`)
-      .limit(5);
-
-    const processed = data?.map(d => ({
-      ...d,
-      last_date: d.fan_logs?.sort((a, b) => b.event_date.localeCompare(a.event_date))[0]?.event_date
-    }));
-    setSuggestions(prev => ({ ...prev, [encId]: processed || [] }));
+    if (input.length < 1) return setSuggestions(p => ({ ...p, [encId]: [] }));
+    const { data } = await supabase.from('cosplayer_master').select(`id, name, fan_logs(event_date)`).ilike('name', `%${input}%`).limit(4);
+    const processed = data?.map(d => ({ ...d, last_date: d.fan_logs?.sort((a,b)=>b.event_date.localeCompare(a.event_date))[0]?.event_date }));
+    setSuggestions(p => ({ ...p, [encId]: processed || [] }));
   };
 
-  // 3. ブラウザ完結型OCR (演出付)
   const handleOcr = async (file) => {
     if (!file) return;
     setIsScanning(true);
     const worker = await createWorker('jpn+eng');
-    try {
-      const { data: { text } } = await worker.recognize(file);
-      setFormData(prev => ({ ...prev, note: prev.note + "\n" + text }));
-    } finally {
-      await worker.terminate();
-      setIsScanning(false);
-    }
+    const { data: { text } } = await worker.recognize(file);
+    setFormData(prev => ({ ...prev, note: prev.note + "\n" + text }));
+    await worker.terminate();
+    setIsScanning(false);
   };
 
-  // 4. 保存処理 (トランザクション的実行)
   const handleSave = async (e) => {
     e.preventDefault();
-    if (!user) return;
     try {
-      // 親ログ保存
-      const { data: logData, error: logError } = await supabase
-        .from('fan_logs')
-        .insert([{
-          event_date: formData.date, event_name: formData.event, venue: formData.venue,
-          event_category: formData.category, fervor_score: formData.fervor,
-          is_first_spark: formData.is_first_spark, memory_note: formData.note, word_count: formData.note.length
-        }]).select().single();
+      const { data: logData } = await supabase.from('fan_logs').insert([{
+        event_date: formData.date, event_name: formData.event, venue: formData.venue,
+        event_category: formData.category, fervor_score: formData.fervor,
+        is_first_spark: formData.is_first_spark, memory_note: formData.note, word_count: formData.note.length
+      }]).select().single();
 
-      if (logError) throw logError;
-
-      // 各レイヤーの処理
       for (const enc of encounters) {
         if (!enc.name) continue;
         let { data: master } = await supabase.from('cosplayer_master').select('id').eq('name', enc.name).single();
         if (!master) {
-          const { data: newMaster } = await supabase.from('cosplayer_master').insert([{ 
-            name: enc.name, genesis_catalyst: 'SERENDIPITY', genesis_type: 'REAL' 
-          }]).select().single();
-          master = newMaster;
+          const { data: nm } = await supabase.from('cosplayer_master').insert([{ name: enc.name, genesis_catalyst: 'SERENDIPITY', genesis_type: 'REAL' }]).select().single();
+          master = nm;
         }
         await supabase.from('log_encounters').insert([{ log_id: logData.id, cosplayer_id: master.id, is_primary: enc.is_primary }]);
       }
       setShowModal(false); fetchLogs();
-    } catch (err) { alert("SYNC_ERROR: " + err.message); }
+    } catch (err) { alert(err.message); }
   };
 
-  if (loading) return <div className="c-loader">RESONANCE_INITIALIZING...</div>;
+  if (loading) return <div className="hud-loader">BOOTING_CORE_SYSTEM...</div>;
 
   return (
-    <div className="c-root">
-      <Head><title>DR // GRAND_CONSOLE</title></Head>
+    <div className="hud-root">
+      <Head><title>DR // HUD_V3</title></Head>
 
-      <header className="c-header">
-        <div className="c-header-inner">
-          <Link href="/"><span className="c-back">← PORTAL</span></Link>
-          <div className="c-logo">RESONANCE_ARCHIVE <span>CORE</span></div>
-          <button className="c-record-btn" onClick={() => setShowModal(true)}>+ DATA_ENTRY</button>
+      <header className="hud-header">
+        <div className="header-inner">
+          <Link href="/"><span className="nav-item">PORTAL</span></Link>
+          <div className="hud-brand">RESONANCE_SCANNER <span>[ALPHA_03]</span></div>
+          <button className="record-trigger" onClick={() => setShowModal(true)}>+ INITIATE_LOG</button>
         </div>
       </header>
 
-      <main className="c-main">
-        {logs.map(log => (
-          <div key={log.id} className="c-log-card">
-            <div className="c-log-side">
-              <span className="c-log-date">{log.event_date.replace(/-/g, '.')}</span>
-              <span className="c-log-cat">{log.event_category}</span>
-            </div>
-            <div className="c-log-body">
-              <h2 className="c-log-title">{log.event_name}</h2>
-              <div className="c-log-names">
-                {log.log_encounters?.map((e, i) => (
-                  <span key={i} className={e.is_primary ? 'is-p' : ''}>@{e.cosplayer_master?.name}</span>
-                ))}
+      <main className="hud-main">
+        <div className="timeline-v3">
+          {logs.map(log => (
+            <div key={log.id} className="archive-item">
+              <div className="item-meta">
+                <div className="item-date">{log.event_date.replace(/-/g, '/')}</div>
+                <div className="item-cat">{log.event_category}</div>
               </div>
-              <p className="c-log-note">{log.memory_note}</p>
+              <div className="item-box">
+                <h2 className="item-title">{log.event_name}</h2>
+                <div className="item-nodes">
+                  {log.log_encounters?.map((e, i) => (
+                    <span key={i} className={e.is_primary ? 'primary-node' : ''}>@{e.cosplayer_master?.name}</span>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </main>
 
       <AnimatePresence>
         {showModal && (
-          <motion.div className="m-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div className="m-glass-card" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+          <motion.div className="hud-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="hud-modal" initial={{ scale: 0.98, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
               
-              <div className="m-ui-header">
-                <div className="m-ui-status"><span className="dot pulse" /> UPLINK_ACTIVE</div>
-                <button className="m-ui-close" onClick={() => setShowModal(false)}>&times;</button>
+              <div className="hud-modal-header">
+                <div className="hud-status-bar">
+                  <span className="status-label">UPLINK_STATUS:</span>
+                  <span className="status-value">ENCRYPTED</span>
+                  <div className="status-led pulse" />
+                </div>
+                <button className="hud-close" onClick={() => setShowModal(false)}>&times;</button>
               </div>
 
-              <form onSubmit={handleSave} className="m-ui-form">
-                <div className="m-ui-grid">
+              <form onSubmit={handleSave} className="hud-form">
+                <div className="hud-grid">
                   
-                  {/* LEFT: CORE_UPLINK */}
-                  <div className="m-ui-col">
-                    <div className="m-ui-field">
-                      <label><span className="id-tag">01</span> MISSION_DATE</label>
+                  {/* MODULE_01: MISSION_CORE */}
+                  <section className="hud-module">
+                    <div className="module-tag">MOD_01 // CORE_INFO</div>
+                    <div className="hud-field">
+                      <label>TARGET_DATE</label>
                       <input type="date" value={formData.date} onChange={e => setFormData({...formData, date: e.target.value})} />
                     </div>
-                    <div className="m-ui-field">
-                      <label><span className="id-tag">02</span> EVENT_NAME</label>
-                      <input type="text" placeholder="REQUIRED_FIELD..." value={formData.event} onChange={e => setFormData({...formData, event: e.target.value})} required />
+                    <div className="hud-field">
+                      <label>MISSION_OBJECTIVE (EVENT)</label>
+                      <input type="text" placeholder="REQUIRED_FIELD" value={formData.event} onChange={e => setFormData({...formData, event: e.target.value})} required />
                     </div>
-                    <div className="m-ui-field">
-                      <label><span className="id-tag">03</span> CATEGORY</label>
-                      <select className="custom-select" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
-                        <option value="STAGE">STAGE_EVENT</option>
-                        <option value="MKT">MARKET_DOUJIN</option>
-                        <option value="SHT">PHOTO_SESSION</option>
-                        <option value="CFE">CAFE_GUEST</option>
-                        <option value="MEM">MEMORIAL</option>
-                        <option value="DIGITAL">DIGITAL_SNS</option>
-                      </select>
+                    <div className="hud-field">
+                      <label>ENVIRONMENT (CATEGORY)</label>
+                      <div className="hud-select-wrap">
+                        <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})}>
+                          <option value="STAGE">STAGE_EVENT</option>
+                          <option value="MKT">MARKET_DOUJIN</option>
+                          <option value="SHT">PHOTO_SESSION</option>
+                          <option value="CFE">CAFE_GUEST</option>
+                          <option value="MEM">MEMORIAL</option>
+                          <option value="DIGITAL">DIGITAL_SNS</option>
+                        </select>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* MODULE_02: IDENTITY_SCAN */}
+                  <section className="hud-module">
+                    <div className="module-tag">MOD_02 // IDENTITY_RECOGNITION</div>
+                    <div className="node-stack">
+                      {encounters.map((enc) => (
+                        <div key={enc.id} className="node-row">
+                          <input 
+                            placeholder="@IDENTIFIER..." 
+                            value={enc.name} 
+                            onChange={(e) => {
+                              setEncounters(encounters.map(item => item.id === enc.id ? {...item, name: e.target.value} : item));
+                              fetchNames(e.target.value, enc.id);
+                            }}
+                          />
+                          <button type="button" 
+                                  className={`node-toggle ${enc.is_primary ? 'is-active' : ''}`}
+                                  onClick={() => setEncounters(encounters.map(item => ({...item, is_primary: item.id === enc.id})))}>
+                            {enc.is_primary ? 'PRI' : 'SEC'}
+                          </button>
+                          {suggestions[enc.id]?.length > 0 && (
+                            <div className="hud-suggest">
+                              {suggestions[enc.id].map((s, i) => (
+                                <div key={i} className="s-row" onClick={() => {
+                                  setEncounters(encounters.map(item => item.id === enc.id ? {...item, name: s.name} : item));
+                                  setSuggestions(p => ({...p, [enc.id]: []}));
+                                }}>
+                                  {s.name} <span className="s-meta">{s.last_date || 'NEW'}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                      <button type="button" className="add-node-btn" onClick={() => setEncounters([...encounters, {id: Date.now(), name:'', is_primary:false}])}>
+                        [ + ATTACH_NEW_NODE ]
+                      </button>
+                    </div>
+                  </section>
+
+                  {/* MODULE_03: PASSION_METRICS */}
+                  <section className="hud-module">
+                    <div className="module-tag">MOD_03 // PASSION_GAUGE</div>
+                    <div className="gauge-wrap">
+                      <div className="gauge-bars">
+                        {[1,2,3,4,5].map(v => (
+                          <div key={v} className={`bar ${formData.fervor >= v ? 'active' : ''}`} onClick={() => setFormData({...formData, fervor: v})} />
+                        ))}
+                      </div>
+                      <div className="gauge-label">INTENSITY_LEVEL: 0{formData.fervor}</div>
                     </div>
                     
-                    <div className="m-ui-field">
-                      <label><span className="id-tag">04</span> COSP_NODES (ENCOUNTERS)</label>
-                      <div className="node-list">
-                        {encounters.map((enc) => (
-                          <div key={enc.id} className="node-item-wrap">
-                            <div className="node-item">
-                              <input 
-                                placeholder="@IDENTIFIER..." 
-                                value={enc.name} 
-                                onChange={(e) => {
-                                  setEncounters(encounters.map(item => item.id === enc.id ? {...item, name: e.target.value} : item));
-                                  fetchNames(e.target.value, enc.id);
-                                }}
-                              />
-                              <button type="button" 
-                                      className={`node-primary-toggle ${enc.is_primary ? 'active' : ''}`}
-                                      onClick={() => setEncounters(encounters.map(item => ({...item, is_primary: item.id === enc.id})))}>
-                                {enc.is_primary ? 'MAIN' : 'SIDE'}
-                              </button>
-                            </div>
-                            {/* 120点のサジェスト表示 */}
-                            <AnimatePresence>
-                              {suggestions[enc.id]?.length > 0 && (
-                                <motion.div className="node-suggest-box" initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-                                  {suggestions[enc.id].map((s, i) => (
-                                    <div key={i} className="s-item" onClick={() => {
-                                      setEncounters(encounters.map(item => item.id === enc.id ? {...item, name: s.name} : item));
-                                      setSuggestions(p => ({...p, [enc.id]: []}));
-                                    }}>
-                                      {s.name} <span className="s-date">{s.last_date ? `Last: ${s.last_date}` : 'New Encounter'}</span>
-                                    </div>
-                                  ))}
-                                </motion.div>
-                              )}
-                            </AnimatePresence>
-                          </div>
-                        ))}
-                        <button type="button" className="node-add-btn" onClick={() => setEncounters([...encounters, {id: Date.now(), name:'', is_primary:false}])}>
-                          + ATTACH_NEW_NODE
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* RIGHT: RESONANCE_DATA */}
-                  <div className="m-ui-col">
-                    <div className="m-ui-field">
-                      <label><span className="id-tag">05</span> FERVOR_LEVEL</label>
-                      <div className="fervor-gauge-v2">
-                        {[1,2,3,4,5].map(v => (
-                          <div key={v} className={`gauge-segment ${formData.fervor >= v ? 'active' : ''}`} onClick={() => setFormData({...formData, fervor: v})} />
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="m-ui-field">
-                      <label><span className="id-tag">06</span> THOUGHT_LOG (WORDS: {formData.note.length})</label>
-                      <div className="textarea-wrapper">
-                        {isScanning && <div className="scan-line-v2" />}
-                        <textarea rows="10" value={formData.note} onChange={e => setFormData({...formData, note: e.target.value})} placeholder="ENTERING_MISSION_REPORT..." />
-                      </div>
-                    </div>
-
-                    <div className="m-ui-field">
-                      <label><span className="id-tag">07</span> OPTICAL_SCAN (OCR)</label>
-                      <div className="ocr-dropzone-v2">
-                        <input type="file" id="ocr-v2" hidden onChange={e => handleOcr(e.target.files[0])} />
-                        <label htmlFor="ocr-v2">
-                          <i className="fas fa-expand-arrows-alt" />
-                          <span>{isScanning ? 'SCANNING_IN_PROGRESS...' : 'UPLOAD_IMAGE_FOR_OCR'}</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div className="m-ui-field flex-row">
+                    <div className="spark-box">
                       <label>FIRST_SPARK_DETECTED</label>
-                      <label className="ui-switch">
-                        <input type="checkbox" checked={formData.is_first_spark} onChange={e => setFormData({...formData, is_first_spark: e.target.checked})} />
-                        <span className="ui-slider" />
+                      <div className={`hud-toggle ${formData.is_first_spark ? 'on' : ''}`} onClick={() => setFormData({...formData, is_first_spark: !formData.is_first_spark})}>
+                        <div className="knob" />
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* MODULE_04: MEMORY_SCAN */}
+                  <section className="hud-module">
+                    <div className="module-tag">MOD_04 // THOUGHT_LOG</div>
+                    <div className="memo-wrapper">
+                      {isScanning && <div className="hud-scan-line" />}
+                      <textarea rows="6" value={formData.note} onChange={e => setFormData({...formData, note: e.target.value})} placeholder="ENTERING_LOG_DATA..." />
+                    </div>
+                    <div className="ocr-action">
+                      <input type="file" id="ocr-v3" hidden onChange={e => handleOcr(e.target.files[0])} />
+                      <label htmlFor="ocr-v3" className="ocr-trigger-v3">
+                        <i className="fas fa-expand" /> {isScanning ? 'ANALYZING...' : 'INITIATE_OPTICAL_SCAN'}
                       </label>
                     </div>
-                  </div>
+                  </section>
+
                 </div>
 
-                <button type="submit" className="final-execute-btn">SYNC_GRAND_ARCHIVE</button>
+                <button type="submit" className="hud-submit">EXECUTE_SYSTEM_SYNC</button>
               </form>
             </motion.div>
           </motion.div>
@@ -264,69 +235,87 @@ export default function GrandResonanceArchive() {
       </AnimatePresence>
 
       <style jsx global>{`
-        :root { --v-mag: #ff00ff; --v-cyn: #00f2ff; --v-bg: #030304; }
-        body { background: var(--v-bg); color: #fff; font-family: 'Montserrat', sans-serif; margin: 0; }
-        
-        /* モーダル背景・スクロール対応 */
-        .m-overlay {
-          position: fixed; inset: 0; background: rgba(0,0,0,0.95); backdrop-filter: blur(30px);
-          z-index: 9999; display: flex; align-items: flex-start; justify-content: center;
-          padding: 40px 20px; overflow-y: auto;
-        }
-        .m-glass-card {
-          background: rgba(15, 15, 20, 0.9); width: 1100px; padding: 60px;
-          border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; position: relative;
+        :root { --v-mag: #ff00ff; --v-cyn: #00f2ff; --v-bg: #050507; --v-panel: rgba(15, 15, 20, 0.95); }
+        body { background: var(--v-bg); color: #fff; font-family: 'Montserrat', sans-serif; letter-spacing: 0.05em; }
+
+        /* 画面全体のオーバーレイと背景 */
+        .hud-overlay {
+          position: fixed; inset: 0; background: radial-gradient(circle at center, rgba(20,0,20,0.8) 0%, #000 100%);
+          backdrop-filter: blur(20px); z-index: 9999; display: flex; align-items: flex-start; justify-content: center;
+          padding: 40px; overflow-y: auto;
         }
 
-        /* セレクトボックス白飛び対策 */
-        .custom-select {
-          background: #111 !important; color: #fff !important; border: 1px solid #333 !important;
-          padding: 12px 15px !important; width: 100%; appearance: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%23444' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") !important;
-          background-repeat: no-repeat !important; background-position: right 15px center !important;
+        /* モーダルの重厚感 */
+        .hud-modal {
+          background: var(--v-panel); width: 1100px; padding: 40px; border: 1px solid rgba(255,255,255,0.08);
+          position: relative; box-shadow: 0 0 100px rgba(0,0,0,0.8);
+          background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+          background-size: 20px 20px; /* 方眼紙グリッド */
         }
-        .custom-select option { background: #111; color: #fff; }
 
-        /* サジェストボックス */
-        .node-item-wrap { position: relative; margin-bottom: 10px; }
-        .node-suggest-box {
-          position: absolute; top: 100%; left: 0; width: 100%; background: #0a0a0a;
-          border: 1px solid #222; z-index: 100; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        /* ヘッダー装飾 */
+        .hud-modal-header { display: flex; justify-content: space-between; margin-bottom: 30px; border-bottom: 2px solid #222; padding-bottom: 15px; }
+        .hud-status-bar { display: flex; align-items: center; gap: 15px; font-size: 10px; font-weight: 800; color: #555; }
+        .status-value { color: var(--v-cyn); }
+        .status-led { width: 8px; height: 8px; border-radius: 50%; background: var(--v-cyn); box-shadow: 0 0 10px var(--v-cyn); }
+        .pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
+
+        /* レイアウト：グリッドの密度 */
+        .hud-grid { display: grid; grid-template-cols: 1fr 1fr; gap: 40px; }
+        .hud-module { background: rgba(0,0,0,0.4); padding: 25px; border: 1px solid rgba(255,255,255,0.03); position: relative; }
+        .module-tag { position: absolute; top: -10px; left: 15px; background: #000; color: #444; font-size: 8px; font-weight: 800; padding: 0 10px; border: 1px solid #222; }
+
+        /* 入力フォームの高級感 */
+        .hud-field { margin-bottom: 25px; }
+        .hud-field label { display: block; font-size: 9px; font-weight: 800; color: #666; margin-bottom: 10px; letter-spacing: 0.2em; }
+        input, textarea, .hud-select-wrap select {
+          width: 100%; background: #0a0a0c; border: 1px solid #222; padding: 12px 15px;
+          color: #fff; font-size: 13px; outline: none; transition: 0.3s;
         }
-        .s-item { padding: 12px; font-size: 12px; cursor: pointer; border-bottom: 1px solid #111; display: flex; justify-content: space-between; }
-        .s-item:hover { background: #111; color: var(--v-cyn); }
-        .s-date { color: #444; font-size: 10px; }
+        input:focus, textarea:focus { border-color: var(--v-mag); box-shadow: 0 0 10px rgba(255,0,255,0.1); }
 
-        /* ゲージ・トグル・演出 (共通) */
-        .fervor-gauge-v2 { display: flex; gap: 8px; }
-        .gauge-segment { flex: 1; height: 4px; background: #111; cursor: pointer; transition: 0.4s; }
-        .gauge-segment.active { background: var(--v-mag); box-shadow: 0 0 15px var(--v-mag); }
+        /* セレクトボックスの白飛び完全解決 */
+        .hud-select-wrap select { appearance: none; color: #fff; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23ff00ff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 15px center; }
+        .hud-select-wrap select option { background: #0a0a0c; color: #fff; }
 
-        .scan-line-v2 { position: absolute; width: 100%; height: 2px; background: var(--v-mag); box-shadow: 0 0 15px var(--v-mag); animation: scan 2s infinite; pointer-events: none; z-index: 10; }
-        @keyframes scan { 0% { top: 0; } 100% { top: 100%; } }
+        /* ゲージ：マゼンタの光 */
+        .gauge-wrap { display: flex; align-items: center; gap: 20px; margin-bottom: 30px; }
+        .gauge-bars { display: flex; gap: 5px; }
+        .bar { width: 35px; height: 12px; background: #111; cursor: pointer; transition: 0.3s; skew: -20deg; transform: skewX(-20deg); }
+        .bar.active { background: var(--v-mag); box-shadow: 0 0 15px var(--v-mag); }
+        .gauge-label { font-size: 10px; font-weight: 800; color: var(--v-mag); }
 
-        .ui-switch { position: relative; width: 44px; height: 22px; }
-        .ui-switch input { opacity: 0; width: 0; height: 0; }
-        .ui-slider { position: absolute; inset: 0; background: #111; border: 1px solid #333; cursor: pointer; transition: 0.4s; }
-        .ui-slider:before { content:""; position: absolute; height: 14px; width: 14px; left: 3px; bottom: 3px; background: #333; transition: 0.4s; }
-        input:checked + .ui-slider { border-color: var(--v-cyn); box-shadow: 0 0 10px var(--v-cyn); }
-        input:checked + .ui-slider:before { transform: translateX(22px); background: var(--v-cyn); }
+        /* トグル：ネオン */
+        .spark-box { display: flex; justify-content: space-between; align-items: center; }
+        .spark-box label { font-size: 9px; font-weight: 800; color: #666; }
+        .hud-toggle { width: 44px; height: 20px; background: #111; border: 1px solid #222; position: relative; cursor: pointer; transition: 0.4s; }
+        .hud-toggle.on { border-color: var(--v-cyn); box-shadow: 0 0 10px var(--v-cyn); }
+        .knob { position: absolute; top: 3px; left: 3px; width: 12px; height: 12px; background: #333; transition: 0.4s; }
+        .hud-toggle.on .knob { transform: translateX(24px); background: var(--v-cyn); }
 
-        /* その他UI */
-        .m-ui-grid { display: grid; grid-template-cols: 1fr 1.2fr; gap: 60px; }
-        .id-tag { color: var(--v-mag); border: 1px solid var(--v-mag); padding: 1px 4px; font-size: 8px; margin-right: 10px; }
-        input, textarea { background: rgba(255,255,255,0.02); border: none; border-bottom: 1px solid #222; padding: 12px 5px; color: #fff; outline: none; transition: 0.3s; }
-        input:focus, textarea:focus { border-color: var(--v-cyn); background: rgba(255,255,255,0.05); }
+        /* スキャン演出 */
+        .memo-wrapper { position: relative; overflow: hidden; }
+        .hud-scan-line { position: absolute; width: 100%; height: 2px; background: var(--v-mag); box-shadow: 0 0 15px var(--v-mag); animation: scanV3 2s infinite linear; z-index: 10; }
+        @keyframes scanV3 { 0% { top: -10%; } 100% { top: 110%; } }
 
-        .final-execute-btn {
-          width: 100%; margin-top: 60px; padding: 25px; background: none; border: 1px solid #222;
-          color: #fff; font-weight: 800; font-size: 12px; letter-spacing: 0.5em; transition: 0.5s;
+        /* 実行ボタン */
+        .hud-submit {
+          width: 100%; margin-top: 40px; padding: 25px; background: none; border: 1px solid var(--v-mag);
+          color: var(--v-mag); font-weight: 800; font-size: 11px; letter-spacing: 0.6em; transition: 0.5s;
         }
-        .final-execute-btn:hover { background: var(--v-mag); border-color: var(--v-mag); box-shadow: 0 0 40px rgba(255,0,255,0.3); }
+        .hud-submit:hover { background: var(--v-mag); color: #fff; box-shadow: 0 0 50px rgba(255,0,255,0.4); }
 
-        .c-header { position: fixed; top: 0; width: 100%; height: 80px; background: rgba(0,0,0,0.9); backdrop-filter: blur(20px); z-index: 1000; border-bottom: 1px solid #111; }
-        .c-header-inner { max-width: 1200px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 100%; padding: 0 40px; }
-        .c-record-btn { background: #fff; color: #000; font-weight: 800; font-size: 10px; padding: 10px 25px; border-radius: 2px; }
+        /* その他：Nodeリスト等 */
+        .node-row { display: flex; gap: 10px; margin-bottom: 10px; position: relative; }
+        .node-toggle { font-size: 8px; font-weight: 800; background: #111; border: 1px solid #222; padding: 0 10px; color: #444; }
+        .node-toggle.is-active { color: var(--v-cyn); border-color: var(--v-cyn); }
+        .add-node-btn { font-size: 8px; font-weight: 800; color: #444; margin-top: 10px; }
+        .hud-suggest { position: absolute; top: 40px; width: 100%; background: #000; border: 1px solid #222; z-index: 50; }
+        .s-row { padding: 10px; font-size: 11px; display: flex; justify-content: space-between; cursor: pointer; }
+        .s-row:hover { background: #111; color: var(--v-cyn); }
+
+        .hud-loader { height: 100vh; background: #000; color: var(--v-cyn); display: flex; align-items: center; justify-content: center; font-weight: 800; letter-spacing: 0.5em; }
       `}</style>
     </div>
   );
