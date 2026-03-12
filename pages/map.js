@@ -5,27 +5,35 @@ import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-map
 import { supabase } from '../lib/supabaseClient';
 
 const containerStyle = { width: '100%', height: '100%' };
+
+// --- 漆黒のタクティカル・マップ・スタイル (違和感を消し去る設定) ---
 const mapOptions = {
-  styles: [ /* 漆黒のタクティカル・マップ・スタイル */
-    { "elementType": "geometry", "stylers": [{ "color": "#020204" }] },
-    { "elementType": "labels.text.fill", "stylers": [{ "color": "#444" }] },
-    { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#000000" }] },
-    { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#111" }] }
+  styles: [
+    { "elementType": "geometry", "stylers": [{ "color": "#1d2c4d" }] },
+    { "elementType": "labels.text.fill", "stylers": [{ "color": "#8ec3b9" }] },
+    { "elementType": "labels.text.stroke", "stylers": [{ "color": "#1a3646" }] },
+    { "featureType": "administrative.country", "elementType": "geometry.stroke", "stylers": [{ "color": "#4b6878" }] },
+    { "featureType": "landscape.man_made", "elementType": "geometry.stroke", "stylers": [{ "color": "#334e87" }] },
+    { "featureType": "poi", "elementType": "geometry", "stylers": [{ "color": "#283d6a" }] },
+    { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#6f9ba5" }] },
+    { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#304a7d" }] },
+    { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#98a5be" }] },
+    { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#0e1626" }] }
   ],
   disableDefaultUI: true,
   zoomControl: true,
+  gestureHandling: "greedy"
 };
 
-export default function ResonanceMap() {
+export default function TacticalMap() {
   const [user, setUser] = useState(null);
-  const [logs, setLogs] = useState([]);
   const [markers, setMarkers] = useState([]);
   const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+    googleMapsApiKey: process.env.AIzaSyAIvI5kP7S_2KiuDNVQbHJuUL4q02XU3fs // ← ここにキーが正しく入っているか確認！
   });
 
   useEffect(() => {
@@ -37,20 +45,16 @@ export default function ResonanceMap() {
 
   const fetchLogs = async (uid) => {
     const { data } = await supabase.from('fan_logs').select('*').eq('user_id', uid);
-    if (data) {
-      setLogs(data);
-      geocodeLocations(data);
-    }
+    if (data) geocodeLocations(data);
   };
 
-  // --- 自動ジオコーディング (名前 → 座標) ---
   const geocodeLocations = async (logData) => {
+    if (!window.google) return;
     const geocoder = new window.google.maps.Geocoder();
     const newMarkers = [];
 
     for (const log of logData) {
       if (!log.location) continue;
-      
       await new Promise((resolve) => {
         geocoder.geocode({ address: log.location }, (results, status) => {
           if (status === 'OK') {
@@ -71,38 +75,41 @@ export default function ResonanceMap() {
     setLoading(false);
   };
 
-  if (!isLoaded || loading) return <div className="m-loader">CALIBRATING_GPS_SATELLITES...</div>;
+  if (!isLoaded || loading) return <div className="m-loader">UPLINKING_TO_SATELLITE...</div>;
 
   return (
     <div className="m-root">
-      <Head><title>DR // GEOGRAPHIC_RESONANCE</title></Head>
+      <Head>
+        <title>DR // GEOGRAPHIC_RESONANCE</title>
+        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&family=Montserrat:wght@100;400;900&display=swap" rel="stylesheet" />
+      </Head>
 
       <header className="m-header">
         <div className="header-inner">
-          <Link href="/"><span className="nav-back">←_RETURN_TO_BASE</span></Link>
+          <Link href="/"><span className="nav-back">←_RETURN_TO_PORTAL</span></Link>
           <div className="m-brand">GEOGRAPHIC_RESONANCE // <span>AREA_ANALYSIS</span></div>
-          <div className="m-stats">IDENTIFIED_SPOTS: {markers.length}</div>
+          <div className="m-status"><span className="p-dot" /> GPS_SYNC_ACTIVE</div>
         </div>
       </header>
 
-      <main className="m-main">
-        <div className="map-wrapper glass">
+      <main className="m-container">
+        <div className="map-view-box glass">
           <GoogleMap
             mapContainerStyle={containerStyle}
-            center={{ lat: 35.6895, lng: 139.6917 }} // デフォルト:東京
+            center={{ lat: 35.6895, lng: 139.6917 }}
             zoom={12}
             options={mapOptions}
           >
-            {markers.map((marker) => (
+            {markers.map((m) => (
               <Marker
-                key={marker.id}
-                position={marker.pos}
-                onClick={() => setSelected(marker)}
+                key={m.id}
+                position={m.pos}
+                onClick={() => setSelected(m)}
                 icon={{
                   path: window.google.maps.SymbolPath.CIRCLE,
-                  scale: 8 + marker.fervor * 2,
-                  fillColor: marker.fervor >= 5 ? '#00f2ff' : '#ff00ff',
-                  fillOpacity: 0.7,
+                  scale: 10 + m.fervor * 2,
+                  fillColor: m.fervor >= 5 ? '#00f2ff' : '#ff00ff',
+                  fillOpacity: 0.8,
                   strokeWeight: 2,
                   strokeColor: '#fff',
                 }}
@@ -111,13 +118,13 @@ export default function ResonanceMap() {
 
             {selected && (
               <InfoWindow position={selected.pos} onCloseClick={() => setSelected(null)}>
-                <div className="info-box">
-                  <div className="info-tag">MISSION_REPORT</div>
+                <div className="info-card">
+                  <span className="i-tag">SYNC_REPORT</span>
                   <h3>{selected.name}</h3>
-                  <div className="info-meta">
-                    <span>LOCATION: {selected.locName}</span>
-                    <span>DATE: {selected.date}</span>
-                    <span>FERVOR: {selected.fervor}</span>
+                  <div className="i-meta">
+                    <p><span>LOC:</span> {selected.locName}</p>
+                    <p><span>DATE:</span> {selected.date}</p>
+                    <p><span>FERVOR:</span> {selected.fervor}/5.0</p>
                   </div>
                 </div>
               </InfoWindow>
@@ -127,31 +134,34 @@ export default function ResonanceMap() {
       </main>
 
       <style jsx global>{`
-        :root { --v-mag: #ff00ff; --v-cyn: #00f2ff; --v-bg: #030306; }
+        :root { --v-mag: #ff00ff; --v-cyn: #00f2ff; --v-bg: #030305; }
         body { background: var(--v-bg); color: #fff; font-family: 'Montserrat', sans-serif; margin: 0; overflow: hidden; }
 
-        .m-header { height: 75px; border-bottom: 1px solid #111; display: flex; align-items: center; padding: 0 40px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); z-index: 1000; }
+        .m-header { height: 75px; border-bottom: 1px solid #111; display: flex; align-items: center; padding: 0 40px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 1000; }
         .header-inner { max-width: 1400px; margin: 0 auto; width: 100%; display: flex; justify-content: space-between; align-items: center; }
         .m-brand { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; letter-spacing: 0.3em; }
-        .m-brand span { color: var(--v-mag); }
+        .m-brand span { color: var(--v-cyn); }
         .nav-back { color: #444; font-size: 10px; font-family: 'JetBrains Mono'; cursor: pointer; }
-        .m-stats { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--v-cyn); letter-spacing: 0.1em; }
+        
+        .m-status { display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono'; font-size: 9px; color: #444; }
+        .p-dot { width: 6px; height: 6px; background: var(--v-cyn); border-radius: 50%; box-shadow: 0 0 10px var(--v-cyn); animation: pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
 
-        .m-main { width: 100vw; height: calc(100vh - 75px); padding: 40px; box-sizing: border-box; }
-        .map-wrapper { width: 100%; height: 100%; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
+        .m-container { padding: 40px; height: calc(100vh - 75px); box-sizing: border-box; }
+        .map-view-box { width: 100%; height: 100%; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
 
-        /* InfoWindow Style */
-        .info-box { background: #000; color: #fff; padding: 15px; font-family: 'Montserrat', sans-serif; min-width: 200px; }
-        .info-tag { font-family: 'JetBrains Mono'; font-size: 8px; color: var(--v-mag); margin-bottom: 10px; border-bottom: 1px solid #222; padding-bottom: 5px; }
-        .info-box h3 { margin: 0 0 10px; font-size: 14px; font-weight: 400; }
-        .info-meta { display: flex; flex-direction: column; gap: 5px; font-size: 10px; color: #666; font-family: 'JetBrains Mono'; }
-
-        .m-loader { height: 100vh; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono'; color: var(--v-cyn); letter-spacing: 0.5em; background: #000; }
-
-        /* GMAP InfoWindowのデフォルト白背景を調整(限界はあるが) */
-        .gm-style-iw { background-color: #000 !important; border: 1px solid #333 !important; }
+        /* INFO_CARD (InfoWindow内) */
+        .gm-style-iw { background-color: #0a0a0c !important; border: 1px solid #222 !important; padding: 0 !important; }
         .gm-style-iw-d { overflow: hidden !important; }
-        .gm-style-iw-tc::after { background: #000 !important; }
+        .gm-style-iw-tc::after { background: #0a0a0c !important; }
+        
+        .info-card { padding: 20px; color: #fff; min-width: 200px; }
+        .i-tag { font-family: 'JetBrains Mono'; font-size: 8px; color: var(--v-mag); display: block; margin-bottom: 10px; }
+        .info-card h3 { font-size: 16px; margin: 0 0 15px; font-weight: 400; }
+        .i-meta p { margin: 5px 0; font-family: 'JetBrains Mono'; font-size: 10px; color: #666; }
+        .i-meta p span { color: #333; }
+
+        .m-loader { height: 100vh; background: #000; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono'; color: var(--v-cyn); letter-spacing: 0.8em; }
       `}</style>
     </div>
   );
