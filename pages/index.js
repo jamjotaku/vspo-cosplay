@@ -1,10 +1,18 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
 
 // アーカイブ画像取得用URL
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
+
+// ぶいすぽ標準並び順
+const MEMBER_ORDER = [
+  '全員', '集合', '花芽すみれ', '花芽なずな', '小雀とと', '一ノ瀬うるは', '胡桃のあ',
+  '兎咲ミミ', '空澄セナ', '橘ひなの', '英リサ', '如月れん', '神成きゅぴ', '八雲べに', 
+  '藍沢エマ', '紫宮るな', '猫汰つな', '白波らむね', '小森めと', '夢野あかり', 
+  '夜乃くろむ', '紡木こかげ', '千燈ゆうひ', '蝶屋はなび', '甘結もか', '銀城サイネ', '龍巻ちせ'
+];
 
 export default function Portal() {
   // --- STATE_MANAGEMENT ---
@@ -21,15 +29,17 @@ export default function Portal() {
   const [pulseStats, setPulseStats] = useState({ avgFervor: 0, lastDays: 0, hasSpark: false });
   const canvasRef = useRef(null);
 
+  // --- CONFIG_STATE (絞り込み機能を追加) ---
   const [config, setConfig] = useState({
-    glow: true, grain: true, interval: 15000, brightness: 0.8
+    glow: true, grain: true, interval: 15000, brightness: 0.8,
+    member: '全員', cosplayer: '全員' // 初期値
   });
 
   // --- INITIALIZATION ---
   useEffect(() => {
     // 1. 設定のロード
     const saved = localStorage.getItem('v_portal_final_v3');
-    if (saved) setConfig(JSON.parse(saved));
+    if (saved) setConfig(prev => ({ ...prev, ...JSON.parse(saved) }));
 
     const savedProgress = localStorage.getItem('v_total_progress') || 45;
     setProductionProgress(parseInt(savedProgress));
@@ -44,16 +54,19 @@ export default function Portal() {
     // 3. 時計の始動
     const clock = setInterval(() => setTime(new Date()), 1000);
 
-    // 4. CSV（画像）データの取得
+    // 4. CSVデータの取得
     const fetchAll = async () => {
       const Papa = (await import('papaparse')).default;
       Papa.parse(CSV_URL, {
         download: true,
         header: true,
         complete: (res) => {
-          const data = res.data.filter(d => d.image || d.url);
+          const data = res.data.filter(d => d.image || d.url).map(d => ({
+            member: (d.member || d['名前'] || "").trim(),
+            image: (d.image || d['画像'] || d.link || d.url || "").replace('name=medium', 'name=large'),
+            cosplayer: (d.cosplayer || d['レイヤー'] || "Unknown").trim(),
+          }));
           setAllData(data);
-          setFeatured(data[Math.floor(Math.random() * data.length)]);
         }
       });
     };
@@ -62,14 +75,32 @@ export default function Portal() {
     return () => clearInterval(clock);
   }, []);
 
-  // --- FEATURED_IMAGE_ROTATION ---
-  useEffect(() => {
+  // --- FILTERED_IMAGE_LOGIC (絞り込みエンジンの統合) ---
+  const cosplayerList = useMemo(() => {
+    return ['全員', ...new Set(allData.map(d => d.cosplayer))].sort();
+  }, [allData]);
+
+  const pickFeatured = useCallback(() => {
     if (allData.length === 0) return;
-    const timer = setInterval(() => {
-      setFeatured(allData[Math.floor(Math.random() * allData.length)]);
-    }, config.interval);
+    
+    // フィルタリング
+    let pool = allData.filter(p => 
+      (config.member === '全員' || p.member === config.member) &&
+      (config.cosplayer === '全員' || p.cosplayer === config.cosplayer)
+    );
+
+    // ヒットしない場合はフォールバック（全体から選出）
+    if (pool.length === 0) pool = allData;
+    
+    setFeatured(pool[Math.floor(Math.random() * pool.length)]);
+  }, [allData, config.member, config.cosplayer]);
+
+  // ローテーション制御
+  useEffect(() => {
+    pickFeatured();
+    const timer = setInterval(pickFeatured, config.interval);
     return () => clearInterval(timer);
-  }, [allData, config.interval]);
+  }, [pickFeatured, config.interval]);
 
   // --- DATA_FETCHING_LOGIC ---
   const fetchLogWidgets = async (userId) => {
@@ -86,12 +117,10 @@ export default function Portal() {
     }
 
     if (data && data.length > 0) {
-      // 右翼フィード
       setNextMission(data.find(l => l.event_date > today));
       const archives = [...data].reverse().filter(l => l.event_date <= today);
       setLatestArchive(archives[0]);
 
-      // 鼓動（PULSE）解析
       const recent = archives.slice(0, 10);
       const avg = recent.reduce((acc, cur) => acc + cur.fervor_score, 0) / (recent.length || 1);
       const lastDate = new Date(archives[0].event_date);
@@ -130,10 +159,12 @@ export default function Portal() {
         if (x === 0) ctx.moveTo(x, y + noise);
         else ctx.lineTo(x, y + noise);
       }
+      
       ctx.stroke();
       offset -= 0.08;
       animationFrameId = requestAnimationFrame(render);
     };
+
     render();
     return () => cancelAnimationFrame(animationFrameId);
   }, [pulseStats]);
@@ -151,7 +182,7 @@ export default function Portal() {
       <div className="p-ambient">
         {config.glow && featured && (
           <div className="p-glow-wrap" key={featured.image}>
-            <img src={featured.image || featured.url} alt="" />
+            <img src={featured.image} alt="" />
           </div>
         )}
         <div className="p-mask"></div>
@@ -198,12 +229,12 @@ export default function Portal() {
               {featured && (
                 <div className="p-featured-card">
                   <div className="p-featured-media">
-                    <img src={featured.image || featured.url} alt="" key={featured.image} />
+                    <img src={featured.image} alt="" key={featured.image} />
                   </div>
                   <div className="p-featured-info">
                     <span className="p-tag">FEATURED_ARCHIVE</span>
                     <h3>{featured.member}</h3>
-                    <p>BY {featured.cosplayer || featured['レイヤー']}</p>
+                    <p>BY {featured.cosplayer}</p>
                   </div>
                 </div>
               )}
@@ -222,7 +253,7 @@ export default function Portal() {
 
         </div>
 
-        {/* --- DOCK_NAVIGATION: ANALYTICS搭載 --- */}
+        {/* DOCK_NAVIGATION */}
         <nav className="p-dock">
           <Link href="/gallery"><div className="p-dock-item"><i className="fas fa-th-large"></i><span>GALLERY</span></div></Link>
           <Link href="/log"><div className="p-dock-item"><i className="fas fa-history"></i><span>LOGS</span></div></Link>
@@ -232,7 +263,7 @@ export default function Portal() {
         </nav>
       </main>
 
-      {/* --- CONFIG_MODAL --- */}
+      {/* --- INTEGRATED CONFIG MODAL --- */}
       {isConfigOpen && (
         <div className="p-modal-overlay" onClick={() => setIsConfigOpen(false)}>
           <div className="p-modal-card" onClick={e => e.stopPropagation()}>
@@ -241,6 +272,31 @@ export default function Portal() {
               <button onClick={() => setIsConfigOpen(false)} className="close-btn">&times;</button>
             </div>
             <div className="p-modal-body">
+              
+              {/* NEW: MEMBER SELECTION */}
+              <div className="p-modal-row">
+                <label>TARGET_MEMBER</label>
+                <select 
+                  className="custom-input" 
+                  value={config.member} 
+                  onChange={e => setConfig({...config, member: e.target.value})}
+                >
+                  {MEMBER_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
+
+              {/* NEW: COSPLAYER SELECTION */}
+              <div className="p-modal-row">
+                <label>IDENTIFIED_COSPLAYER</label>
+                <select 
+                  className="custom-input" 
+                  value={config.cosplayer} 
+                  onChange={e => setConfig({...config, cosplayer: e.target.value})}
+                >
+                  {cosplayerList.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
               <div className="p-modal-row">
                 <label>AMBIENT_GLOW</label>
                 <div className="custom-check">
@@ -248,16 +304,22 @@ export default function Portal() {
                   <label htmlFor="glow"></label>
                 </div>
               </div>
+
               <div className="p-modal-row">
                 <label>MASTER_BRIGHTNESS</label>
                 <input type="range" min="0.2" max="1" step="0.1" value={config.brightness} onChange={e => setConfig({...config, brightness: parseFloat(e.target.value)})} className="custom-slider" />
               </div>
+
               <div className="p-modal-row">
                 <label>INTERVAL (ms)</label>
                 <input type="number" step="1000" value={config.interval} onChange={e => setConfig({...config, interval: parseInt(e.target.value)})} className="custom-input" />
               </div>
             </div>
-            <button className="p-modal-save" onClick={() => { localStorage.setItem('v_portal_final_v3', JSON.stringify(config)); setIsConfigOpen(false); }}>APPLY_CHANGES</button>
+            <button className="p-modal-save" onClick={() => { 
+              localStorage.setItem('v_portal_final_v3', JSON.stringify(config)); 
+              setIsConfigOpen(false); 
+              pickFeatured(); // 設定適用時に画像を更新
+            }}>APPLY_AND_SYNC</button>
           </div>
         </div>
       )}
@@ -313,21 +375,27 @@ export default function Portal() {
         .p-dock-item:hover { color:#fff; background:rgba(255,255,255,0.1); }
         .p-dock-item span { font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 800; }
 
+        /* CONFIG MODAL */
         .p-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(20px); z-index:2000; display:flex; align-items:center; justify-content:center; }
         .p-modal-card { background:#0a0a0b; width:450px; padding:40px; border:1px solid #222; border-radius:4px; box-shadow: 0 0 100px #000; }
         .p-modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; border-bottom:1px solid #111; padding-bottom:15px; }
         .p-modal-head h3 { font-family: 'JetBrains Mono'; font-size:12px; font-weight:800; color:#eee; margin:0; }
         .close-btn { background:none; border:none; color:#444; font-size:30px; cursor:pointer; }
-        .p-modal-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:30px; }
+        .p-modal-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; }
         .p-modal-row label { font-family: 'JetBrains Mono'; font-size:10px; font-weight:800; color:#666; }
+        
         .custom-check { position:relative; width:20px; height:20px; }
         .custom-check input { opacity:0; position:absolute; }
         .custom-check label { position:absolute; inset:0; border:2px solid #333; border-radius:2px; cursor:pointer; }
         .custom-check input:checked + label { border-color:var(--v-cyan); background:rgba(0,242,255,0.1); }
         .custom-check input:checked + label::after { content:'✓'; position:absolute; top:-2px; left:3px; color:var(--v-cyan); font-size:14px; }
+        
         .custom-slider { -webkit-appearance:none; width:150px; height:2px; background:#222; outline:none; }
         .custom-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; background:var(--v-magenta); border-radius:50%; box-shadow:0 0 10px var(--v-magenta); cursor:pointer; }
-        .custom-input { background:#111; border:1px solid #222; color:var(--v-cyan); padding:8px 12px; font-family: 'JetBrains Mono'; font-size:12px; text-align:right; width:100px; outline:none; }
+        
+        .custom-input { background:#111; border:1px solid #222; color:var(--v-cyan); padding:8px 12px; font-family: 'JetBrains Mono'; font-size:12px; text-align:right; width:150px; outline:none; border-radius:4px; }
+        .custom-input:focus { border-color:var(--v-cyan); }
+        
         .p-modal-save { width:100%; padding:20px; background:var(--v-cyan); color:#000; font-family: 'JetBrains Mono'; font-weight:800; border:none; margin-top:20px; cursor:pointer; transition:0.3s; }
         .p-modal-save:hover { background:#fff; box-shadow:0 0 30px var(--v-cyan); }
       `}</style>
