@@ -24,6 +24,7 @@
     }
   },
   "dependencies": {
+    "@react-google-maps/api": "^2.20.8",
     "@supabase/supabase-js": "^2.98.0",
     "d3": "^7.9.0",
     "framer-motion": "^12.35.2",
