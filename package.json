@@ -28,10 +28,12 @@
     "@supabase/supabase-js": "^2.98.0",
     "d3": "^7.9.0",
     "framer-motion": "^12.35.2",
+    "leaflet": "^1.9.4",
     "next": "latest",
     "papaparse": "latest",
     "react": "latest",
     "react-dom": "latest",
+    "react-leaflet": "^5.0.0",
     "recharts": "^3.8.0",
     "tesseract.js": "^7.0.0"
   },

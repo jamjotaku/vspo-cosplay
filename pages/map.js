@@ -1,167 +1,143 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { GoogleMap, useJsApiLoader, Marker, InfoWindow } from '@react-google-maps/api';
 import { supabase } from '../lib/supabaseClient';
 
-const containerStyle = { width: '100%', height: '100%' };
+// Leafletはブラウザ側でのみ動くため、dynamic importが必要
+import dynamic from 'next/dynamic';
+const MapContainer = dynamic(() => import('react-leaflet').then(mod => mod.MapContainer), { ssr: false });
+const TileLayer = dynamic(() => import('react-leaflet').then(mod => mod.TileLayer), { ssr: false });
+const Marker = dynamic(() => import('react-leaflet').then(mod => mod.Marker), { ssr: false });
+const Popup = dynamic(() => import('react-leaflet').then(mod => mod.Popup), { ssr: false });
 
-// --- 漆黒のタクティカル・マップ・スタイル (違和感を消し去る設定) ---
-const mapOptions = {
-  styles: [
-    { "elementType": "geometry", "stylers": [{ "color": "#1d2c4d" }] },
-    { "elementType": "labels.text.fill", "stylers": [{ "color": "#8ec3b9" }] },
-    { "elementType": "labels.text.stroke", "stylers": [{ "color": "#1a3646" }] },
-    { "featureType": "administrative.country", "elementType": "geometry.stroke", "stylers": [{ "color": "#4b6878" }] },
-    { "featureType": "landscape.man_made", "elementType": "geometry.stroke", "stylers": [{ "color": "#334e87" }] },
-    { "featureType": "poi", "elementType": "geometry", "stylers": [{ "color": "#283d6a" }] },
-    { "featureType": "poi", "elementType": "labels.text.fill", "stylers": [{ "color": "#6f9ba5" }] },
-    { "featureType": "road", "elementType": "geometry", "stylers": [{ "color": "#304a7d" }] },
-    { "featureType": "road", "elementType": "labels.text.fill", "stylers": [{ "color": "#98a5be" }] },
-    { "featureType": "water", "elementType": "geometry", "stylers": [{ "color": "#0e1626" }] }
-  ],
-  disableDefaultUI: true,
-  zoomControl: true,
-  gestureHandling: "greedy"
-};
-
-export default function TacticalMap() {
-  const [user, setUser] = useState(null);
+export default function LeafletTacticalMap() {
+  const [logs, setLogs] = useState([]);
   const [markers, setMarkers] = useState([]);
-  const [selected, setSelected] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const { isLoaded } = useJsApiLoader({
-    id: 'google-map-script',
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY // ← ここにキーが正しく入っているか確認！
-  });
+  const [L, setL] = useState(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      if (session?.user) fetchLogs(session.user.id);
+    // Leafletのスタイルとインスタンスを初期化
+    import('leaflet').then((leaflet) => {
+      setL(leaflet);
     });
+    fetchLogs();
   }, []);
 
-  const fetchLogs = async (uid) => {
-    const { data } = await supabase.from('fan_logs').select('*').eq('user_id', uid);
-    if (data) geocodeLocations(data);
+  const fetchLogs = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      const { data } = await supabase.from('fan_logs').select('*').eq('user_id', session.user.id);
+      if (data) geocodeAll(data);
+    }
   };
 
-  const geocodeLocations = async (logData) => {
-    if (!window.google) return;
-    const geocoder = new window.google.maps.Geocoder();
+  // --- OSS版ジオコーディング (Nominatim使用) ---
+  const geocodeAll = async (logData) => {
     const newMarkers = [];
-
     for (const log of logData) {
       if (!log.location) continue;
-      await new Promise((resolve) => {
-        geocoder.geocode({ address: log.location }, (results, status) => {
-          if (status === 'OK') {
-            newMarkers.push({
-              id: log.id,
-              name: log.event_name,
-              locName: log.location,
-              pos: results[0].geometry.location,
-              fervor: log.fervor_score,
-              date: log.event_date
-            });
-          }
-          resolve();
-        });
-      });
+      try {
+        // 無料のNominatim APIを叩く (1秒1リクエストの制限に注意)
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(log.location)}`);
+        const data = await res.json();
+        if (data && data.length > 0) {
+          newMarkers.push({
+            id: log.id,
+            name: log.event_name,
+            locName: log.location,
+            pos: [parseFloat(data[0].lat), parseFloat(data[0].lon)],
+            fervor: log.fervor_score,
+            date: log.event_date
+          });
+        }
+        // 負荷軽減のためのウェイト
+        await new Promise(r => setTimeout(r, 1000));
+      } catch (err) {
+        console.error("GEOCODE_ERROR:", err);
+      }
     }
     setMarkers(newMarkers);
     setLoading(false);
   };
 
-  if (!isLoaded || loading) return <div className="m-loader">UPLINKING_TO_SATELLITE...</div>;
+  // カスタムアイコン（マゼンタ/シアンのネオン円）
+  const createCustomIcon = (fervor) => {
+    if (!L) return null;
+    const color = fervor >= 5 ? 'var(--v-cyn)' : 'var(--v-mag)';
+    const size = 12 + fervor * 3;
+    return L.divIcon({
+      className: 'custom-marker',
+      html: `<div style="width:${size}px; height:${size}px; background:${color}; border:2px solid #fff; border-radius:50%; box-shadow:0 0 15px ${color};"></div>`,
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2]
+    });
+  };
+
+  if (loading || !L) return <div className="m-loader">CALIBRATING_OSS_SATELLITE...</div>;
 
   return (
     <div className="m-root">
       <Head>
-        <title>DR // GEOGRAPHIC_RESONANCE</title>
-        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&family=Montserrat:wght@100;400;900&display=swap" rel="stylesheet" />
+        <title>DR // OSS_TACTICAL_MAP</title>
+        <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+        <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&family=Montserrat:wght@400;900&display=swap" rel="stylesheet" />
       </Head>
 
       <header className="m-header">
         <div className="header-inner">
           <Link href="/"><span className="nav-back">←_RETURN_TO_PORTAL</span></Link>
-          <div className="m-brand">GEOGRAPHIC_RESONANCE // <span>AREA_ANALYSIS</span></div>
-          <div className="m-status"><span className="p-dot" /> GPS_SYNC_ACTIVE</div>
+          <div className="m-brand">GEOGRAPHIC_RESONANCE // <span>OSS_MODE</span></div>
+          <div className="m-status"><span className="p-dot" /> OPEN_STREET_MAP_CONNECTED</div>
         </div>
       </header>
 
       <main className="m-container">
-        <div className="map-view-box glass">
-          <GoogleMap
-            mapContainerStyle={containerStyle}
-            center={{ lat: 35.6895, lng: 139.6917 }}
-            zoom={12}
-            options={mapOptions}
-          >
+        <div className="map-view-box">
+          <MapContainer center={[35.6895, 139.6917]} zoom={12} style={{ height: '100%', width: '100%', background: '#000' }}>
+            {/* 漆黒のタイルレイヤー (CartoDB Dark Matter) */}
+            <TileLayer
+              url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>'
+            />
             {markers.map((m) => (
-              <Marker
-                key={m.id}
-                position={m.pos}
-                onClick={() => setSelected(m)}
-                icon={{
-                  path: window.google.maps.SymbolPath.CIRCLE,
-                  scale: 10 + m.fervor * 2,
-                  fillColor: m.fervor >= 5 ? '#00f2ff' : '#ff00ff',
-                  fillOpacity: 0.8,
-                  strokeWeight: 2,
-                  strokeColor: '#fff',
-                }}
-              />
-            ))}
-
-            {selected && (
-              <InfoWindow position={selected.pos} onCloseClick={() => setSelected(null)}>
-                <div className="info-card">
-                  <span className="i-tag">SYNC_REPORT</span>
-                  <h3>{selected.name}</h3>
-                  <div className="i-meta">
-                    <p><span>LOC:</span> {selected.locName}</p>
-                    <p><span>DATE:</span> {selected.date}</p>
-                    <p><span>FERVOR:</span> {selected.fervor}/5.0</p>
+              <Marker key={m.id} position={m.pos} icon={createCustomIcon(m.fervor)}>
+                <Popup>
+                  <div className="info-card">
+                    <span className="i-tag">RESONANCE_DETECTED</span>
+                    <h3>{m.name}</h3>
+                    <p>{m.locName} / {m.date}</p>
+                    <p>FERVOR: {m.fervor}</p>
                   </div>
-                </div>
-              </InfoWindow>
-            )}
-          </GoogleMap>
+                </Popup>
+              </Marker>
+            ))}
+          </MapContainer>
         </div>
       </main>
 
       <style jsx global>{`
         :root { --v-mag: #ff00ff; --v-cyn: #00f2ff; --v-bg: #030305; }
-        body { background: var(--v-bg); color: #fff; font-family: 'Montserrat', sans-serif; margin: 0; overflow: hidden; }
-
-        .m-header { height: 75px; border-bottom: 1px solid #111; display: flex; align-items: center; padding: 0 40px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); position: sticky; top: 0; z-index: 1000; }
+        body { background: var(--v-bg); color: #fff; font-family: 'Montserrat', sans-serif; margin: 0; }
+        
+        .m-header { height: 75px; border-bottom: 1px solid #111; display: flex; align-items: center; padding: 0 40px; background: rgba(0,0,0,0.8); backdrop-filter: blur(20px); }
         .header-inner { max-width: 1400px; margin: 0 auto; width: 100%; display: flex; justify-content: space-between; align-items: center; }
         .m-brand { font-family: 'JetBrains Mono'; font-weight: 800; font-size: 14px; letter-spacing: 0.3em; }
-        .m-brand span { color: var(--v-cyn); }
-        .nav-back { color: #444; font-size: 10px; font-family: 'JetBrains Mono'; cursor: pointer; }
-        
-        .m-status { display: flex; align-items: center; gap: 10px; font-family: 'JetBrains Mono'; font-size: 9px; color: #444; }
-        .p-dot { width: 6px; height: 6px; background: var(--v-cyn); border-radius: 50%; box-shadow: 0 0 10px var(--v-cyn); animation: pulse 2s infinite; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+        .m-brand span { color: var(--v-mag); }
+        .nav-back { color: #444; font-size: 10px; font-family: 'JetBrains Mono'; cursor: pointer; text-decoration: none; }
 
         .m-container { padding: 40px; height: calc(100vh - 75px); box-sizing: border-box; }
         .map-view-box { width: 100%; height: 100%; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; overflow: hidden; }
 
-        /* INFO_CARD (InfoWindow内) */
-        .gm-style-iw { background-color: #0a0a0c !important; border: 1px solid #222 !important; padding: 0 !important; }
-        .gm-style-iw-d { overflow: hidden !important; }
-        .gm-style-iw-tc::after { background: #0a0a0c !important; }
-        
-        .info-card { padding: 20px; color: #fff; min-width: 200px; }
-        .i-tag { font-family: 'JetBrains Mono'; font-size: 8px; color: var(--v-mag); display: block; margin-bottom: 10px; }
-        .info-card h3 { font-size: 16px; margin: 0 0 15px; font-weight: 400; }
-        .i-meta p { margin: 5px 0; font-family: 'JetBrains Mono'; font-size: 10px; color: #666; }
-        .i-meta p span { color: #333; }
+        .m-loader { height: 100vh; background: #000; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono'; color: var(--v-cyn); letter-spacing: 0.5em; }
+        .p-dot { display: inline-block; width: 6px; height: 6px; background: var(--v-cyn); border-radius: 50%; box-shadow: 0 0 10px var(--v-cyn); margin-right: 10px; }
 
-        .m-loader { height: 100vh; background: #000; display: flex; align-items: center; justify-content: center; font-family: 'JetBrains Mono'; color: var(--v-cyn); letter-spacing: 0.8em; }
+        /* Leaflet Popup Styling */
+        .leaflet-popup-content-wrapper { background: #000 !important; color: #fff !important; border: 1px solid #222 !important; border-radius: 0 !important; }
+        .leaflet-popup-tip { background: #000 !important; }
+        .info-card { font-family: 'JetBrains Mono'; font-size: 10px; }
+        .i-tag { color: var(--v-mag); font-size: 8px; display: block; margin-bottom: 5px; }
+        .info-card h3 { margin: 5px 0; font-weight: 800; font-size: 14px; }
       `}</style>
     </div>
   );
