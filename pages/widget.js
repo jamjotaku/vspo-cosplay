@@ -11,9 +11,15 @@ const MEMBER_ORDER = [
   '夜乃くろむ', '紡木こかげ', '千燈ゆうひ', '蝶屋はなび', '甘結もか', '銀城サイネ', '龍巻ちせ'
 ];
 
-const SIZES = { '小': { w: 240, h: 360 }, '中': { w: 320, h: 480 }, '大': { w: 400, h: 600 }, 'ワイド': { w: 480, h: 270 } };
+const SIZES = { 
+  '小': { w: 240, h: 360 }, 
+  '中': { w: 320, h: 480 }, 
+  '大': { w: 400, h: 600 }, 
+  'ワイド': { w: 480, h: 270 } 
+};
 
 export default function DeepSyncWidget() {
+  // --- STATE_MANAGEMENT ---
   const [allData, setAllData] = useState([]);
   const [currentPhoto, setCurrentPhoto] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -46,7 +52,7 @@ export default function DeepSyncWidget() {
 
     const loadData = async () => {
       const Papa = (await import('papaparse')).default;
-       Papa.parse(CSV_URL, {
+      Papa.parse(CSV_URL, {
         download: true, header: true, skipEmptyLines: true,
         complete: (res) => {
           const formatted = res.data.filter(d => d.image || d['画像'] || d.link || d['URL']).map(d => ({
@@ -102,7 +108,7 @@ export default function DeepSyncWidget() {
   // --- SYNC LOGIC ---
   const archiveSession = async (type, minutes) => {
     if (!user) return;
-    const { error } = await supabase.from('work_logs').insert([{
+    await supabase.from('work_logs').insert([{
       user_id: user.id,
       session_type: type,
       duration_minutes: minutes,
@@ -157,7 +163,6 @@ export default function DeepSyncWidget() {
         <div className="drag-handle-base"></div>
 
         <div className="ui-overlay">
-          {/* --- REFINED HEADER --- */}
           <div className="header-ui">
             <div className="brand-badge">
               VSPO! / {user ? <span className="sync-active">[CONNECTED]</span> : 'OFFLINE'}
@@ -188,11 +193,11 @@ export default function DeepSyncWidget() {
           </div>
         </div>
 
-        {/* SETTINGS VIEW */}
+        {/* SETTINGS VIEW - WITH ENHANCED RESPONSIVE FIXES */}
         <div className={`settings-view ${isSettingsOpen ? 'is-active' : ''}`}>
           <div className="settings-content">
             <div className="settings-header">
-              <h3>SYSTEM_SETUP_v4.9</h3>
+              <h3>SYSTEM_SETUP_v5.0</h3>
               <button className="x-btn" onClick={() => setIsSettingsOpen(false)}>&times;</button>
             </div>
             
@@ -202,7 +207,7 @@ export default function DeepSyncWidget() {
               <button className={activeTab === 'sync' ? 'on' : ''} onClick={() => setActiveTab('sync')}>SYNC</button>
             </div>
 
-            <div className="settings-body">
+            <div className="settings-body no-scrollbar">
               {activeTab === 'magazine' && (
                 <div className="field-group">
                   <label>MEMBER_ID</label>
@@ -268,10 +273,8 @@ export default function DeepSyncWidget() {
         .main-photo { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
         .drag-handle-base { position: absolute; inset: 0; z-index: 5; -webkit-app-region: drag; }
 
-        /* UI OVERLAY */
         .ui-overlay { position: absolute; inset: 0; z-index: 10; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
         
-        /* HEADER REFINEMENT */
         .header-ui { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .header-controls { display: flex; align-items: center; gap: 12px; pointer-events: auto; }
         
@@ -281,7 +284,6 @@ export default function DeepSyncWidget() {
 
         .title-text { font-family: 'Playfair Display', serif; font-style: italic; font-size: 42px; margin: 0; text-align: center; text-shadow: 0 0 20px #000; }
 
-        /* INTERACTIVES */
         .pomo-trigger-btn, .gear-trigger-btn, .settings-view, .auth-btn, input, select { pointer-events: auto !important; -webkit-app-region: no-drag !important; }
 
         .gear-trigger-btn { 
@@ -304,28 +306,50 @@ export default function DeepSyncWidget() {
         .status-focus .dot { background: var(--v-mag); box-shadow: 0 0 10px var(--v-mag); }
         .status-break .dot { background: var(--v-cyn); box-shadow: 0 0 10px var(--v-cyn); }
         
-        /* SETTINGS_VIEW */
+        /* --- SETTINGS_VIEW ENHANCEMENTS --- */
         .settings-view { position: absolute; inset: 0; background: rgba(10,10,12,0.98); backdrop-filter: blur(30px); z-index: 1000; transform: translateY(100%); transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
         .settings-view.is-active { transform: translateY(0); }
+        
         .settings-content { padding: 40px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
-        .settings-tabs { display: flex; gap: 20px; margin-bottom: 30px; border-bottom: 1px solid #1a1a1c; }
+        
+        .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-shrink: 0; }
+        .settings-header h3 { font-family: 'JetBrains Mono'; font-size: 12px; color: #eee; margin: 0; }
+
+        .settings-tabs { display: flex; gap: 20px; margin-bottom: 20px; border-bottom: 1px solid #1a1a1c; flex-shrink: 0; }
         .settings-tabs button { background: none; border: none; color: #333; font-weight: 800; padding: 10px 0; font-size: 11px; cursor: pointer; font-family: 'JetBrains Mono'; }
         .settings-tabs button.on { color: var(--v-cyn); border-bottom: 2px solid var(--v-cyn); }
 
-        .settings-body { flex: 1; overflow-y: auto; }
-        .field-group label { display: block; font-family: 'JetBrains Mono'; font-size: 9px; color: #444; margin: 20px 0 8px 0; }
-        select, input[type="range"], input[type="text"], input[type="password"] { background: #0f0f11; border: 1px solid #1a1a1c; color: #fff; padding: 12px; border-radius: 4px; font-family: 'JetBrains Mono'; width: 100%; box-sizing: border-box; }
+        .settings-body { flex: 1; overflow-y: auto; overflow-x: hidden; margin-right: -10px; padding-right: 10px; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        
+        .field-group label { display: block; font-family: 'JetBrains Mono'; font-size: 9px; color: #444; margin: 15px 0 6px 0; }
+        select, input[type="text"], input[type="password"] { background: #0f0f11; border: 1px solid #1a1a1c; color: #fff; padding: 10px; border-radius: 4px; font-family: 'JetBrains Mono'; width: 100%; box-sizing: border-box; font-size: 12px; }
 
-        .auth-btn { width: 100%; padding: 14px; border: none; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 11px; cursor: pointer; margin-top: 15px; border-radius: 4px; }
+        .auth-btn { width: 100%; padding: 12px; border: none; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 10px; cursor: pointer; margin-top: 10px; border-radius: 4px; }
         .auth-btn.login { background: var(--v-cyn); color: #000; }
         .auth-btn.logout { background: #1a1a1c; color: #555; }
 
-        .size-grid { display: flex; gap: 8px; }
-        .size-grid button { flex: 1; padding: 12px; background: #0f0f11; border: 1px solid #1a1a1c; color: #444; font-size: 10px; cursor: pointer; border-radius: 4px; font-weight: 800; font-family: 'JetBrains Mono'; }
+        .size-grid { display: flex; gap: 6px; flex-wrap: wrap; }
+        .size-grid button { flex: 1; min-width: 45%; padding: 10px; background: #0f0f11; border: 1px solid #1a1a1c; color: #444; font-size: 9px; cursor: pointer; border-radius: 4px; font-weight: 800; font-family: 'JetBrains Mono'; }
         .size-grid button.on { border-color: var(--v-cyn); color: var(--v-cyn); }
 
-        .final-apply-btn { background: #fff; color: #000; border: none; padding: 18px; border-radius: 4px; font-weight: 800; font-size: 11px; letter-spacing: 0.2em; cursor: pointer; margin-top: 30px; font-family: 'JetBrains Mono'; }
-        .x-btn { color: #222; font-size: 32px; background: none; border: none; cursor: pointer; }
+        .final-apply-btn { background: #fff; color: #000; border: none; padding: 15px; border-radius: 4px; font-weight: 800; font-size: 10px; letter-spacing: 0.2em; cursor: pointer; margin-top: 20px; font-family: 'JetBrains Mono'; flex-shrink: 0; }
+        .x-btn { color: #333; font-size: 28px; background: none; border: none; cursor: pointer; line-height: 1; }
+
+        /* --- SMALL SIZE (小) SPECIFIC RESPONSIVE --- */
+        @media (max-height: 400px), (max-width: 280px) {
+          .settings-content { padding: 15px; }
+          .settings-header { margin-bottom: 10px; }
+          .settings-tabs { gap: 10px; margin-bottom: 10px; }
+          .settings-tabs button { font-size: 9px; padding: 5px 0; }
+          .field-group label { margin-top: 10px; font-size: 8px; }
+          select, input[type="text"], input[type="password"] { padding: 8px; font-size: 10px; }
+          .final-apply-btn { padding: 10px; margin-top: 10px; font-size: 9px; }
+          .title-text { font-size: 28px; }
+          .pomo-trigger-btn { padding: 8px 14px; }
+        }
+
+        .p-loader { height:100vh; background:#000; color:var(--v-cyn); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono'; letter-spacing:0.5em; font-size:14px; }
       `}</style>
     </div>
   );
