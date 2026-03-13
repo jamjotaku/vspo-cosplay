@@ -59,7 +59,7 @@ export default function DeepTacticalMap() {
 
       // 2. 座標がない場合のみ外部APIに問い合わせ
       try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent("日本 " + log.location)}`);
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(log.location)}&countrycodes=jp&addressdetails=1`);
         const data = await res.json();
 
         if (data && data.length > 0) {
