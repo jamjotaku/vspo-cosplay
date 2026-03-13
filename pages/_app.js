@@ -1,12 +1,7 @@
-// import '../styles/globals.css'  // ← ここが原因。ファイルがない場合はコメントアウト
-import GlobalCommander from '../components/GlobalCommander'
-
+// pages/_app.js
+// GlobalCommander のインポートと適用を完全に削除します
 function MyApp({ Component, pageProps }) {
-  return (
-    <GlobalCommander>
-      <Component {...pageProps} />
-    </GlobalCommander>
-  )
+  return <Component {...pageProps} />
 }
 
 export default MyApp
