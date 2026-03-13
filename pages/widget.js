@@ -68,15 +68,31 @@ export default function SyncWidget() {
   }, []);
 
   // --- LOGIN LOGIC ---
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPass });
-    if (error) alert("SYNC_AUTH_FAILED: " + error.message);
-    else {
+  // handleLogin関数をこれに差し替えてテストしてみてください
+const handleLogin = async (e) => {
+  e.preventDefault();
+  console.log("ATTEMPTING_AUTH_LINK...");
+  
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ 
+      email: loginEmail, 
+      password: loginPass 
+    });
+
+    if (error) {
+      // 具体的なエラー内容を表示
+      console.error("AUTH_ERROR_DETAIL:", error);
+      alert(`SYNC_AUTH_FAILED\nCODE: ${error.status}\nMSG: ${error.message}`);
+    } else {
+      console.log("AUTH_ESTABLISHED:", data.user.email);
       setLoginEmail(""); setLoginPass("");
-      setActiveTab('magazine'); // 成功したら戻す
+      setActiveTab('magazine');
+      alert("CONNECTION_ESTABLISHED: 司令部との同期を開始します");
     }
-  };
+  } catch (err) {
+    alert("CRITICAL_CONNECTION_ERROR: 通信経路に異常があります");
+  }
+};
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
