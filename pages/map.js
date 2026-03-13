@@ -33,7 +33,7 @@ export default function TacticalMap() {
 
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
-    googleMapsApiKey: process.env.AIzaSyAIvI5kP7S_2KiuDNVQbHJuUL4q02XU3fs // ← ここにキーが正しく入っているか確認！
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY // ← ここにキーが正しく入っているか確認！
   });
 
   useEffect(() => {

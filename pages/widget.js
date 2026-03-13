@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Head from 'next/head';
-import { supabase } from '../lib/supabaseClient'; // Supabaseクライアントを導入
+import { supabase } from '../lib/supabaseClient';
 
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 
@@ -25,9 +25,18 @@ export default function SyncWidget() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [user, setUser] = useState(null);
 
+  // --- NEW: LOGIN FORM STATE ---
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPass, setLoginPass] = useState("");
+
   // --- INITIALIZATION ---
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // ログイン状態の変化を監視
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
 
@@ -52,8 +61,26 @@ export default function SyncWidget() {
       });
     };
     loadData();
-    return () => clearInterval(clockTimer);
+    return () => {
+      clearInterval(clockTimer);
+      subscription.unsubscribe();
+    };
   }, []);
+
+  // --- LOGIN LOGIC ---
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    const { error } = await supabase.auth.signInWithPassword({ email: loginEmail, password: loginPass });
+    if (error) alert("SYNC_AUTH_FAILED: " + error.message);
+    else {
+      setLoginEmail(""); setLoginPass("");
+      setActiveTab('magazine'); // 成功したら戻す
+    }
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+  };
 
   // --- PHOTO LOGIC ---
   const pickPhoto = useCallback(() => {
@@ -70,9 +97,9 @@ export default function SyncWidget() {
     return () => clearInterval(timer);
   }, [pickPhoto, config.interval, pomoStatus]);
 
-  // --- DATA ARCHIVING LOGIC (最強の補強) ---
+  // --- DATA ARCHIVING LOGIC ---
   const archiveSession = async (type, minutes) => {
-    if (!user) return;
+    if (!user) return; // ログインしていなければ送信しない
     console.log(`ARCHIVING_${type}_SESSION: ${minutes} MIN`);
     const { error } = await supabase
       .from('work_logs')
@@ -137,7 +164,9 @@ export default function SyncWidget() {
 
         <div className="ui-overlay">
           <div className="header-ui">
-            <div className="brand-badge">VSPO! ARCHIVE / {pomoStatus === 'focus' ? 'FOCUS_MODE' : 'STABLE'}</div>
+            <div className="brand-badge">
+              VSPO! ARCHIVE / {user ? <span style={{color:'var(--v-cyn)'}}>[CONNECTED]</span> : 'OFFLINE'}
+            </div>
             <div className="top-clock">{timeStr}</div>
           </div>
 
@@ -171,10 +200,11 @@ export default function SyncWidget() {
             <div className="settings-tabs">
               <button className={activeTab === 'magazine' ? 'on' : ''} onClick={() => setActiveTab('magazine')}>Magazine</button>
               <button className={activeTab === 'timer' ? 'on' : ''} onClick={() => setActiveTab('timer')}>Timer</button>
+              <button className={activeTab === 'sync' ? 'on' : ''} onClick={() => setActiveTab('sync')}>Sync</button>
             </div>
 
             <div className="settings-body">
-              {activeTab === 'magazine' ? (
+              {activeTab === 'magazine' && (
                 <div className="field-group">
                   <label>TARGET_MEMBER</label>
                   <select value={config.member} onChange={e => setConfig({...config, member: e.target.value})}>
@@ -191,7 +221,9 @@ export default function SyncWidget() {
                     {Object.keys(SIZES).map(s => <button key={s} className={config.size === s ? 'on' : ''} onClick={() => setConfig({...config, size: s})}>{s}</button>)}
                   </div>
                 </div>
-              ) : (
+              )}
+
+              {activeTab === 'timer' && (
                 <div className="field-group">
                   <label>FOCUS_DURATION ({pomoConfig.focusTime}m)</label>
                   <input type="range" min="5" max="60" step="5" value={pomoConfig.focusTime} onChange={e => setPomoConfig({...pomoConfig, focusTime: parseInt(e.target.value)})} />
@@ -199,12 +231,30 @@ export default function SyncWidget() {
                   <input type="range" min="1" max="15" step="1" value={pomoConfig.breakTime} onChange={e => setPomoConfig({...pomoConfig, breakTime: parseInt(e.target.value)})} />
                 </div>
               )}
+
+              {activeTab === 'sync' && (
+                <div className="field-group">
+                  <label>DATA_UPLINK_STATUS</label>
+                  {user ? (
+                    <div className="auth-status-info">
+                      <p style={{fontSize: '11px', color: '#888'}}>ACCOUNT: <br/>{user.email}</p>
+                      <button className="auth-btn logout" onClick={handleLogout}>LOGOUT / DISCONNECT</button>
+                    </div>
+                  ) : (
+                    <div className="auth-form">
+                      <input type="email" placeholder="EMAIL" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} />
+                      <input type="password" placeholder="PASSWORD" value={loginPass} onChange={e => setLoginPass(e.target.value)} />
+                      <button className="auth-btn login" onClick={handleLogin}>ESTABLISH_LINK</button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
             <button className="final-apply-btn" onClick={() => { 
               localStorage.setItem('vspo-widget-config', JSON.stringify(config)); 
               localStorage.setItem('vspo-widget-pomo', JSON.stringify(pomoConfig));
               setIsSettingsOpen(false); 
-            }}>APPLY_AND_SYNC</button>
+            }}>APPLY_CHANGES</button>
           </div>
         </div>
       </div>
@@ -225,7 +275,7 @@ export default function SyncWidget() {
 
         .title-text { font-family: 'Playfair Display', serif; font-style: italic; font-size: 48px; margin: 0; text-align: center; line-height: 1; text-shadow: 0 0 20px rgba(0,0,0,0.8); }
 
-        .pomo-trigger-btn, .gear-trigger-btn, .settings-view { pointer-events: auto !important; -webkit-app-region: no-drag !important; }
+        .pomo-trigger-btn, .gear-trigger-btn, .settings-view, .auth-btn, input, select { pointer-events: auto !important; -webkit-app-region: no-drag !important; }
 
         .footer-ui { display: flex; justify-content: space-between; align-items: flex-end; }
         .model-info .label { font-size: 8px; color: #666; letter-spacing: 0.1em; display: block; margin-bottom: 4px; }
@@ -243,7 +293,6 @@ export default function SyncWidget() {
         
         .gear-trigger-btn { position: absolute; top: 20px; right: 20px; z-index: 100; width: 40px; height: 40px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
 
-        /* SETTINGS_DESIGN */
         .settings-view { position: absolute; inset: 0; background: rgba(10,10,12,0.95); backdrop-filter: blur(30px); z-index: 1000; transform: translateY(100%); transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
         .settings-view.is-active { transform: translateY(0); }
         .settings-content { padding: 40px; height: 100%; display: flex; flex-direction: column; }
@@ -254,8 +303,13 @@ export default function SyncWidget() {
 
         .settings-body { flex: 1; overflow-y: auto; }
         .field-group label { display: block; font-family: 'JetBrains Mono'; font-size: 8px; color: #444; margin: 20px 0 8px 0; }
-        select, input[type="range"] { background: #111; border: 1px solid #222; color: #fff; padding: 12px; border-radius: 4px; }
-        
+        select, input[type="range"], input[type="email"], input[type="password"] { background: #111; border: 1px solid #222; color: #fff; padding: 12px; border-radius: 4px; font-family: 'JetBrains Mono'; width: 100%; box-sizing: border-box; }
+        input[type="email"], input[type="password"] { margin-bottom: 10px; font-size: 12px; }
+
+        .auth-btn { width: 100%; padding: 15px; border: none; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 11px; cursor: pointer; margin-top: 10px; border-radius: 4px; }
+        .auth-btn.login { background: var(--v-cyn); color: #000; }
+        .auth-btn.logout { background: #222; color: #888; }
+
         .size-grid { display: flex; gap: 8px; }
         .size-grid button { flex: 1; padding: 12px; background: #111; border: 1px solid #222; color: #666; font-size: 10px; cursor: pointer; border-radius: 4px; font-weight: 800; }
         .size-grid button.on { border-color: var(--v-cyn); color: var(--v-cyn); }
