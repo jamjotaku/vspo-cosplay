@@ -13,7 +13,7 @@ const MEMBER_ORDER = [
 
 const SIZES = { '小': { w: 240, h: 360 }, '中': { w: 320, h: 480 }, '大': { w: 400, h: 600 }, 'ワイド': { w: 480, h: 270 } };
 
-export default function SyncWidget() {
+export default function DeepSyncWidget() {
   const [allData, setAllData] = useState([]);
   const [currentPhoto, setCurrentPhoto] = useState(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -25,17 +25,16 @@ export default function SyncWidget() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [user, setUser] = useState(null);
 
-  // --- NEW: LOGIN FORM STATE ---
-  const [loginEmail, setLoginEmail] = useState("");
+  // --- LOGIN STATE ---
+  const [loginID, setLoginID] = useState("");
   const [loginPass, setLoginPass] = useState("");
 
   // --- INITIALIZATION ---
   useEffect(() => {
+    // セッション監視
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
-
-    // ログイン状態の変化を監視
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
@@ -67,35 +66,28 @@ export default function SyncWidget() {
     };
   }, []);
 
-  // --- LOGIN LOGIC ---
-  // handleLogin関数をこれに差し替えてテストしてみてください
-const handleLogin = async (e) => {
-  e.preventDefault();
-  console.log("ATTEMPTING_AUTH_LINK...");
-  
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({ 
-      email: loginEmail, 
+  // --- LOGIN LOGIC (ID -> INTERNAL_EMAIL CONVERSION) ---
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    // 監督独自の「ID+ドメイン」プロトコル
+    const finalEmail = loginID.includes('@') ? loginID : `${loginID}@vspo-internal.local`;
+
+    const { error } = await supabase.auth.signInWithPassword({ 
+      email: finalEmail, 
       password: loginPass 
     });
 
     if (error) {
-      // 具体的なエラー内容を表示
-      console.error("AUTH_ERROR_DETAIL:", error);
-      alert(`SYNC_AUTH_FAILED\nCODE: ${error.status}\nMSG: ${error.message}`);
+      alert(`SYNC_AUTH_FAILED: ${error.message}`);
     } else {
-      console.log("AUTH_ESTABLISHED:", data.user.email);
-      setLoginEmail(""); setLoginPass("");
+      setLoginID(""); setLoginPass("");
       setActiveTab('magazine');
-      alert("CONNECTION_ESTABLISHED: 司令部との同期を開始します");
+      alert("COMMANDER_LINK_ESTABLISHED: 司令部との同期を開始します");
     }
-  } catch (err) {
-    alert("CRITICAL_CONNECTION_ERROR: 通信経路に異常があります");
-  }
-};
+  };
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    if (confirm("DISCONNECT_FROM_ARCHIVE?")) await supabase.auth.signOut();
   };
 
   // --- PHOTO LOGIC ---
@@ -113,18 +105,19 @@ const handleLogin = async (e) => {
     return () => clearInterval(timer);
   }, [pickPhoto, config.interval, pomoStatus]);
 
-  // --- DATA ARCHIVING LOGIC ---
+  // --- SYNC LOGIC (SUPABASE UPLINK) ---
   const archiveSession = async (type, minutes) => {
-    if (!user) return; // ログインしていなければ送信しない
-    console.log(`ARCHIVING_${type}_SESSION: ${minutes} MIN`);
+    if (!user) return;
+    console.log(`SYNCING_${type}_DATA: ${minutes} MIN`);
     const { error } = await supabase
       .from('work_logs')
       .insert([{
         user_id: user.id,
-        session_type: type,
-        duration_minutes: minutes
+        session_type: type, // 'FOCUS' or 'BREAK'
+        duration_minutes: minutes,
+        completed_at: new Date().toISOString()
       }]);
-    if (error) console.error("UPLINK_ERROR:", error.message);
+    if (error) console.error("SYNC_FAIL:", error.message);
   };
 
   // --- POMODORO CORE ---
@@ -136,7 +129,7 @@ const handleLogin = async (e) => {
           const finishedStatus = pomoStatus;
           const duration = finishedStatus === 'focus' ? pomoConfig.focusTime : pomoConfig.breakTime;
           
-          // セッション完了の瞬間にデータをアーカイブ
+          // バックグラウンド同期
           archiveSession(finishedStatus.toUpperCase(), duration);
 
           const nextS = pomoStatus === 'focus' ? 'break' : 'focus';
@@ -152,10 +145,10 @@ const handleLogin = async (e) => {
   const togglePomo = (e) => {
     e.preventDefault(); e.stopPropagation();
     if (pomoStatus === 'idle') { setPomoStatus('focus'); setTimeLeft(pomoConfig.focusTime * 60); }
-    else { if (confirm("現在のセッションを破棄して終了しますか？")) { setPomoStatus('idle'); setTimeLeft(0); } }
+    else { if (confirm("現在のセッションを破棄しますか？")) { setPomoStatus('idle'); setTimeLeft(0); } }
   };
 
-  // --- WINDOW RESIZE (ELECTRON) ---
+  // --- ELECTRON WINDOW RESIZE ---
   useEffect(() => {
     if (window.electronAPI) {
       const { w, h } = SIZES[config.size || '中'];
@@ -169,7 +162,7 @@ const handleLogin = async (e) => {
   return (
     <div className={`widget-root status-${pomoStatus}`}>
       <Head>
-        <title>VSPO! // SYNC_WIDGET</title>
+        <title>VSPO! // DEEP_SYNC_WIDGET</title>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
         <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,900&family=Montserrat:wght@300;800&family=JetBrains+Mono:wght@800&display=swap" rel="stylesheet" />
       </Head>
@@ -181,7 +174,7 @@ const handleLogin = async (e) => {
         <div className="ui-overlay">
           <div className="header-ui">
             <div className="brand-badge">
-              VSPO! ARCHIVE / {user ? <span style={{color:'var(--v-cyn)'}}>[CONNECTED]</span> : 'OFFLINE'}
+              VSPO! ARCHIVE / {user ? <span className="sync-active">[CONNECTED]</span> : 'OFFLINE'}
             </div>
             <div className="top-clock">{timeStr}</div>
           </div>
@@ -209,28 +202,28 @@ const handleLogin = async (e) => {
         <div className={`settings-view ${isSettingsOpen ? 'is-active' : ''}`}>
           <div className="settings-content">
             <div className="settings-header">
-              <h3>SYSTEM_CONFIG</h3>
+              <h3>SYSTEM_SETUP_v4.8</h3>
               <button className="x-btn" onClick={() => setIsSettingsOpen(false)}>&times;</button>
             </div>
             
             <div className="settings-tabs">
-              <button className={activeTab === 'magazine' ? 'on' : ''} onClick={() => setActiveTab('magazine')}>Magazine</button>
-              <button className={activeTab === 'timer' ? 'on' : ''} onClick={() => setActiveTab('timer')}>Timer</button>
-              <button className={activeTab === 'sync' ? 'on' : ''} onClick={() => setActiveTab('sync')}>Sync</button>
+              <button className={activeTab === 'magazine' ? 'on' : ''} onClick={() => setActiveTab('magazine')}>MAGAZINE</button>
+              <button className={activeTab === 'timer' ? 'on' : ''} onClick={() => setActiveTab('timer')}>TIMER</button>
+              <button className={activeTab === 'sync' ? 'on' : ''} onClick={() => setActiveTab('sync')}>SYNC</button>
             </div>
 
             <div className="settings-body">
               {activeTab === 'magazine' && (
                 <div className="field-group">
-                  <label>TARGET_MEMBER</label>
+                  <label>MEMBER_ID</label>
                   <select value={config.member} onChange={e => setConfig({...config, member: e.target.value})}>
                     {MEMBER_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
                   </select>
-                  <label>IDENTIFIED_COSPLAYER</label>
+                  <label>COSPLAYER_ID</label>
                   <select value={config.cosplayer} onChange={e => setConfig({...config, cosplayer: e.target.value})}>
                     {cosplayers.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
-                  <label>REFRESH_INTERVAL ({config.interval}s)</label>
+                  <label>SCAN_INTERVAL ({config.interval}s)</label>
                   <input type="range" min="10" max="600" step="10" value={config.interval} onChange={e => setConfig({...config, interval: parseInt(e.target.value)})} />
                   <label>CONSOLE_SIZE</label>
                   <div className="size-grid">
@@ -241,25 +234,26 @@ const handleLogin = async (e) => {
 
               {activeTab === 'timer' && (
                 <div className="field-group">
-                  <label>FOCUS_DURATION ({pomoConfig.focusTime}m)</label>
+                  <label>FOCUS_TIME ({pomoConfig.focusTime}m)</label>
                   <input type="range" min="5" max="60" step="5" value={pomoConfig.focusTime} onChange={e => setPomoConfig({...pomoConfig, focusTime: parseInt(e.target.value)})} />
-                  <label>BREAK_DURATION ({pomoConfig.breakTime}m)</label>
+                  <label>BREAK_TIME ({pomoConfig.breakTime}m)</label>
                   <input type="range" min="1" max="15" step="1" value={pomoConfig.breakTime} onChange={e => setPomoConfig({...pomoConfig, breakTime: parseInt(e.target.value)})} />
                 </div>
               )}
 
               {activeTab === 'sync' && (
                 <div className="field-group">
-                  <label>DATA_UPLINK_STATUS</label>
+                  <label>UPLINK_STATION_AUTH</label>
                   {user ? (
-                    <div className="auth-status-info">
-                      <p style={{fontSize: '11px', color: '#888'}}>ACCOUNT: <br/>{user.email}</p>
-                      <button className="auth-btn logout" onClick={handleLogout}>LOGOUT / DISCONNECT</button>
+                    <div className="auth-status-panel">
+                      <div className="user-id-badge">ID: {user.email.split('@')[0]}</div>
+                      <p className="status-text">UPLINK: <span className="sync-active">ACTIVE</span></p>
+                      <button className="auth-btn logout" onClick={handleLogout}>TERMINATE_LINK</button>
                     </div>
                   ) : (
                     <div className="auth-form">
-                      <input type="email" placeholder="EMAIL" value={loginEmail} onChange={e => setLoginEmail(e.target.value)} />
-                      <input type="password" placeholder="PASSWORD" value={loginPass} onChange={e => setLoginPass(e.target.value)} />
+                      <input type="text" placeholder="COMMANDER_ID" value={loginID} onChange={e => setLoginID(e.target.value)} />
+                      <input type="password" placeholder="ACCESS_PASS" value={loginPass} onChange={e => setLoginPass(e.target.value)} />
                       <button className="auth-btn login" onClick={handleLogin}>ESTABLISH_LINK</button>
                     </div>
                   )}
@@ -270,68 +264,78 @@ const handleLogin = async (e) => {
               localStorage.setItem('vspo-widget-config', JSON.stringify(config)); 
               localStorage.setItem('vspo-widget-pomo', JSON.stringify(pomoConfig));
               setIsSettingsOpen(false); 
-            }}>APPLY_CHANGES</button>
+            }}>SAVE_COMMAND_CONFIG</button>
           </div>
         </div>
       </div>
 
       <style jsx global>{`
-        :root { --v-cyn: #00f2ff; --v-mag: #ff00ff; }
+        :root { --v-cyn: #00f2ff; --v-mag: #ff00ff; --v-bg: #0a0a0c; }
         body { margin: 0; background: transparent; overflow: hidden; font-family: 'Montserrat', sans-serif; color: white; }
-        .main-wrapper { width: 100vw; height: 100vh; position: relative; background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .main-wrapper { width: 100vw; height: 100vh; position: relative; background: #000; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 40px rgba(0,0,0,0.8); }
         
         .bg-photo-layer { position: absolute; inset: 0; z-index: 1; }
-        .main-photo { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; }
+        .main-photo { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; transition: 1s ease; }
         .drag-handle-base { position: absolute; inset: 0; z-index: 5; -webkit-app-region: drag; }
 
         .ui-overlay { position: absolute; inset: 0; z-index: 10; padding: 25px; display: flex; flex-direction: column; justify-content: space-between; pointer-events: none; }
-        .brand-badge { font-family: 'JetBrains Mono'; font-size: 8px; letter-spacing: 0.2em; color: rgba(255,255,255,0.4); }
-        .top-clock { font-family: 'JetBrains Mono'; font-size: 14px; color: #fff; }
+        .brand-badge { font-family: 'JetBrains Mono'; font-size: 8px; letter-spacing: 0.2em; color: rgba(255,255,255,0.3); }
+        .sync-active { color: var(--v-cyn); text-shadow: 0 0 10px var(--v-cyn); }
+        .top-clock { font-family: 'JetBrains Mono'; font-size: 14px; letter-spacing: 0.1em; }
         .header-ui { display: flex; justify-content: space-between; align-items: center; }
 
-        .title-text { font-family: 'Playfair Display', serif; font-style: italic; font-size: 48px; margin: 0; text-align: center; line-height: 1; text-shadow: 0 0 20px rgba(0,0,0,0.8); }
+        .title-text { font-family: 'Playfair Display', serif; font-style: italic; font-size: 48px; margin: 0; text-align: center; text-shadow: 0 0 30px rgba(0,0,0,0.9); }
 
         .pomo-trigger-btn, .gear-trigger-btn, .settings-view, .auth-btn, input, select { pointer-events: auto !important; -webkit-app-region: no-drag !important; }
 
         .footer-ui { display: flex; justify-content: space-between; align-items: flex-end; }
-        .model-info .label { font-size: 8px; color: #666; letter-spacing: 0.1em; display: block; margin-bottom: 4px; }
-        .model-info .name { font-size: 11px; font-weight: 800; color: #fff; }
+        .model-info .label { font-size: 8px; color: #555; letter-spacing: 0.2em; display: block; margin-bottom: 4px; font-family: 'JetBrains Mono'; }
+        .model-info .name { font-size: 12px; font-weight: 800; color: #fff; letter-spacing: 0.1em; }
 
-        .pomo-trigger-btn { background: rgba(0,0,0,0.8); border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 20px; border-radius: 40px; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: 0.4s; }
-        .pomo-trigger-btn:hover { border-color: var(--v-cyn); background: #000; }
-        .timer-val { font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 800; }
+        .pomo-trigger-btn { background: rgba(0,0,0,0.85); border: 1px solid rgba(255,255,255,0.08); color: white; padding: 12px 22px; border-radius: 40px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.3s; backdrop-filter: blur(10px); }
+        .pomo-trigger-btn:hover { border-color: var(--v-cyn); transform: translateY(-2px); }
+        .timer-val { font-family: 'JetBrains Mono'; font-size: 13px; font-weight: 800; }
         
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--v-cyn); }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: #444; }
         .pulse { animation: pulse-glow 2s infinite; }
-        @keyframes pulse-glow { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.2); } 100% { opacity: 1; transform: scale(1); } }
-        .status-focus .dot { background: var(--v-mag); box-shadow: 0 0 10px var(--v-mag); }
-        .status-break .dot { background: var(--v-cyn); box-shadow: 0 0 10px var(--v-cyn); }
+        @keyframes pulse-glow { 0% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.3); } 100% { opacity: 1; transform: scale(1); } }
+        .status-focus .dot { background: var(--v-mag); box-shadow: 0 0 15px var(--v-mag); }
+        .status-break .dot { background: var(--v-cyn); box-shadow: 0 0 15px var(--v-cyn); }
         
-        .gear-trigger-btn { position: absolute; top: 20px; right: 20px; z-index: 100; width: 40px; height: 40px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); color: white; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); }
+        .gear-trigger-btn { position: absolute; top: 20px; right: 20px; z-index: 100; width: 40px; height: 40px; background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); color: #555; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(10px); transition: 0.3s; }
+        .gear-trigger-btn:hover { color: #fff; border-color: #fff; }
 
-        .settings-view { position: absolute; inset: 0; background: rgba(10,10,12,0.95); backdrop-filter: blur(30px); z-index: 1000; transform: translateY(100%); transition: 0.5s cubic-bezier(0.19, 1, 0.22, 1); }
+        .settings-view { position: absolute; inset: 0; background: rgba(10,10,12,0.96); backdrop-filter: blur(35px); z-index: 1000; transform: translateY(100%); transition: 0.6s cubic-bezier(0.19, 1, 0.22, 1); }
         .settings-view.is-active { transform: translateY(0); }
-        .settings-content { padding: 40px; height: 100%; display: flex; flex-direction: column; }
-        .settings-header h3 { font-family: 'JetBrains Mono'; font-size: 12px; letter-spacing: 0.2em; color: #444; }
-        .settings-tabs { display: flex; gap: 20px; margin-bottom: 30px; }
-        .settings-tabs button { background: none; border: none; color: #333; font-weight: 800; padding: 10px 0; font-size: 11px; cursor: pointer; letter-spacing: 0.1em; }
+        .settings-content { padding: 45px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
+        .settings-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .settings-header h3 { font-family: 'JetBrains Mono'; font-size: 11px; letter-spacing: 0.3em; color: #333; margin: 0; }
+        .settings-tabs { display: flex; gap: 25px; margin-bottom: 35px; border-bottom: 1px solid #1a1a1c; }
+        .settings-tabs button { background: none; border: none; color: #444; font-weight: 800; padding: 12px 0; font-size: 11px; cursor: pointer; letter-spacing: 0.2em; font-family: 'JetBrains Mono'; }
         .settings-tabs button.on { color: var(--v-cyn); border-bottom: 2px solid var(--v-cyn); }
 
         .settings-body { flex: 1; overflow-y: auto; }
-        .field-group label { display: block; font-family: 'JetBrains Mono'; font-size: 8px; color: #444; margin: 20px 0 8px 0; }
-        select, input[type="range"], input[type="email"], input[type="password"] { background: #111; border: 1px solid #222; color: #fff; padding: 12px; border-radius: 4px; font-family: 'JetBrains Mono'; width: 100%; box-sizing: border-box; }
-        input[type="email"], input[type="password"] { margin-bottom: 10px; font-size: 12px; }
+        .field-group label { display: block; font-family: 'JetBrains Mono'; font-size: 9px; color: #444; margin: 25px 0 10px 0; letter-spacing: 0.1em; }
+        select, input[type="range"], input[type="text"], input[type="password"] { background: #0f0f11; border: 1px solid #1a1a1c; color: #fff; padding: 14px; border-radius: 4px; font-family: 'JetBrains Mono'; width: 100%; box-sizing: border-box; outline: none; }
+        input:focus { border-color: var(--v-cyn); }
 
-        .auth-btn { width: 100%; padding: 15px; border: none; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 11px; cursor: pointer; margin-top: 10px; border-radius: 4px; }
+        .auth-status-panel { padding: 20px; background: rgba(255,255,255,0.02); border: 1px solid #1a1a1c; border-radius: 4px; }
+        .user-id-badge { font-family: 'JetBrains Mono'; font-size: 12px; color: var(--v-cyn); margin-bottom: 10px; }
+        .status-text { font-family: 'JetBrains Mono'; font-size: 10px; color: #444; }
+
+        .auth-btn { width: 100%; padding: 16px; border: none; font-family: 'JetBrains Mono'; font-weight: 800; font-size: 11px; cursor: pointer; margin-top: 15px; border-radius: 4px; transition: 0.3s; }
         .auth-btn.login { background: var(--v-cyn); color: #000; }
-        .auth-btn.logout { background: #222; color: #888; }
+        .auth-btn.logout { background: #1a1a1c; color: #555; }
+        .auth-btn.logout:hover { color: #ff4444; background: #2a1111; }
 
-        .size-grid { display: flex; gap: 8px; }
-        .size-grid button { flex: 1; padding: 12px; background: #111; border: 1px solid #222; color: #666; font-size: 10px; cursor: pointer; border-radius: 4px; font-weight: 800; }
-        .size-grid button.on { border-color: var(--v-cyn); color: var(--v-cyn); }
+        .size-grid { display: flex; gap: 10px; }
+        .size-grid button { flex: 1; padding: 14px; background: #0f0f11; border: 1px solid #1a1a1c; color: #444; font-size: 10px; cursor: pointer; border-radius: 4px; font-weight: 800; font-family: 'JetBrains Mono'; }
+        .size-grid button.on { border-color: var(--v-cyn); color: var(--v-cyn); background: rgba(0,242,255,0.05); }
 
-        .final-apply-btn { background: var(--v-cyn); color: #000; border: none; padding: 20px; border-radius: 4px; font-weight: 800; font-size: 11px; letter-spacing: 0.2em; cursor: pointer; margin-top: 30px; }
-        .x-btn { color: #333; font-size: 32px; background: none; border: none; cursor: pointer; }
+        .final-apply-btn { background: #fff; color: #000; border: none; padding: 22px; border-radius: 4px; font-weight: 800; font-size: 11px; letter-spacing: 0.3em; cursor: pointer; margin-top: 40px; font-family: 'JetBrains Mono'; }
+        .final-apply-btn:hover { background: var(--v-cyn); box-shadow: 0 0 30px rgba(0,242,255,0.4); }
+        .x-btn { color: #222; font-size: 32px; background: none; border: none; cursor: pointer; transition: 0.3s; }
+        .x-btn:hover { color: #fff; }
       `}</style>
     </div>
   );
