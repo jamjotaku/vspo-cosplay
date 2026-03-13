@@ -14,13 +14,15 @@ export default function GrandResonanceMapSync() {
   const [editingId, setEditingId] = useState(null);
   const [systemLogs, setSystemLogs] = useState([]); 
 
+  // --- NEW: LOCATION SCAN STATE ---
+  const [locationStatus, setLocationStatus] = useState('IDLE'); // IDLE, SCANNING, OK, FAIL
+
   const workerRef = useRef(null);
 
-  // --- フォームステート (locationを追加) ---
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     event: '', 
-    location: '', // 地図同期用
+    location: '', 
     category: 'STAGE', 
     fervor: 3, 
     note: '', 
@@ -52,6 +54,30 @@ export default function GrandResonanceMapSync() {
       .order('event_date', { ascending: false });
     setLogs(data || []);
     addSystemLog("SYNC_COMPLETE", "SUCCESS");
+  };
+
+  // --- NEW: LOCATION VERIFICATION LOGIC ---
+  const checkLocation = async () => {
+    if (!formData.location) return;
+    setLocationStatus('SCANNING');
+    addSystemLog(`SCANNING_LOCATION: ${formData.location}`, "WAIT");
+    
+    try {
+      // 命中精度を上げるため「日本」を付与してOSM(Nominatim)に問い合わせ
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent("日本 " + formData.location)}`);
+      const data = await res.json();
+      
+      if (data && data.length > 0) {
+        setLocationStatus('OK');
+        addSystemLog("LOCATION_VERIFIED_SUCCESS", "SUCCESS");
+      } else {
+        setLocationStatus('FAIL');
+        addSystemLog("LOCATION_NOT_FOUND_IN_ATLAS", "ERROR");
+      }
+    } catch (err) {
+      setLocationStatus('FAIL');
+      addSystemLog("GEO_SERVER_TIMEOUT", "ERROR");
+    }
   };
 
   const fetchNames = async (input, encId) => {
@@ -100,7 +126,7 @@ export default function GrandResonanceMapSync() {
     const payload = {
       event_date: formData.date, 
       event_name: formData.event, 
-      location: formData.location, // 地図連動用
+      location: formData.location, 
       event_category: formData.category, 
       fervor_score: formData.fervor,
       is_first_spark: formData.is_first_spark, 
@@ -140,7 +166,7 @@ export default function GrandResonanceMapSync() {
     setFormData({
       date: log.event_date, 
       event: log.event_name, 
-      location: log.location || '', // ここで反映
+      location: log.location || '', 
       category: log.event_category, 
       fervor: log.fervor_score,
       note: log.memory_note, 
@@ -152,7 +178,7 @@ export default function GrandResonanceMapSync() {
   };
 
   const closeModal = () => {
-    setShowModal(false); setEditingId(null);
+    setShowModal(false); setEditingId(null); setLocationStatus('IDLE');
     setFormData({ date: new Date().toISOString().split('T')[0], event: '', location: '', category: 'STAGE', fervor: 3, note: '', is_first_spark: false });
     setEncounters([{ id: Date.now(), name: '', is_primary: true }]);
   };
@@ -177,7 +203,7 @@ export default function GrandResonanceMapSync() {
       <header className="res-header">
         <div className="header-inner">
           <Link href="/"><span className="nav-back">←_UPLINK_HOME</span></Link>
-          <div className="header-brand">RESONANCE_ARCHIVE <span>[CORE_v4.0]</span></div>
+          <div className="header-brand">RESONANCE_ARCHIVE <span>[CORE_v4.5]</span></div>
           <button className="add-trigger" onClick={() => { prepareOcr(); setShowModal(true); }}>+ RECORD_MISSION</button>
         </div>
       </header>
@@ -198,7 +224,6 @@ export default function GrandResonanceMapSync() {
                 </div>
                 <div className="card-content">
                   <h2 className="card-title">{log.event_name}</h2>
-                  {/* ロケーション表示を追加 */}
                   <div className="card-loc-tag">
                     <i className="fas fa-map-marker-alt" /> {log.location || 'UNKNOWN_STATION'}
                   </div>
@@ -249,15 +274,32 @@ export default function GrandResonanceMapSync() {
                       <input type="text" placeholder="TYPE_MISSION_NAME..." value={formData.event} onChange={e => setFormData({...formData, event: e.target.value})} required />
                     </div>
                     
-                    {/* --- NEW: MISSION_LOCATION INPUT --- */}
+                    {/* --- UPDATED: MISSION_LOCATION WITH SCAN TEST --- */}
                     <div className="f-row">
                       <label><i className="fas fa-map-marker-alt" /> MISSION_LOCATION (FOR_GPS_SYNC)</label>
-                      <input 
-                        type="text" 
-                        placeholder="ENTER_STATION_NAME (e.g. Akihabara, Makuhari...)" 
-                        value={formData.location} 
-                        onChange={e => setFormData({...formData, location: e.target.value})} 
-                      />
+                      <div className="scan-input-group">
+                        <input 
+                          type="text" 
+                          placeholder="ENTER_STATION_NAME (e.g. Akihabara, Makuhari...)" 
+                          value={formData.location} 
+                          onChange={e => {
+                            setFormData({...formData, location: e.target.value});
+                            setLocationStatus('IDLE');
+                          }} 
+                        />
+                        <button 
+                          type="button" 
+                          className={`scan-check-btn ${locationStatus}`}
+                          onClick={checkLocation}
+                        >
+                          {locationStatus === 'SCANNING' ? 'SCANNING...' : 
+                           locationStatus === 'OK' ? '✓_DETECTED' : 
+                           locationStatus === 'FAIL' ? '❌_FAILED' : 'SCAN_TEST'}
+                        </button>
+                      </div>
+                      {locationStatus === 'FAIL' && (
+                        <span className="scan-err">※地名が見つかりません。都市名を加えてください。</span>
+                      )}
                     </div>
 
                     <div className="f-row">
@@ -412,6 +454,17 @@ export default function GrandResonanceMapSync() {
         }
         input:focus, textarea:focus { border-color: var(--v-cyn); background: rgba(255,255,255,0.05); }
 
+        /* --- NEW: SCAN INPUT GROUP STYLING --- */
+        .scan-input-group { display: flex; gap: 10px; }
+        .scan-check-btn { 
+          padding: 0 15px; background: #111; border: 1px solid #222; color: #444; 
+          font-size: 9px; cursor: pointer; white-space: nowrap; transition: 0.3s;
+        }
+        .scan-check-btn.SCANNING { color: var(--v-mag); border-color: var(--v-mag); }
+        .scan-check-btn.OK { color: var(--v-cyn); border-color: var(--v-cyn); text-shadow: 0 0 5px var(--v-cyn); }
+        .scan-check-btn.FAIL { color: var(--v-mag); border-color: var(--v-mag); }
+        .scan-err { display: block; font-size: 8px; color: var(--v-mag); margin-top: 5px; font-family: 'JetBrains Mono'; }
+
         .fervor-gauge-v3 { display: flex; gap: 10px; }
         .gauge-bar-v3 { flex: 1; height: 8px; background: #111; cursor: pointer; transform: skewX(-20deg); transition: 0.3s; }
         .gauge-bar-v3.active { background: var(--v-mag); box-shadow: 0 0 20px var(--v-mag); }
@@ -445,6 +498,9 @@ export default function GrandResonanceMapSync() {
         .WAIT { color: var(--v-mag); }
 
         .full-loader { height: 100vh; background: #000; color: var(--v-cyn); display: flex; align-items: center; justify-content: center; font-weight: 800; letter-spacing: 0.8em; font-size: 12px; }
+
+        .pulse { animation: p-glow 2s infinite; }
+        @keyframes p-glow { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
       `}</style>
     </div>
   );
