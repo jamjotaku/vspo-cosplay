@@ -323,7 +323,7 @@ export default function Portal() {
           <Link href="/chronicle"><div className="p-dock-item"><i className="fas fa-project-diagram"></i><span>CHRONICLE</span></div></Link>
           <Link href="/analytics"><div className="p-dock-item"><i className="fas fa-chart-line"></i><span>ANALYTICS</span></div></Link>
           <Link href="/workstation"><div className="p-dock-item"><i className="fas fa-hammer"></i><span>WORKSTATION</span> </div></Link>
-          <Link href="/download"><div className="p-dock-item p-profile-trigger"><i className="fas fa-user-shield"></i><span>PROFILE</span><span className="p-notif-dot"></span></div></Link>
+          <Link href="/profile"><div className="p-dock-item p-profile-trigger"><i className="fas fa-user-shield"></i><span>PROFILE</span><span className="p-notif-dot"></span></div></Link>
 </nav>
       </main>
 
