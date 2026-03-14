@@ -83,6 +83,7 @@ export default function Profile() {
       
       <main className="p-main-layer">
         <div className="p-container">
+          {/* ヘッダーエリア */}
           <div className="p-glass-panel head-area flex-between">
             <div>
               <span className="p-tag">COMMANDER_IDENTITY_CARD</span>
@@ -143,10 +144,11 @@ export default function Profile() {
                 <Link href="/download">
                   <div className="p-app-link-card">
                     <img src="/icon.png" alt="" className="mini-icon" />
-                    <div>
+                    <div className="card-text">
                       <div className="card-title">ACCESS_DEPLOY_HUB</div>
                       <div className="card-desc">デスクトップ版の配備はこちら</div>
                     </div>
+                    <i className="fas fa-chevron-right arrow-icon"></i>
                   </div>
                 </Link>
               </div>
@@ -154,45 +156,98 @@ export default function Profile() {
               <button onClick={handleLogout} className="p-logout-btn mt-30">TERMINATE_SESSION</button>
             </div>
           </div>
+
+          <Link href="/">
+            <button className="p-back-btn">
+              <i className="fas fa-arrow-left"></i> RETURN_TO_PORTAL
+            </button>
+          </Link>
         </div>
       </main>
 
       <style jsx global>{`
         :root { --v-accent: ${profile.theme_color}; }
-        body { margin:0; background:#000; color:#fff; font-family:'Montserrat', sans-serif; }
+        body { margin:0; background:#000; color:#fff; font-family:'Montserrat', sans-serif; overflow-x:hidden; }
+        
         .p-grain { position:fixed; inset:0; background:url('https://grainy-gradients.vercel.app/noise.svg'); opacity:0.05; pointer-events:none; z-index:900; }
-        .p-main-layer { position:relative; min-height:100vh; padding:60px 20px; z-index:10; background: radial-gradient(circle at 50% -20%, #112, #000); }
+        .p-main-layer { position:relative; min-height:100vh; padding:60px 20px; box-sizing:border-box; z-index:10; background: radial-gradient(circle at 50% -20%, #112, #000); }
         .p-container { max-width:1000px; margin:0 auto; }
+
         .p-glass-panel { background:rgba(255,255,255,0.02); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.08); padding:30px; margin-bottom:20px; }
         .flex-between { display:flex; justify-content:space-between; align-items:flex-start; }
-        .p-tag { font-family:'JetBrains Mono'; font-size:10px; font-weight:800; color:var(--v-accent); letter-spacing:0.2em; display:block; margin-bottom:15px; }
+        .p-tag { font-family:'JetBrains Mono'; font-size:10px; font-weight:800; color:var(--v-accent); letter-spacing:0.2em; display:block; margin-bottom:15px; text-shadow: 0 0 10px var(--v-accent); }
+        
         h1 { font-size:40px; font-weight:100; margin:0; letter-spacing:0.1em; }
+
         .p-content-grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
         
-        /* SNSアイコン */
+        .user-info-row { display:flex; gap:20px; align-items:center; }
+        .p-avatar { width:60px; height:60px; border:1px solid var(--v-accent); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--v-accent); font-size:24px; box-shadow:0 0 15px var(--v-accent); }
+        
+        .p-label { font-family:'JetBrains Mono'; font-size:9px; color:#555; font-weight:800; }
+        .p-value { font-size:14px; color:#eee; }
+        .p-value-large { font-size:36px; font-weight:100; color:#fff; letter-spacing:0.1em; }
+
+        /* SNS表示 */
         .social-display { display:flex; gap:15px; }
-        .social-icon-btn { width:50px; height:50px; background:rgba(255,255,255,0.05); border:1px solid #333; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff; transition:0.3s; }
-        .social-icon-btn:hover { border-color:var(--v-accent); color:var(--v-accent); box-shadow: 0 0 15px var(--v-accent); }
+        .social-icon-btn { width:50px; height:50px; background:rgba(255,255,255,0.03); border:1px solid #222; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff; transition:0.3s; text-decoration:none; }
+        .social-icon-btn:hover { border-color:var(--v-accent); color:var(--v-accent); box-shadow: 0 0 15px var(--v-accent); transform: translateY(-2px); }
         .no-data { font-family:'JetBrains Mono'; font-size:10px; color:#333; }
 
-        /* フォーム */
+        /* 編集フォーム */
         .edit-form { display:flex; flex-direction:column; gap:15px; }
         .form-group label { display:block; font-family:'JetBrains Mono'; font-size:10px; color:#666; margin-bottom:5px; }
-        .form-group input { width:100%; background:#111; border:1px solid #222; color:#fff; padding:10px; font-family:'JetBrains Mono'; font-size:12px; }
-        .form-group input:focus { border-color:var(--v-accent); outline:none; }
+        .form-group input { width:100%; background:#111; border:1px solid #222; color:#fff; padding:12px; font-family:'JetBrains Mono'; font-size:12px; border-radius:4px; transition:0.3s; }
+        .form-group input:focus { border-color:var(--v-accent); outline:none; box-shadow: 0 0 10px var(--v-accent); }
         
-        .p-edit-toggle { background:none; border:1px solid var(--v-accent); color:var(--v-accent); padding:8px 15px; font-family:'JetBrains Mono'; font-size:10px; cursor:pointer; }
-        .p-save-btn { background:var(--v-accent); color:#000; border:none; padding:12px; font-family:'JetBrains Mono'; font-weight:800; cursor:pointer; }
-        
-        .p-avatar { width:60px; height:60px; border:1px solid var(--v-accent); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--v-accent); font-size:24px; box-shadow:0 0 10px var(--v-accent); }
-        .user-info-row { display:flex; gap:20px; align-items:center; }
-        .p-label { font-family:'JetBrains Mono'; font-size:9px; color:#555; }
-        .p-value-large { font-size:32px; font-weight:100; }
-        .p-app-link-card { display:flex; align-items:center; gap:15px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.1); padding:15px; cursor:pointer; }
-        .p-logout-btn { background:none; border:1px solid #311; color:#633; padding:10px; font-family:'JetBrains Mono'; font-size:10px; cursor:pointer; }
+        .p-edit-toggle { background:none; border:1px solid #333; color:#666; padding:8px 15px; font-family:'JetBrains Mono'; font-size:10px; cursor:pointer; transition:0.3s; }
+        .p-edit-toggle:hover { border-color:var(--v-accent); color:var(--v-accent); }
+        .p-save-btn { background:var(--v-accent); color:#000; border:none; padding:15px; font-family:'JetBrains Mono'; font-weight:800; cursor:pointer; margin-top:10px; transition:0.3s; }
+        .p-save-btn:hover { background:#fff; box-shadow: 0 0 20px var(--v-accent); }
+
+        /* ★リサイズ済み：ダウンロードカード★ */
+        .p-app-link-card { 
+          display: flex; 
+          align-items: center; 
+          gap: 15px; 
+          background: rgba(255,255,255,0.03); 
+          border: 1px solid rgba(255,255,255,0.1); 
+          padding: 12px 20px; 
+          border-radius: 4px;
+          cursor: pointer; 
+          transition: 0.3s;
+          max-width: 100%;
+        }
+        .p-app-link-card:hover { 
+          border-color: var(--v-accent); 
+          background: rgba(255,255,255,0.06); 
+          transform: translateX(5px); 
+        }
+        .mini-icon { 
+          width: 48px; 
+          height: 48px; 
+          object-fit: contain;
+          flex-shrink: 0;
+          filter: drop-shadow(0 0 8px var(--v-accent)); 
+        }
+        .card-text { flex-grow: 1; }
+        .card-title { font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 800; color: var(--v-accent); }
+        .card-desc { font-size: 10px; color: #555; }
+        .arrow-icon { font-size: 12px; color: #333; }
+
+        .p-logout-btn { background:none; border:1px solid #311; color:#633; padding:10px 20px; font-family:'JetBrains Mono'; font-size:10px; font-weight:800; cursor:pointer; transition:0.3s; }
+        .p-logout-btn:hover { background:#311; color:#f66; border-color:#f66; }
+
+        .p-back-btn { background:none; border:1px solid #222; color:#444; padding:10px 20px; font-family:'JetBrains Mono'; font-size:10px; cursor:pointer; transition:0.3s; margin-top:20px; }
+        .p-back-btn:hover { border-color:#666; color:#eee; }
+
         .mt-30 { margin-top:30px; }
         .mt-40 { margin-top:40px; }
-        .p-loader { height:100vh; background:#000; color:var(--v-accent); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono'; }
+        .p-loader { height:100vh; background:#000; color:var(--v-accent); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono'; letter-spacing:0.5em; }
+
+        @media (max-width: 768px) {
+          .p-content-grid { grid-template-columns: 1fr; }
+        }
       `}</style>
     </div>
   );
