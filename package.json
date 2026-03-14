@@ -2,6 +2,7 @@
   "name": "vspo-cosplay-hub",
   "version": "1.0.0",
   "description": "Vspo! Cosplay Archive - Unified Platform",
+  "author": "じゃむじゃ",
   "main": "main.js",
   "scripts": {
     "dev": "next dev",
@@ -16,15 +17,11 @@
     "productName": "VspoCosplayWidget",
     "copyright": "Copyright © 2026 じゃむじゃ",
     "win": {
-<<<<<<< HEAD
-      "target": "portable"
-=======
       "target": [
         "nsis",
         "portable"
       ],
       "icon": "icon.ico"
->>>>>>> ea1e049c2a5e5b62ba4f5516257f507949bccb7c
     },
     "nsis": {
       "oneClick": false,
