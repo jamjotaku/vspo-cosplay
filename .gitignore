@@ -1,2 +1,8 @@
 node_modules/
+.next/
+out/
 dist/
+release/
+.env*
+*.log
+.DS_Store

@@ -1,27 +1,59 @@
 {
-  "name": "vspo-cosplay-widget",
+  "name": "vspo-cosplay-hub",
   "version": "1.0.0",
+  "description": "Vspo! Cosplay Archive - Unified Platform",
   "main": "main.js",
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "widget": "electron .",
-    "dist": "electron-builder --win"
+    "dist": "electron-builder --win",
+    "lint": "next lint"
   },
   "build": {
     "appId": "com.vspo.cosplay.widget",
     "productName": "VspoCosplayWidget",
     "copyright": "Copyright © 2026 じゃむじゃ",
     "win": {
+<<<<<<< HEAD
       "target": "portable"
+=======
+      "target": [
+        "nsis",
+        "portable"
+      ],
+      "icon": "icon.ico"
+>>>>>>> ea1e049c2a5e5b62ba4f5516257f507949bccb7c
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "VspoCosplayWidget",
+      "runAfterFinish": true,
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "artifactName": "${productName}_Setup_${version}.${ext}"
     },
     "directories": {
       "output": "dist"
     }
   },
   "dependencies": {
+    "@react-google-maps/api": "^2.20.8",
+    "@supabase/supabase-js": "^2.98.0",
+    "d3": "^7.9.0",
+    "framer-motion": "^12.35.2",
+    "leaflet": "^1.9.4",
     "next": "latest",
-    "papaparse": "latest",
+    "papaparse": "^5.5.3",
     "react": "latest",
-    "react-dom": "latest"
+    "react-dom": "latest",
+    "react-leaflet": "^5.0.0",
+    "recharts": "^3.8.0",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "electron": "^28.0.0",
