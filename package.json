@@ -16,8 +16,22 @@
     "productName": "VspoCosplayWidget",
     "copyright": "Copyright © 2026 じゃむじゃ",
     "win": {
-      "target": "portable",
+      "target": [
+        "nsis",
+        "portable"
+      ],
       "icon": "icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": "always",
+      "createStartMenuShortcut": true,
+      "shortcutName": "VspoCosplayWidget",
+      "runAfterFinish": true,
+      "installerIcon": "icon.ico",
+      "uninstallerIcon": "icon.ico",
+      "artifactName": "${productName}_Setup_${version}.${ext}"
     },
     "directories": {
       "output": "dist"
