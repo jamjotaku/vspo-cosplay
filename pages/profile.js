@@ -14,6 +14,7 @@ export default function Profile() {
     discord_id: '',
     theme_color: '#00f2ff'
   });
+  const [favorites, setFavorites] = useState([]); // アーカイブ画像用
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -33,7 +34,6 @@ export default function Profile() {
         .single();
       
       if (error && error.code === 'PGRST116') {
-        // データがない場合は初期値で作成(Auto-Create)
         const newProf = { id: session.user.id, oshi_member: '全員', theme_color: '#00f2ff' };
         await supabase.from('profiles').insert([newProf]);
         prof = newProf;
@@ -43,6 +43,15 @@ export default function Profile() {
         setProfile(prof);
         document.documentElement.style.setProperty('--v-accent', prof.theme_color || '#00f2ff');
       }
+
+      // 2. アーカイブ画像（お気に入り）を取得
+      const { data: favs } = await supabase.from('favorites')
+        .select('*')
+        .eq('user_id', session.user.id)
+        .order('created_at', { ascending: false });
+      
+      if (favs) setFavorites(favs);
+
       setLoading(false);
     };
 
@@ -157,6 +166,34 @@ export default function Profile() {
             </div>
           </div>
 
+          {/* ★新設：アーカイブ・ギャラリーセクション★ */}
+          <div className="p-glass-panel archive-section mt-20">
+            <div className="archive-head">
+              <span className="p-tag">ARCHIVED_MISSION_RESOURCES</span>
+              <span className="archive-count">{favorites.length} UNIT_STORED</span>
+            </div>
+            
+            <div className="p-archive-grid">
+              {favorites.length > 0 ? (
+                favorites.map((fav) => (
+                  <div key={fav.id} className="p-archive-item">
+                    <div className="archive-img-wrap">
+                      <img src={fav.image_url} alt={fav.member_name} />
+                      <div className="archive-overlay">
+                        <span className="overlay-tag">{fav.member_name}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="no-archive-msg">
+                  <i className="fas fa-ghost"></i>
+                  <p>NO_DATA_ARCHIVED_IN_DATABASE</p>
+                </div>
+              )}
+            </div>
+          </div>
+
           <Link href="/">
             <button className="p-back-btn">
               <i className="fas fa-arrow-left"></i> RETURN_TO_PORTAL
@@ -188,6 +225,49 @@ export default function Profile() {
         .p-value { font-size:14px; color:#eee; }
         .p-value-large { font-size:36px; font-weight:100; color:#fff; letter-spacing:0.1em; }
 
+        /* アーカイブセクション */
+        .archive-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
+        .archive-count { font-family:'JetBrains Mono'; font-size:9px; color:#333; }
+        .p-archive-grid { 
+          display: grid; 
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
+          gap: 15px; 
+          margin-top: 10px;
+        }
+        .p-archive-item { 
+          background: #000; 
+          border: 1px solid #111; 
+          border-radius: 4px; 
+          overflow: hidden; 
+          aspect-ratio: 4 / 5;
+          position: relative;
+          cursor: pointer;
+          transition: 0.4s;
+        }
+        .p-archive-item:hover { 
+          border-color: var(--v-accent); 
+          box-shadow: 0 0 20px var(--v-accent);
+          transform: translateY(-5px);
+        }
+        .archive-img-wrap { width: 100%; height: 100%; }
+        .archive-img-wrap img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; transition: 0.4s; }
+        .p-archive-item:hover img { opacity: 1; transform: scale(1.05); }
+        
+        .archive-overlay { 
+          position: absolute; inset: 0; 
+          background: linear-gradient(transparent 60%, rgba(0,0,0,0.9)); 
+          display: flex; align-items: flex-end; padding: 15px; 
+          opacity: 0; transition: 0.3s;
+        }
+        .p-archive-item:hover .archive-overlay { opacity: 1; }
+        .overlay-tag { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--v-accent); font-weight: 800; }
+
+        .no-archive-msg { 
+          grid-column: 1 / -1; padding: 60px; text-align: center; 
+          color: #222; font-family: 'JetBrains Mono'; font-size: 12px;
+        }
+        .no-archive-msg i { font-size: 30px; margin-bottom: 10px; display: block; }
+
         /* SNS表示 */
         .social-display { display:flex; gap:15px; }
         .social-icon-btn { width:50px; height:50px; background:rgba(255,255,255,0.03); border:1px solid #222; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff; transition:0.3s; text-decoration:none; }
@@ -205,31 +285,9 @@ export default function Profile() {
         .p-save-btn { background:var(--v-accent); color:#000; border:none; padding:15px; font-family:'JetBrains Mono'; font-weight:800; cursor:pointer; margin-top:10px; transition:0.3s; }
         .p-save-btn:hover { background:#fff; box-shadow: 0 0 20px var(--v-accent); }
 
-        /* ★リサイズ済み：ダウンロードカード★ */
-        .p-app-link-card { 
-          display: flex; 
-          align-items: center; 
-          gap: 15px; 
-          background: rgba(255,255,255,0.03); 
-          border: 1px solid rgba(255,255,255,0.1); 
-          padding: 12px 20px; 
-          border-radius: 4px;
-          cursor: pointer; 
-          transition: 0.3s;
-          max-width: 100%;
-        }
-        .p-app-link-card:hover { 
-          border-color: var(--v-accent); 
-          background: rgba(255,255,255,0.06); 
-          transform: translateX(5px); 
-        }
-        .mini-icon { 
-          width: 48px; 
-          height: 48px; 
-          object-fit: contain;
-          flex-shrink: 0;
-          filter: drop-shadow(0 0 8px var(--v-accent)); 
-        }
+        .p-app-link-card { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 12px 20px; border-radius: 4px; cursor: pointer; transition: 0.3s; max-width: 100%; }
+        .p-app-link-card:hover { border-color: var(--v-accent); background: rgba(255,255,255,0.06); transform: translateX(5px); }
+        .mini-icon { width: 48px; height: 48px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 0 8px var(--v-accent)); }
         .card-text { flex-grow: 1; }
         .card-title { font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 800; color: var(--v-accent); }
         .card-desc { font-size: 10px; color: #555; }
@@ -237,17 +295,13 @@ export default function Profile() {
 
         .p-logout-btn { background:none; border:1px solid #311; color:#633; padding:10px 20px; font-family:'JetBrains Mono'; font-size:10px; font-weight:800; cursor:pointer; transition:0.3s; }
         .p-logout-btn:hover { background:#311; color:#f66; border-color:#f66; }
-
         .p-back-btn { background:none; border:1px solid #222; color:#444; padding:10px 20px; font-family:'JetBrains Mono'; font-size:10px; cursor:pointer; transition:0.3s; margin-top:20px; }
         .p-back-btn:hover { border-color:#666; color:#eee; }
 
-        .mt-30 { margin-top:30px; }
-        .mt-40 { margin-top:40px; }
+        .mt-20 { margin-top: 20px; } .mt-30 { margin-top:30px; } .mt-40 { margin-top:40px; }
         .p-loader { height:100vh; background:#000; color:var(--v-accent); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono'; letter-spacing:0.5em; }
 
-        @media (max-width: 768px) {
-          .p-content-grid { grid-template-columns: 1fr; }
-        }
+        @media (max-width: 768px) { .p-content-grid { grid-template-columns: 1fr; } }
       `}</style>
     </div>
   );
