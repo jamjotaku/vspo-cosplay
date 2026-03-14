@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { useRouter } from 'next/router'; // ログインガード用
+import { useRouter } from 'next/router'; 
 import { supabase } from '../lib/supabaseClient';
 
-// アーカイブ画像取得用URL
 const CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQgV5MvOa8ZUcpQ9jL1HhYQOLS_y78ZoOnQI96iru-5JZVTrRc5Li4hBkN7igEyB5p73EuaaEfLC38G/pub?gid=0&single=true&output=csv";
 
-// ぶいすぽ標準並び順
 const MEMBER_ORDER = [
   '全員', '集合', '花芽すみれ', '花芽なずな', '小雀とと', '一ノ瀬うるは', '胡桃のあ',
   '兎咲ミミ', '空澄セナ', '橘ひなの', '英リサ', '如月れん', '神成きゅぴ', '八雲べに', 
@@ -18,12 +16,12 @@ const MEMBER_ORDER = [
 export default function Portal() {
   const router = useRouter();
 
-  // --- STATE_MANAGEMENT (既存機能を100%保持) ---
   const [allData, setAllData] = useState([]);
   const [featured, setFeatured] = useState(null);
   const [user, setUser] = useState(null);
   const [time, setTime] = useState(new Date());
   const [isConfigOpen, setIsConfigOpen] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false); // 保存演出用
   
   const [nextMission, setNextMission] = useState(null);
   const [latestArchive, setLatestArchive] = useState(null);
@@ -32,7 +30,6 @@ export default function Portal() {
   const [pulseStats, setPulseStats] = useState({ avgFervor: 0, lastDays: 0, hasSpark: false });
   const canvasRef = useRef(null);
 
-  // --- CONFIG_STATE (既存項目を完全保持しつつ、カラーピッカー項目を追加) ---
   const [config, setConfig] = useState({
     glow: true, 
     grain: true, 
@@ -40,13 +37,11 @@ export default function Portal() {
     brightness: 0.8,
     member: '全員', 
     cosplayer: '全員',
-    theme_color: '#00f2ff' // 新機能：カラーピッカー用
+    theme_color: '#00f2ff' 
   });
 
-  // --- INITIALIZATION (ログインガード & プロファイル同期の統合) ---
   useEffect(() => {
     const initPortal = async () => {
-      // 1. ログインガード：セッションの確認
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         router.push('/login');
@@ -55,39 +50,32 @@ export default function Portal() {
       const currentUser = session.user;
       setUser(currentUser);
 
-      // 2. 設定のロード（localStorage と Supabase profiles のマージ）
       const saved = localStorage.getItem('v_portal_final_v3');
       const localConfig = saved ? JSON.parse(saved) : {};
 
-      // Supabaseから推し設定とテーマカラーを同期
       const { data: prof } = await supabase.from('profiles').select('*').eq('id', currentUser.id).single();
       
       const mergedConfig = {
         ...config,
         ...localConfig,
-        // Supabase側にデータがあれば最優先、なければLocal、それもなければ初期値
         member: prof?.oshi_member || localConfig.member || '全員',
         cosplayer: prof?.favorite_cosplayer || localConfig.cosplayer || '全員',
         theme_color: prof?.theme_color || localConfig.theme_color || '#00f2ff'
       };
 
       setConfig(mergedConfig);
-      // CSS変数に反映
       document.documentElement.style.setProperty('--v-accent', mergedConfig.theme_color);
-
-      // 3. ログデータの取得開始
       fetchLogWidgets(currentUser.id);
     };
 
     initPortal();
 
+    // 監督のオリジナルロジックを完全保持
     const savedProgress = localStorage.getItem('v_total_progress') || 45;
     setProductionProgress(parseInt(savedProgress));
 
-    // 4. 時計の始動
     const clock = setInterval(() => setTime(new Date()), 1000);
 
-    // 5. CSVデータの取得
     const fetchAll = async () => {
       const Papa = (await import('papaparse')).default;
       Papa.parse(CSV_URL, {
@@ -108,33 +96,26 @@ export default function Portal() {
     return () => clearInterval(clock);
   }, []);
 
-  // --- FILTERED_IMAGE_LOGIC (既存のロジックを完全保持) ---
   const cosplayerList = useMemo(() => {
     return ['全員', ...new Set(allData.map(d => d.cosplayer))].sort();
   }, [allData]);
 
   const pickFeatured = useCallback(() => {
     if (allData.length === 0) return;
-    
-    // フィルタリング（member と cosplayer の両軸）
     let pool = allData.filter(p => 
       (config.member === '全員' || p.member === config.member) &&
       (config.cosplayer === '全員' || p.cosplayer === config.cosplayer)
     );
-
     if (pool.length === 0) pool = allData;
-    
     setFeatured(pool[Math.floor(Math.random() * pool.length)]);
   }, [allData, config.member, config.cosplayer]);
 
-  // ローテーション制御
   useEffect(() => {
     pickFeatured();
     const timer = setInterval(pickFeatured, config.interval);
     return () => clearInterval(timer);
   }, [pickFeatured, config.interval]);
 
-  // --- DATA_FETCHING_LOGIC (既存のロジックを完全保持) ---
   const fetchLogWidgets = async (userId) => {
     const today = new Date().toISOString().split('T')[0];
     const { data, error } = await supabase
@@ -143,10 +124,7 @@ export default function Portal() {
       .eq('user_id', userId) 
       .order('event_date', { ascending: true });
 
-    if (error) {
-      console.error("DATA_SYNC_ERROR:", error.message);
-      return;
-    }
+    if (error) return;
 
     if (data && data.length > 0) {
       setNextMission(data.find(l => l.event_date > today));
@@ -166,7 +144,26 @@ export default function Portal() {
     }
   };
 
-  // --- REALTIME_CANVAS_ENGINE (既存のノイズ演出を維持しつつカラーを連動) ---
+  // 保存機能：Supabaseへのデータ挿入
+  const handleSaveToArchive = async () => {
+    if (!featured || !user || isArchiving) return;
+    setIsArchiving(true);
+    
+    const { error } = await supabase.from('favorites').insert([
+      { 
+        user_id: user.id, 
+        image_url: featured.image, 
+        member_name: featured.member 
+      }
+    ]);
+
+    if (!error) {
+      setTimeout(() => setIsArchiving(false), 2000);
+    } else {
+      setIsArchiving(false);
+    }
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas || !pulseStats.avgFervor) return;
@@ -178,31 +175,25 @@ export default function Portal() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const amplitude = pulseStats.avgFervor * 12; 
       const frequency = 0.015 + (1 / (pulseStats.lastDays + 1)) * 0.04;
-      
       ctx.beginPath();
       ctx.lineWidth = 2;
-      // 選択されたテーマカラーを反映
       ctx.strokeStyle = config.theme_color || '#00f2ff';
       ctx.shadowBlur = 15;
       ctx.shadowColor = ctx.strokeStyle;
-
       for (let x = 0; x < canvas.width; x++) {
         const y = canvas.height / 2 + amplitude * Math.sin(x * frequency + offset);
         const noise = pulseStats.hasSpark ? (Math.random() - 0.5) * 10 : 0;
         if (x === 0) ctx.moveTo(x, y + noise);
         else ctx.lineTo(x, y + noise);
       }
-      
       ctx.stroke();
       offset -= 0.08;
       animationFrameId = requestAnimationFrame(render);
     };
-
     render();
     return () => cancelAnimationFrame(animationFrameId);
   }, [pulseStats, config.theme_color]);
 
-  // --- NEW: CONFIG_UPDATE_HANDLER (リアルタイムプレビュー用) ---
   const handleUpdate = (key, value) => {
     const newConfig = { ...config, [key]: value };
     setConfig(newConfig);
@@ -211,9 +202,7 @@ export default function Portal() {
     }
   };
 
-  // --- NEW: CONFIG_SAVE_PROTOCOL (Supabase + LocalStorage) ---
   const saveAllConfig = async () => {
-    // 1. Supabase Profiles テーブルの更新
     if (user) {
       await supabase.from('profiles').update({
         oshi_member: config.member,
@@ -221,12 +210,9 @@ export default function Portal() {
         theme_color: config.theme_color
       }).eq('id', user.id);
     }
-
-    // 2. LocalStorage の更新
     localStorage.setItem('v_portal_final_v3', JSON.stringify(config));
-    
     setIsConfigOpen(false);
-    pickFeatured(); // 設定適用時に画像を即時更新
+    pickFeatured();
   };
 
   if (!user) return <div className="p-loader">IDENTIFYING_COMMANDER...</div>;
@@ -234,7 +220,7 @@ export default function Portal() {
   return (
     <div className="p-root" style={{ '--v-bright': config.brightness }}>
       <Head>
-        <title>COMMAND_CENTER // VSPO! HUB v5.8</title>
+        <title>COMMAND_CENTER // VSPO! HUB v6.0</title>
         <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&family=Montserrat:wght@100;400;900&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
       </Head>
@@ -253,7 +239,6 @@ export default function Portal() {
       <main className="p-main-layer">
         <div className="p-grid">
           
-          {/* LEFT_WING (完全復元) */}
           <div className="p-wing-left">
             <div className="p-glass-panel">
               <span className="p-tag">PRODUCTION_STATUS</span>
@@ -268,7 +253,6 @@ export default function Portal() {
             </button>
           </div>
 
-          {/* CHRONO_CORE & BIO_MONITOR (完全復元) */}
           <div className="p-chrono-core">
             <div className="p-clock">{time.toLocaleTimeString('en-US', { hour12: false })}</div>
             <div className="p-date">{time.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}</div>
@@ -285,13 +269,18 @@ export default function Portal() {
             </div>
           </div>
 
-          {/* RIGHT_WING (Featured + フィードパネル完全復元) */}
           <div className="p-wing-right">
             <div className="p-stack">
               {featured && (
                 <div className="p-featured-card">
                   <div className="p-featured-media">
                     <img src={featured.image} alt="" key={featured.image} />
+                    <button 
+                      className={`p-archive-trigger ${isArchiving ? 'active' : ''}`}
+                      onClick={handleSaveToArchive}
+                    >
+                      <i className={isArchiving ? "fas fa-check" : "fas fa-bookmark"}></i>
+                    </button>
                   </div>
                   <div className="p-featured-info">
                     <span className="p-tag">FEATURED_ARCHIVE</span>
@@ -315,19 +304,23 @@ export default function Portal() {
 
         </div>
 
-        {/* DOCK_NAVIGATION (全6項目完全復元) */}
         <nav className="p-dock">
           <Link href="/gallery"><div className="p-dock-item"><i className="fas fa-th-large"></i><span>GALLERY</span></div></Link>
           <Link href="/log"><div className="p-dock-item"><i className="fas fa-history"></i><span>LOGS</span></div></Link>
           <Link href="/tracker"><div className="p-dock-item"><i className="fas fa-compass"></i><span>TRACKER</span></div></Link>
           <Link href="/chronicle"><div className="p-dock-item"><i className="fas fa-project-diagram"></i><span>CHRONICLE</span></div></Link>
           <Link href="/analytics"><div className="p-dock-item"><i className="fas fa-chart-line"></i><span>ANALYTICS</span></div></Link>
-          <Link href="/workstation"><div className="p-dock-item"><i className="fas fa-hammer"></i><span>WORKSTATION</span> </div></Link>
-          <Link href="/profile"><div className="p-dock-item p-profile-trigger"><i className="fas fa-user-shield"></i><span>PROFILE</span><span className="p-notif-dot"></span></div></Link>
-</nav>
+          <Link href="/workstation"><div className="p-dock-item"><i className="fas fa-hammer"></i><span>WORKSTATION</span></div></Link>
+          <Link href="/profile">
+            <div className="p-dock-item p-profile-trigger">
+              <i className="fas fa-user-shield"></i>
+              <span>PROFILE</span>
+              <span className="p-notif-dot"></span>
+            </div>
+          </Link>
+        </nav>
       </main>
 
-      {/* --- INTEGRATED CONFIG MODAL (既存UIを100%保持 + カラーピッカー統合) --- */}
       {isConfigOpen && (
         <div className="p-modal-overlay" onClick={() => setIsConfigOpen(false)}>
           <div className="p-modal-card" onClick={e => e.stopPropagation()}>
@@ -336,47 +329,25 @@ export default function Portal() {
               <button onClick={() => setIsConfigOpen(false)} className="close-btn">&times;</button>
             </div>
             <div className="p-modal-body">
-              
               <div className="p-modal-row">
                 <label>TARGET_MEMBER</label>
-                <select 
-                  className="custom-input" 
-                  value={config.member} 
-                  onChange={e => handleUpdate('member', e.target.value)}
-                >
+                <select className="custom-input" value={config.member} onChange={e => handleUpdate('member', e.target.value)}>
                   {MEMBER_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
                 </select>
               </div>
-
               <div className="p-modal-row">
                 <label>IDENTIFIED_COSPLAYER</label>
-                <select 
-                  className="custom-input" 
-                  value={config.cosplayer} 
-                  onChange={e => handleUpdate('cosplayer', e.target.value)}
-                >
+                <select className="custom-input" value={config.cosplayer} onChange={e => handleUpdate('cosplayer', e.target.value)}>
                   {cosplayerList.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
-
-              {/* NEW: RESONANCE COLOR PICKER */}
               <div className="p-modal-row">
                 <label>RESONANCE_COLOR</label>
                 <div className="color-ctrl">
-                  <input 
-                    type="color" 
-                    value={config.theme_color || '#00f2ff'} 
-                    onChange={e => handleUpdate('theme_color', e.target.value)}
-                  />
-                  <input 
-                    type="text" 
-                    className="hex-input"
-                    value={(config.theme_color || '#00f2ff').toUpperCase()}
-                    onChange={e => handleUpdate('theme_color', e.target.value)}
-                  />
+                  <input type="color" value={config.theme_color || '#00f2ff'} onChange={e => handleUpdate('theme_color', e.target.value)} />
+                  <input type="text" className="hex-input" value={(config.theme_color || '#00f2ff').toUpperCase()} onChange={e => handleUpdate('theme_color', e.target.value)} />
                 </div>
               </div>
-
               <div className="p-modal-row">
                 <label>AMBIENT_GLOW</label>
                 <div className="custom-check">
@@ -384,12 +355,10 @@ export default function Portal() {
                   <label htmlFor="glow"></label>
                 </div>
               </div>
-
               <div className="p-modal-row">
                 <label>MASTER_BRIGHTNESS</label>
                 <input type="range" min="0.2" max="1" step="0.1" value={config.brightness} onChange={e => handleUpdate('brightness', parseFloat(e.target.value))} className="custom-slider" />
               </div>
-
               <div className="p-modal-row">
                 <label>INTERVAL (ms)</label>
                 <input type="number" step="1000" value={config.interval} onChange={e => handleUpdate('interval', parseInt(e.target.value))} className="custom-input" />
@@ -435,9 +404,23 @@ export default function Portal() {
         .p-pulse-stat strong { font-size: 18px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
         .spark-status strong { color: var(--v-accent); text-shadow: 0 0 10px var(--v-accent); }
 
-        .p-featured-card { padding:0; overflow:hidden; }
-        .p-featured-media { height:240px; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; }
+        .p-featured-card { padding:0; overflow:hidden; position:relative; }
+        .p-featured-media { height:240px; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
         .p-featured-media img { max-width:100%; max-height:100%; object-fit:contain; }
+        
+        /* 保存ボタンの追加スタイル */
+        .p-archive-trigger { 
+          position:absolute; top:15px; right:15px; 
+          background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.1); 
+          color:#fff; width:36px; height:36px; border-radius:50%; 
+          display:flex; align-items:center; justify-content:center; 
+          cursor:pointer; opacity:0; transform:translateY(-10px); transition:0.3s;
+          z-index:20;
+        }
+        .p-featured-card:hover .p-archive-trigger { opacity:1; transform:translateY(0); }
+        .p-archive-trigger:hover { border-color:var(--v-accent); color:var(--v-accent); box-shadow:0 0 15px var(--v-accent); }
+        .p-archive-trigger.active { background:var(--v-accent); color:#000; border-color:var(--v-accent); opacity:1; transform:scale(1.1); }
+
         .p-featured-info { padding:20px; }
         .p-featured-info h3 { margin:0; font-size:18px; font-weight:400; color:#eee; }
         .p-featured-info p { margin:8px 0 0; font-size:10px; font-weight:800; color:#555; }
@@ -447,11 +430,12 @@ export default function Portal() {
         .p-feed-row p { margin:0; font-size:14px; color:#fff; font-weight: 400; line-height: 1.4; }
 
         .p-dock { position:fixed; bottom:40px; left:50%; transform:translateX(-50%); display:flex; gap:10px; background:rgba(0,0,0,0.8); backdrop-filter:blur(30px); padding:8px; border-radius:50px; border:1px solid rgba(255,255,255,0.1); z-index:100; }
-        .p-dock-item { padding:12px 25px; border-radius:40px; color:#666; transition:0.3s; cursor:pointer; display: flex; align-items: center; gap: 10px; }
+        .p-dock-item { padding:12px 25px; border-radius:40px; color:#666; transition:0.3s; cursor:pointer; display: flex; align-items: center; gap: 10px; text-decoration:none; }
         .p-dock-item:hover { color:var(--v-accent); background:rgba(255,255,255,0.1); }
         .p-dock-item span { font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 800; }
+        .p-notif-dot { width:6px; height:6px; background:var(--v-accent); border-radius:50%; box-shadow:0 0 10px var(--v-accent); animation:dot-pulse 2s infinite; }
+        @keyframes dot-pulse { 0% { opacity:0.3; transform:scale(0.8); } 50% { opacity:1; transform:scale(1.1); } 100% { opacity:0.3; transform:scale(0.8); } }
 
-        /* CONFIG MODAL */
         .p-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(20px); z-index:2000; display:flex; align-items:center; justify-content:center; }
         .p-modal-card { background:#0a0a0b; width:450px; padding:40px; border:1px solid #222; border-radius:4px; box-shadow: 0 0 100px #000; }
         .p-modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; border-bottom:1px solid #111; padding-bottom:15px; }
@@ -475,7 +459,6 @@ export default function Portal() {
         .custom-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; background:var(--v-accent); border-radius:50%; box-shadow:0 0 10px var(--v-accent); cursor:pointer; }
         
         .custom-input { background:#111; border:1px solid #222; color:#fff; padding:8px 12px; font-family: 'JetBrains Mono'; font-size:12px; text-align:right; width:150px; outline:none; border-radius:4px; }
-        .custom-input:focus { border-color:var(--v-accent); }
         
         .p-modal-save { width:100%; padding:20px; background:var(--v-accent); color:#000; font-family: 'JetBrains Mono'; font-weight:800; border:none; margin-top:20px; cursor:pointer; transition:0.3s; }
         .p-modal-save:hover { background:#fff; box-shadow:0 0 30px var(--v-accent); }
