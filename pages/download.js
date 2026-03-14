@@ -27,7 +27,7 @@ export default function Download() {
           <div className="p-content-grid">
             <div className="p-glass-panel visual-box">
                {/* 苦労して作ったあのアイコンを表示 */}
-              <img src="/icon.ico" alt="Widget Icon" className="p-icon-main" />
+              <img src="/icon.png" alt="Widget Icon" className="p-icon-main" />
               <div className="p-status-row">
                 <span className="status-dot"></span>
                 <span className="status-text">READY_FOR_DEPLOY</span>
@@ -37,7 +37,7 @@ export default function Download() {
             <div className="p-glass-panel info-box">
               <span className="p-tag">SPECIFICATION</span>
               <p className="p-desc">
-                ぶいすぽっ！のアーカイブをデスクトップに常駐させる専用ウィジェット。
+                ぶいすぽコスプレイヤーさんのアーカイブをデスクトップに常駐させる専用ウィジェット。
                 ポータルとのデータ同期機能を搭載し、常に最新の「推し」を表示します。
               </p>
               
