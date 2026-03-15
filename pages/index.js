@@ -21,7 +21,7 @@ export default function Portal() {
   const [user, setUser] = useState(null);
   const [time, setTime] = useState(new Date());
   const [isConfigOpen, setIsConfigOpen] = useState(false);
-  const [isArchiving, setIsArchiving] = useState(false); // 保存演出用
+  const [isArchiving, setIsArchiving] = useState(false); 
   
   const [nextMission, setNextMission] = useState(null);
   const [latestArchive, setLatestArchive] = useState(null);
@@ -70,7 +70,6 @@ export default function Portal() {
 
     initPortal();
 
-    // 監督のオリジナルロジックを完全保持
     const savedProgress = localStorage.getItem('v_total_progress') || 45;
     setProductionProgress(parseInt(savedProgress));
 
@@ -144,24 +143,14 @@ export default function Portal() {
     }
   };
 
-  // 保存機能：Supabaseへのデータ挿入
   const handleSaveToArchive = async () => {
     if (!featured || !user || isArchiving) return;
     setIsArchiving(true);
-    
     const { error } = await supabase.from('favorites').insert([
-      { 
-        user_id: user.id, 
-        image_url: featured.image, 
-        member_name: featured.member 
-      }
+      { user_id: user.id, image_url: featured.image, member_name: featured.member }
     ]);
-
-    if (!error) {
-      setTimeout(() => setIsArchiving(false), 2000);
-    } else {
-      setIsArchiving(false);
-    }
+    if (!error) setTimeout(() => setIsArchiving(false), 2000);
+    else setIsArchiving(false);
   };
 
   useEffect(() => {
@@ -215,7 +204,74 @@ export default function Portal() {
     pickFeatured();
   };
 
-  if (!user) return <div className="p-loader">IDENTIFYING_COMMANDER...</div>;
+  // ★アップデート箇所：漆黒のブートローダー★
+  if (!user) {
+    return (
+      <div className="p-boot-loader">
+        <div className="p-boot-content">
+          <div className="p-boot-text">IDENTIFYING_COMMANDER...</div>
+          <div className="p-boot-bar">
+            <div className="p-boot-progress"></div>
+          </div>
+          <div className="p-boot-sub">ESTABLISHING_SECURE_LINK</div>
+        </div>
+        <style jsx>{`
+          .p-boot-loader {
+            position: fixed;
+            inset: 0;
+            background: #000;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .p-boot-content { text-align: center; }
+          .p-boot-text {
+            font-family: 'JetBrains Mono', monospace;
+            color: ${config.theme_color || '#00f2ff'};
+            font-size: 14px;
+            font-weight: 800;
+            letter-spacing: 0.5em;
+            text-shadow: 0 0 15px ${config.theme_color || '#00f2ff'};
+            margin-bottom: 25px;
+            animation: boot-pulse 2s infinite ease-in-out;
+          }
+          .p-boot-bar {
+            width: 240px;
+            height: 2px;
+            background: rgba(255, 255, 255, 0.05);
+            margin: 0 auto;
+            position: relative;
+            overflow: hidden;
+            border-radius: 2px;
+          }
+          .p-boot-progress {
+            position: absolute;
+            width: 80px;
+            height: 100%;
+            background: ${config.theme_color || '#00f2ff'};
+            box-shadow: 0 0 20px ${config.theme_color || '#00f2ff'};
+            animation: boot-slide 1.5s infinite ease-in-out;
+          }
+          .p-boot-sub {
+            margin-top: 15px;
+            font-family: 'JetBrains Mono';
+            font-size: 8px;
+            color: #333;
+            letter-spacing: 0.3em;
+          }
+          @keyframes boot-pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.98); }
+          }
+          @keyframes boot-slide {
+            from { left: -80px; }
+            to { left: 100%; }
+          }
+        `}</style>
+      </div>
+    );
+  }
 
   return (
     <div className="p-root" style={{ '--v-bright': config.brightness }}>
@@ -238,7 +294,6 @@ export default function Portal() {
 
       <main className="p-main-layer">
         <div className="p-grid">
-          
           <div className="p-wing-left">
             <div className="p-glass-panel">
               <span className="p-tag">PRODUCTION_STATUS</span>
@@ -301,7 +356,6 @@ export default function Portal() {
               </div>
             </div>
           </div>
-
         </div>
 
         <nav className="p-dock">
@@ -370,7 +424,7 @@ export default function Portal() {
       )}
 
       <style jsx global>{`
-        :root { --v-accent: #00f2ff; --v-magenta: #ff00ff; }
+        :root { --v-accent: ${config.theme_color || '#00f2ff'}; --v-magenta: #ff00ff; }
         body { margin:0; background:#000; color:#fff; font-family:'Montserrat', sans-serif; overflow:hidden; }
 
         .p-grain { position:fixed; inset:0; background:url('https://grainy-gradients.vercel.app/noise.svg'); opacity:0.05; pointer-events:none; z-index:900; }
@@ -393,7 +447,6 @@ export default function Portal() {
         .p-config-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#999; padding:12px 25px; font-size:10px; font-weight:800; border-radius:4px; cursor:pointer; font-family: 'JetBrains Mono'; }
         .p-config-btn:hover { border-color:var(--v-accent); color:var(--v-accent); }
 
-        .p-chrono-core { display: flex; flex-direction: column; align-items: center; }
         .p-clock { font-size:120px; font-weight:100; text-align:center; letter-spacing: -0.05em; line-height: 1; }
         .p-date { font-size:12px; font-weight:800; color:#333; letter-spacing:0.5em; margin: 10px 0 40px; text-align:center; font-family: 'JetBrains Mono'; }
 
@@ -408,15 +461,7 @@ export default function Portal() {
         .p-featured-media { height:240px; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
         .p-featured-media img { max-width:100%; max-height:100%; object-fit:contain; }
         
-        /* 保存ボタンの追加スタイル */
-        .p-archive-trigger { 
-          position:absolute; top:15px; right:15px; 
-          background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.1); 
-          color:#fff; width:36px; height:36px; border-radius:50%; 
-          display:flex; align-items:center; justify-content:center; 
-          cursor:pointer; opacity:0; transform:translateY(-10px); transition:0.3s;
-          z-index:20;
-        }
+        .p-archive-trigger { position:absolute; top:15px; right:15px; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.1); color:#fff; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transform:translateY(-10px); transition:0.3s; z-index:20; }
         .p-featured-card:hover .p-archive-trigger { opacity:1; transform:translateY(0); }
         .p-archive-trigger:hover { border-color:var(--v-accent); color:var(--v-accent); box-shadow:0 0 15px var(--v-accent); }
         .p-archive-trigger.active { background:var(--v-accent); color:#000; border-color:var(--v-accent); opacity:1; transform:scale(1.1); }
@@ -441,29 +486,21 @@ export default function Portal() {
         .p-modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; border-bottom:1px solid #111; padding-bottom:15px; }
         .p-modal-head h3 { font-family: 'JetBrains Mono'; font-size:12px; font-weight:800; color:#eee; margin:0; }
         .close-btn { background:none; border:none; color:#444; font-size:30px; cursor:pointer; }
-        
         .p-modal-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; }
         .p-modal-row label { font-family: 'JetBrains Mono'; font-size:10px; font-weight:800; color:#666; }
-        
         .color-ctrl { display:flex; gap:10px; align-items:center; }
         .color-ctrl input[type="color"] { background:none; border:1px solid #222; width:40px; height:40px; cursor:pointer; }
         .hex-input { background:#000; border:1px solid #222; color:#fff; padding:10px; width:100px; font-family:'JetBrains Mono'; text-align:center; outline:none; font-size:12px; }
-
         .custom-check { position:relative; width:20px; height:20px; }
         .custom-check input { opacity:0; position:absolute; }
         .custom-check label { position:absolute; inset:0; border:2px solid #333; border-radius:2px; cursor:pointer; }
         .custom-check input:checked + label { border-color:var(--v-accent); background:rgba(0,242,255,0.1); }
         .custom-check input:checked + label::after { content:'✓'; position:absolute; top:-2px; left:3px; color:var(--v-accent); font-size:14px; }
-        
         .custom-slider { -webkit-appearance:none; width:150px; height:2px; background:#222; outline:none; }
         .custom-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; background:var(--v-accent); border-radius:50%; box-shadow:0 0 10px var(--v-accent); cursor:pointer; }
-        
         .custom-input { background:#111; border:1px solid #222; color:#fff; padding:8px 12px; font-family: 'JetBrains Mono'; font-size:12px; text-align:right; width:150px; outline:none; border-radius:4px; }
-        
         .p-modal-save { width:100%; padding:20px; background:var(--v-accent); color:#000; font-family: 'JetBrains Mono'; font-weight:800; border:none; margin-top:20px; cursor:pointer; transition:0.3s; }
         .p-modal-save:hover { background:#fff; box-shadow:0 0 30px var(--v-accent); }
-
-        .p-loader { height:100vh; background:#000; color:var(--v-accent); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono'; letter-spacing:0.5em; font-size:14px; }
       `}</style>
     </div>
   );
