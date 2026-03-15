@@ -146,11 +146,20 @@ export default function Portal() {
   const handleSaveToArchive = async () => {
     if (!featured || !user || isArchiving) return;
     setIsArchiving(true);
+    
     const { error } = await supabase.from('favorites').insert([
-      { user_id: user.id, image_url: featured.image, member_name: featured.member }
+      { 
+        user_id: user.id, 
+        image_url: featured.image, 
+        member_name: featured.member 
+      }
     ]);
-    if (!error) setTimeout(() => setIsArchiving(false), 2000);
-    else setIsArchiving(false);
+
+    if (!error) {
+      setTimeout(() => setIsArchiving(false), 2000);
+    } else {
+      setIsArchiving(false);
+    }
   };
 
   useEffect(() => {
@@ -204,7 +213,7 @@ export default function Portal() {
     pickFeatured();
   };
 
-  // ★アップデート箇所：漆黒のブートローダー★
+  // ★ブートローダー：漆黒の認証画面★
   if (!user) {
     return (
       <div className="p-boot-loader">
@@ -294,6 +303,7 @@ export default function Portal() {
 
       <main className="p-main-layer">
         <div className="p-grid">
+          
           <div className="p-wing-left">
             <div className="p-glass-panel">
               <span className="p-tag">PRODUCTION_STATUS</span>
@@ -312,8 +322,9 @@ export default function Portal() {
             <div className="p-clock">{time.toLocaleTimeString('en-US', { hour12: false })}</div>
             <div className="p-date">{time.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}</div>
             
+            {/* ★パルスモニター：完全センター ＆ フェードエッジ★ */}
             <div className="p-pulse-monitor">
-              <canvas ref={canvasRef} width={600} height={120} />
+              <canvas ref={canvasRef} width={800} height={120} />
               <div className="p-pulse-info">
                 <div className="p-pulse-stat"><span>FERVOR_AVG</span> <strong>{pulseStats.avgFervor.toFixed(1)}</strong></div>
                 <div className="p-pulse-stat"><span>LAST_SCAN</span> <strong>{pulseStats.lastDays}D_AGO</strong></div>
@@ -356,6 +367,7 @@ export default function Portal() {
               </div>
             </div>
           </div>
+
         </div>
 
         <nav className="p-dock">
@@ -447,11 +459,19 @@ export default function Portal() {
         .p-config-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#999; padding:12px 25px; font-size:10px; font-weight:800; border-radius:4px; cursor:pointer; font-family: 'JetBrains Mono'; }
         .p-config-btn:hover { border-color:var(--v-accent); color:var(--v-accent); }
 
+        .p-chrono-core { display: flex; flex-direction: column; align-items: center; }
         .p-clock { font-size:120px; font-weight:100; text-align:center; letter-spacing: -0.05em; line-height: 1; }
         .p-date { font-size:12px; font-weight:800; color:#333; letter-spacing:0.5em; margin: 10px 0 40px; text-align:center; font-family: 'JetBrains Mono'; }
 
-        .p-pulse-monitor { width: 600px; position: relative; }
-        .p-pulse-info { display: flex; justify-content: space-between; margin-top: 25px; padding: 0 40px; }
+        /* パルスモニター：HUD仕様に強化 */
+        .p-pulse-monitor { 
+          width: 800px; 
+          position: relative; 
+          margin: 0 auto;
+          mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+          -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+        }
+        .p-pulse-info { display: flex; justify-content: space-between; margin-top: 25px; padding: 0 60px; }
         .p-pulse-stat { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 800; color: #fff; text-align: center; }
         .p-pulse-stat span { color: #444; margin-bottom: 8px; font-size: 9px; display: block; letter-spacing: 0.1em; }
         .p-pulse-stat strong { font-size: 18px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
