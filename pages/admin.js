@@ -17,7 +17,7 @@ export default function AdminConsole() {
   useEffect(() => {
     const checkAdmin = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session || !session.user.email.startsWith("Jamj__Otaku")) {
+      if (!session || !session.user.email.startsWith("jamj__otaku")) {
         router.push('/'); // 管理者以外は即追放
         return;
       }
