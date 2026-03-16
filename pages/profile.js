@@ -9,7 +9,7 @@ export default function Profile() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState({
     oshi_member: '全員',
-    oshi_cosplayer: 'UNDEFINED', // ★追加：メイン表示用
+    oshi_cosplayer: 'UNDEFINED',
     x_url: '',
     instagram_url: '',
     discord_id: '',
@@ -18,6 +18,7 @@ export default function Profile() {
   const [favorites, setFavorites] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [saveLoading, setSaveLoading] = useState(false); // 保存専用のローディング
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -28,7 +29,6 @@ export default function Profile() {
       }
       setUser(session.user);
 
-      // 1. プロフィール取得（なければ作成）
       let { data: prof, error } = await supabase.from('profiles')
         .select('*')
         .eq('id', session.user.id)
@@ -50,34 +50,45 @@ export default function Profile() {
         document.documentElement.style.setProperty('--v-accent', prof.theme_color || '#00f2ff');
       }
 
-      // 2. アーカイブ画像（お気に入り）を取得
       const { data: favs } = await supabase.from('favorites')
         .select('*')
         .eq('user_id', session.user.id)
         .order('created_at', { ascending: false });
       
       if (favs) setFavorites(favs);
-
       setLoading(false);
     };
 
     fetchUserData();
   }, [router]);
 
-  // 保存処理
+  // 保存処理の安定化
   const handleSave = async () => {
-    setLoading(true);
-    const { error } = await supabase.from('profiles').upsert({
+    if (saveLoading) return;
+    setSaveLoading(true);
+
+    // 送信データを精査（idの重複送信や余計なカラムを除外）
+    const updateData = {
       id: user.id,
-      ...profile,
+      oshi_member: profile.oshi_member,
+      oshi_cosplayer: profile.oshi_cosplayer,
+      x_url: profile.x_url,
+      instagram_url: profile.instagram_url,
+      theme_color: profile.theme_color,
       updated_at: new Date(),
-    });
+    };
+
+    const { error } = await supabase.from('profiles').upsert(updateData);
 
     if (!error) {
       setIsEditing(false);
       document.documentElement.style.setProperty('--v-accent', profile.theme_color);
+      alert("PROFILE_UPDATED_SUCCESSFULLY");
+    } else {
+      console.error(error);
+      alert("SAVE_ERROR: " + error.message);
     }
-    setLoading(false);
+    setSaveLoading(false);
   };
 
   const handleLogout = async () => {
@@ -95,11 +106,11 @@ export default function Profile() {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
       </Head>
 
+      {/* 粒子レイヤーを最背面へ移動 */}
       <div className="p-grain"></div>
       
       <main className="p-main-layer">
         <div className="p-container">
-          {/* ヘッダーエリア */}
           <div className="p-glass-panel head-area flex-between">
             <div>
               <span className="p-tag">COMMANDER_IDENTITY_CARD</span>
@@ -122,7 +133,6 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* 編集フォーム */}
               <div className="social-section mt-30">
                 <span className="p-tag">IDENTITY_RESOURCES</span>
                 {isEditing ? (
@@ -147,25 +157,32 @@ export default function Profile() {
                       <label><i className="fas fa-palette"></i> THEME_COLOR</label>
                       <input type="color" value={profile.theme_color} onChange={e => setProfile({...profile, theme_color: e.target.value})} className="p-color-picker" />
                     </div>
-                    <button className="p-save-btn" onClick={handleSave}>UPDATE_IDENT_DATA</button>
+                    
+                    {/* 保存ボタン：ローディング中はテキスト変更 & 無効化 */}
+                    <button 
+                      className={`p-save-btn ${saveLoading ? 'loading' : ''}`} 
+                      onClick={handleSave}
+                      disabled={saveLoading}
+                    >
+                      {saveLoading ? 'SYNCHRONIZING...' : 'UPDATE_IDENT_DATA'}
+                    </button>
                   </div>
                 ) : (
                   <div className="social-display">
                     {profile.x_url ? (
-                      <a href={profile.x_url} target="_blank" className="social-icon-btn"><i className="fab fa-x-twitter"></i></a>
+                      <a href={profile.x_url} target="_blank" rel="noreferrer" className="social-icon-btn"><i className="fab fa-x-twitter"></i></a>
                     ) : <span className="no-data">NO_X_LINK</span>}
                     {profile.instagram_url ? (
-                      <a href={profile.instagram_url} target="_blank" className="social-icon-btn"><i className="fab fa-instagram"></i></a>
+                      <a href={profile.instagram_url} target="_blank" rel="noreferrer" className="social-icon-btn"><i className="fab fa-instagram"></i></a>
                     ) : <span className="no-data">NO_INSTA_LINK</span>}
                   </div>
                 )}
               </div>
             </div>
 
-            {/* 右側：メインステータス (Resonance) */}
+            {/* 右側：メインステータス */}
             <div className="p-glass-panel equipment-box">
               <span className="p-tag">CURRENT_RESONANCE</span>
-              {/* コスプレイヤー名をデカデカと表示 */}
               <div className="p-value-large resonance-glow">{profile?.oshi_cosplayer}</div>
               <div className="p-sub-value">TARGET_CHARACTER: {profile?.oshi_member}</div>
               
@@ -227,7 +244,8 @@ export default function Profile() {
         :root { --v-accent: ${profile.theme_color}; }
         body { margin:0; background:#000; color:#fff; font-family:'Montserrat', sans-serif; overflow-x:hidden; }
         
-        .p-grain { position:fixed; inset:0; background:url('https://grainy-gradients.vercel.app/noise.svg'); opacity:0.05; pointer-events:none; z-index:900; }
+        /* Z-indexを調整してクリックを邪魔しないように修正 */
+        .p-grain { position:fixed; inset:0; background:url('https://grainy-gradients.vercel.app/noise.svg'); opacity:0.05; pointer-events:none; z-index:0; }
         .p-main-layer { position:relative; min-height:100vh; padding:60px 20px; box-sizing:border-box; z-index:10; background: radial-gradient(circle at 50% -20%, #0a0a15, #000); }
         .p-container { max-width:1000px; margin:0 auto; }
 
@@ -236,55 +254,57 @@ export default function Profile() {
         .p-tag { font-family:'JetBrains Mono'; font-size:10px; font-weight:800; color:var(--v-accent); letter-spacing:0.2em; display:block; margin-bottom:15px; text-shadow: 0 0 10px var(--v-accent); }
         
         h1 { font-size:40px; font-weight:900; margin:0; letter-spacing:0.1em; }
-
         .p-content-grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
-        
         .user-info-row { display:flex; gap:20px; align-items:center; }
         .p-avatar { width:60px; height:60px; border:1px solid var(--v-accent); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--v-accent); font-size:24px; box-shadow:0 0 15px var(--v-accent); }
-        
         .p-label { font-family:'JetBrains Mono'; font-size:9px; color:#555; font-weight:800; }
         .p-value { font-size:14px; color:#eee; font-family: 'JetBrains Mono'; }
-        
-        /* Resonance表示の強化 */
         .p-value-large { font-size:42px; font-weight:900; color:#fff; letter-spacing:0.05em; margin-bottom: 5px; }
         .resonance-glow { text-shadow: 0 0 20px rgba(255,255,255,0.2); }
         .p-sub-value { font-family: 'JetBrains Mono'; font-size: 11px; color: #444; font-weight: 800; }
 
-        /* アーカイブセクション */
-        .archive-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
-        .archive-count { font-family:'JetBrains Mono'; font-size:9px; color:#333; }
-        .p-archive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 10px; }
+        .p-archive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
         .p-archive-item { background: #000; border: 1px solid #111; border-radius: 4px; overflow: hidden; aspect-ratio: 4 / 5; position: relative; cursor: pointer; transition: 0.4s; }
         .p-archive-item:hover { border-color: var(--v-accent); box-shadow: 0 0 25px var(--v-accent); transform: translateY(-5px); }
         .archive-img-wrap { width: 100%; height: 100%; }
         .archive-img-wrap img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; transition: 0.4s; }
         .p-archive-item:hover img { opacity: 1; transform: scale(1.05); }
-        .archive-overlay { position: absolute; inset: 0; background: linear-gradient(transparent 60%, rgba(0,0,0,0.9)); display: flex; align-items: flex-end; padding: 15px; opacity: 0; transition: 0.3s; }
-        .p-archive-item:hover .archive-overlay { opacity: 1; }
-        .overlay-tag { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--v-accent); font-weight: 800; }
 
         .social-display { display:flex; gap:15px; }
         .social-icon-btn { width:50px; height:50px; background:rgba(255,255,255,0.03); border:1px solid #222; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff; transition:0.3s; text-decoration:none; border-radius: 4px; }
         .social-icon-btn:hover { border-color:var(--v-accent); color:var(--v-accent); box-shadow: 0 0 15px var(--v-accent); transform: translateY(-2px); }
-        .no-data { font-family:'JetBrains Mono'; font-size:10px; color:#333; }
 
-        /* 編集フォーム */
         .edit-form { display:flex; flex-direction:column; gap:15px; }
         .form-group label { display:block; font-family:'JetBrains Mono'; font-size:10px; color:#555; margin-bottom:8px; font-weight: 800; }
         .form-group input { width:100%; background:rgba(0,0,0,0.5); border:1px solid #222; color:#fff; padding:12px; font-family:'JetBrains Mono'; font-size:12px; border-radius:4px; transition:0.3s; box-sizing: border-box; }
         .form-group input:focus { border-color:var(--v-accent); outline:none; box-shadow: 0 0 10px var(--v-accent); background: #000; }
         .p-color-picker { height: 45px; cursor: pointer; padding: 5px !important; }
         
-        .p-edit-toggle { background:none; border:1px solid #333; color:#666; padding:10px 20px; font-family:'JetBrains Mono'; font-size:10px; cursor:pointer; transition:0.3s; border-radius: 4px; }
-        .p-edit-toggle:hover { border-color:var(--v-accent); color:var(--v-accent); }
-        .p-save-btn { background:var(--v-accent); color:#000; border:none; padding:18px; font-family:'JetBrains Mono'; font-weight:800; cursor:pointer; margin-top:10px; transition:0.3s; border-radius: 4px; letter-spacing: 0.1em; }
-        .p-save-btn:hover { background:#fff; box-shadow: 0 0 30px var(--v-accent); transform: translateY(-2px); }
+        .p-edit-toggle { background:none; border:1px solid #333; color:#666; padding:10px 20px; font-family:'JetBrains Mono'; font-size:10px; cursor:pointer; transition:0.3s; border-radius: 4px; z-index: 100; }
+        
+        /* 保存ボタンの強化 */
+        .p-save-btn { 
+          background:var(--v-accent); 
+          color:#000; 
+          border:none; 
+          padding:18px; 
+          font-family:'JetBrains Mono'; 
+          font-weight:800; 
+          cursor:pointer; 
+          margin-top:10px; 
+          transition:0.3s; 
+          border-radius: 4px; 
+          letter-spacing: 0.1em;
+          pointer-events: auto; /* 強制的にイベントを有効化 */
+          position: relative;
+          z-index: 100;
+        }
+        .p-save-btn:hover:not(:disabled) { background:#fff; box-shadow: 0 0 30px var(--v-accent); transform: translateY(-2px); }
+        .p-save-btn:disabled { opacity: 0.5; cursor: wait; }
 
         .p-app-link-card { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 15px 20px; border-radius: 4px; cursor: pointer; transition: 0.3s; }
         .p-app-link-card:hover { border-color: var(--v-accent); background: rgba(255,255,255,0.06); transform: translateX(5px); }
         .mini-icon { width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 0 8px var(--v-accent)); }
-        .card-title { font-family: 'JetBrains Mono'; font-size: 13px; font-weight: 800; color: var(--v-accent); }
-        .card-desc { font-size: 10px; color: #555; margin-top: 4px; }
 
         .p-logout-btn { background:none; border:1px solid #311; color:#633; padding:12px 20px; font-family:'JetBrains Mono'; font-size:10px; font-weight:800; cursor:pointer; transition:0.3s; border-radius: 4px; }
         .p-logout-btn:hover { background:#311; color:#f66; border-color:#f66; }
@@ -293,7 +313,6 @@ export default function Profile() {
 
         .p-loader { height:100vh; background:#000; color:var(--v-accent); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono'; letter-spacing:0.5em; }
 
-        @keyframes pulse { 0% { opacity:0.3; } 50% { opacity:1; } 100% { opacity:0.3; } }
         @media (max-width: 768px) { .p-content-grid { grid-template-columns: 1fr; } }
       `}</style>
     </div>
