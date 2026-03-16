@@ -9,12 +9,13 @@ export default function Profile() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState({
     oshi_member: '全員',
+    oshi_cosplayer: 'UNDEFINED', // ★追加：メイン表示用
     x_url: '',
     instagram_url: '',
     discord_id: '',
     theme_color: '#00f2ff'
   });
-  const [favorites, setFavorites] = useState([]); // アーカイブ画像用
+  const [favorites, setFavorites] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -34,7 +35,12 @@ export default function Profile() {
         .single();
       
       if (error && error.code === 'PGRST116') {
-        const newProf = { id: session.user.id, oshi_member: '全員', theme_color: '#00f2ff' };
+        const newProf = { 
+          id: session.user.id, 
+          oshi_member: '全員', 
+          oshi_cosplayer: 'UNDEFINED',
+          theme_color: '#00f2ff' 
+        };
         await supabase.from('profiles').insert([newProf]);
         prof = newProf;
       }
@@ -63,7 +69,8 @@ export default function Profile() {
     setLoading(true);
     const { error } = await supabase.from('profiles').upsert({
       id: user.id,
-      ...profile
+      ...profile,
+      updated_at: new Date(),
     });
 
     if (!error) {
@@ -104,7 +111,7 @@ export default function Profile() {
           </div>
 
           <div className="p-content-grid">
-            {/* 左側：ID & SNS */}
+            {/* 左側：ID & SNS & 設定 */}
             <div className="p-glass-panel info-box">
               <span className="p-tag">IDENTIFICATION</span>
               <div className="user-info-row">
@@ -115,11 +122,19 @@ export default function Profile() {
                 </div>
               </div>
 
-              {/* SNS表示/編集エリア */}
+              {/* 編集フォーム */}
               <div className="social-section mt-30">
-                <span className="p-tag">SOCIAL_RESOURCES</span>
+                <span className="p-tag">IDENTITY_RESOURCES</span>
                 {isEditing ? (
                   <div className="edit-form">
+                    <div className="form-group">
+                      <label><i className="fas fa-user-tag"></i> TARGET_COSPLAYER</label>
+                      <input type="text" value={profile.oshi_cosplayer || ''} onChange={e => setProfile({...profile, oshi_cosplayer: e.target.value})} placeholder="名前を入力..." />
+                    </div>
+                    <div className="form-group">
+                      <label><i className="fas fa-mask"></i> TARGET_CHARACTER</label>
+                      <input type="text" value={profile.oshi_member || ''} onChange={e => setProfile({...profile, oshi_member: e.target.value})} placeholder="キャラ名を入力..." />
+                    </div>
                     <div className="form-group">
                       <label><i className="fab fa-x-twitter"></i> X_URL</label>
                       <input type="text" value={profile.x_url || ''} onChange={e => setProfile({...profile, x_url: e.target.value})} placeholder="https://x.com/..." />
@@ -127,6 +142,10 @@ export default function Profile() {
                     <div className="form-group">
                       <label><i className="fab fa-instagram"></i> INSTA_URL</label>
                       <input type="text" value={profile.instagram_url || ''} onChange={e => setProfile({...profile, instagram_url: e.target.value})} placeholder="https://instagram.com/..." />
+                    </div>
+                    <div className="form-group">
+                      <label><i className="fas fa-palette"></i> THEME_COLOR</label>
+                      <input type="color" value={profile.theme_color} onChange={e => setProfile({...profile, theme_color: e.target.value})} className="p-color-picker" />
                     </div>
                     <button className="p-save-btn" onClick={handleSave}>UPDATE_IDENT_DATA</button>
                   </div>
@@ -143,10 +162,12 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* 右側：アプリ & ステータス */}
+            {/* 右側：メインステータス (Resonance) */}
             <div className="p-glass-panel equipment-box">
               <span className="p-tag">CURRENT_RESONANCE</span>
-              <div className="p-value-large">{profile?.oshi_member}</div>
+              {/* コスプレイヤー名をデカデカと表示 */}
+              <div className="p-value-large resonance-glow">{profile?.oshi_cosplayer}</div>
+              <div className="p-sub-value">TARGET_CHARACTER: {profile?.oshi_member}</div>
               
               <div className="mt-40">
                 <span className="p-tag">EQUIPMENT_STATUS</span>
@@ -166,7 +187,7 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* ★新設：アーカイブ・ギャラリーセクション★ */}
+          {/* アーカイブ・ギャラリー */}
           <div className="p-glass-panel archive-section mt-20">
             <div className="archive-head">
               <span className="p-tag">ARCHIVED_MISSION_RESOURCES</span>
@@ -207,14 +228,14 @@ export default function Profile() {
         body { margin:0; background:#000; color:#fff; font-family:'Montserrat', sans-serif; overflow-x:hidden; }
         
         .p-grain { position:fixed; inset:0; background:url('https://grainy-gradients.vercel.app/noise.svg'); opacity:0.05; pointer-events:none; z-index:900; }
-        .p-main-layer { position:relative; min-height:100vh; padding:60px 20px; box-sizing:border-box; z-index:10; background: radial-gradient(circle at 50% -20%, #112, #000); }
+        .p-main-layer { position:relative; min-height:100vh; padding:60px 20px; box-sizing:border-box; z-index:10; background: radial-gradient(circle at 50% -20%, #0a0a15, #000); }
         .p-container { max-width:1000px; margin:0 auto; }
 
-        .p-glass-panel { background:rgba(255,255,255,0.02); backdrop-filter:blur(20px); border:1px solid rgba(255,255,255,0.08); padding:30px; margin-bottom:20px; }
+        .p-glass-panel { background:rgba(255,255,255,0.02); backdrop-filter:blur(30px); border:1px solid rgba(255,255,255,0.08); padding:30px; margin-bottom:20px; border-radius: 4px; }
         .flex-between { display:flex; justify-content:space-between; align-items:flex-start; }
         .p-tag { font-family:'JetBrains Mono'; font-size:10px; font-weight:800; color:var(--v-accent); letter-spacing:0.2em; display:block; margin-bottom:15px; text-shadow: 0 0 10px var(--v-accent); }
         
-        h1 { font-size:40px; font-weight:100; margin:0; letter-spacing:0.1em; }
+        h1 { font-size:40px; font-weight:900; margin:0; letter-spacing:0.1em; }
 
         .p-content-grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
         
@@ -222,85 +243,57 @@ export default function Profile() {
         .p-avatar { width:60px; height:60px; border:1px solid var(--v-accent); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--v-accent); font-size:24px; box-shadow:0 0 15px var(--v-accent); }
         
         .p-label { font-family:'JetBrains Mono'; font-size:9px; color:#555; font-weight:800; }
-        .p-value { font-size:14px; color:#eee; }
-        .p-value-large { font-size:36px; font-weight:100; color:#fff; letter-spacing:0.1em; }
+        .p-value { font-size:14px; color:#eee; font-family: 'JetBrains Mono'; }
+        
+        /* Resonance表示の強化 */
+        .p-value-large { font-size:42px; font-weight:900; color:#fff; letter-spacing:0.05em; margin-bottom: 5px; }
+        .resonance-glow { text-shadow: 0 0 20px rgba(255,255,255,0.2); }
+        .p-sub-value { font-family: 'JetBrains Mono'; font-size: 11px; color: #444; font-weight: 800; }
 
         /* アーカイブセクション */
         .archive-head { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px; }
         .archive-count { font-family:'JetBrains Mono'; font-size:9px; color:#333; }
-        .p-archive-grid { 
-          display: grid; 
-          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); 
-          gap: 15px; 
-          margin-top: 10px;
-        }
-        .p-archive-item { 
-          background: #000; 
-          border: 1px solid #111; 
-          border-radius: 4px; 
-          overflow: hidden; 
-          aspect-ratio: 4 / 5;
-          position: relative;
-          cursor: pointer;
-          transition: 0.4s;
-        }
-        .p-archive-item:hover { 
-          border-color: var(--v-accent); 
-          box-shadow: 0 0 20px var(--v-accent);
-          transform: translateY(-5px);
-        }
+        .p-archive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; margin-top: 10px; }
+        .p-archive-item { background: #000; border: 1px solid #111; border-radius: 4px; overflow: hidden; aspect-ratio: 4 / 5; position: relative; cursor: pointer; transition: 0.4s; }
+        .p-archive-item:hover { border-color: var(--v-accent); box-shadow: 0 0 25px var(--v-accent); transform: translateY(-5px); }
         .archive-img-wrap { width: 100%; height: 100%; }
         .archive-img-wrap img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; transition: 0.4s; }
         .p-archive-item:hover img { opacity: 1; transform: scale(1.05); }
-        
-        .archive-overlay { 
-          position: absolute; inset: 0; 
-          background: linear-gradient(transparent 60%, rgba(0,0,0,0.9)); 
-          display: flex; align-items: flex-end; padding: 15px; 
-          opacity: 0; transition: 0.3s;
-        }
+        .archive-overlay { position: absolute; inset: 0; background: linear-gradient(transparent 60%, rgba(0,0,0,0.9)); display: flex; align-items: flex-end; padding: 15px; opacity: 0; transition: 0.3s; }
         .p-archive-item:hover .archive-overlay { opacity: 1; }
         .overlay-tag { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--v-accent); font-weight: 800; }
 
-        .no-archive-msg { 
-          grid-column: 1 / -1; padding: 60px; text-align: center; 
-          color: #222; font-family: 'JetBrains Mono'; font-size: 12px;
-        }
-        .no-archive-msg i { font-size: 30px; margin-bottom: 10px; display: block; }
-
-        /* SNS表示 */
         .social-display { display:flex; gap:15px; }
-        .social-icon-btn { width:50px; height:50px; background:rgba(255,255,255,0.03); border:1px solid #222; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff; transition:0.3s; text-decoration:none; }
+        .social-icon-btn { width:50px; height:50px; background:rgba(255,255,255,0.03); border:1px solid #222; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff; transition:0.3s; text-decoration:none; border-radius: 4px; }
         .social-icon-btn:hover { border-color:var(--v-accent); color:var(--v-accent); box-shadow: 0 0 15px var(--v-accent); transform: translateY(-2px); }
         .no-data { font-family:'JetBrains Mono'; font-size:10px; color:#333; }
 
         /* 編集フォーム */
         .edit-form { display:flex; flex-direction:column; gap:15px; }
-        .form-group label { display:block; font-family:'JetBrains Mono'; font-size:10px; color:#666; margin-bottom:5px; }
-        .form-group input { width:100%; background:#111; border:1px solid #222; color:#fff; padding:12px; font-family:'JetBrains Mono'; font-size:12px; border-radius:4px; transition:0.3s; }
-        .form-group input:focus { border-color:var(--v-accent); outline:none; box-shadow: 0 0 10px var(--v-accent); }
+        .form-group label { display:block; font-family:'JetBrains Mono'; font-size:10px; color:#555; margin-bottom:8px; font-weight: 800; }
+        .form-group input { width:100%; background:rgba(0,0,0,0.5); border:1px solid #222; color:#fff; padding:12px; font-family:'JetBrains Mono'; font-size:12px; border-radius:4px; transition:0.3s; box-sizing: border-box; }
+        .form-group input:focus { border-color:var(--v-accent); outline:none; box-shadow: 0 0 10px var(--v-accent); background: #000; }
+        .p-color-picker { height: 45px; cursor: pointer; padding: 5px !important; }
         
-        .p-edit-toggle { background:none; border:1px solid #333; color:#666; padding:8px 15px; font-family:'JetBrains Mono'; font-size:10px; cursor:pointer; transition:0.3s; }
+        .p-edit-toggle { background:none; border:1px solid #333; color:#666; padding:10px 20px; font-family:'JetBrains Mono'; font-size:10px; cursor:pointer; transition:0.3s; border-radius: 4px; }
         .p-edit-toggle:hover { border-color:var(--v-accent); color:var(--v-accent); }
-        .p-save-btn { background:var(--v-accent); color:#000; border:none; padding:15px; font-family:'JetBrains Mono'; font-weight:800; cursor:pointer; margin-top:10px; transition:0.3s; }
-        .p-save-btn:hover { background:#fff; box-shadow: 0 0 20px var(--v-accent); }
+        .p-save-btn { background:var(--v-accent); color:#000; border:none; padding:18px; font-family:'JetBrains Mono'; font-weight:800; cursor:pointer; margin-top:10px; transition:0.3s; border-radius: 4px; letter-spacing: 0.1em; }
+        .p-save-btn:hover { background:#fff; box-shadow: 0 0 30px var(--v-accent); transform: translateY(-2px); }
 
-        .p-app-link-card { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 12px 20px; border-radius: 4px; cursor: pointer; transition: 0.3s; max-width: 100%; }
+        .p-app-link-card { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 15px 20px; border-radius: 4px; cursor: pointer; transition: 0.3s; }
         .p-app-link-card:hover { border-color: var(--v-accent); background: rgba(255,255,255,0.06); transform: translateX(5px); }
-        .mini-icon { width: 48px; height: 48px; object-fit: contain; flex-shrink: 0; filter: drop-shadow(0 0 8px var(--v-accent)); }
-        .card-text { flex-grow: 1; }
-        .card-title { font-family: 'JetBrains Mono'; font-size: 12px; font-weight: 800; color: var(--v-accent); }
-        .card-desc { font-size: 10px; color: #555; }
-        .arrow-icon { font-size: 12px; color: #333; }
+        .mini-icon { width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 0 8px var(--v-accent)); }
+        .card-title { font-family: 'JetBrains Mono'; font-size: 13px; font-weight: 800; color: var(--v-accent); }
+        .card-desc { font-size: 10px; color: #555; margin-top: 4px; }
 
-        .p-logout-btn { background:none; border:1px solid #311; color:#633; padding:10px 20px; font-family:'JetBrains Mono'; font-size:10px; font-weight:800; cursor:pointer; transition:0.3s; }
+        .p-logout-btn { background:none; border:1px solid #311; color:#633; padding:12px 20px; font-family:'JetBrains Mono'; font-size:10px; font-weight:800; cursor:pointer; transition:0.3s; border-radius: 4px; }
         .p-logout-btn:hover { background:#311; color:#f66; border-color:#f66; }
-        .p-back-btn { background:none; border:1px solid #222; color:#444; padding:10px 20px; font-family:'JetBrains Mono'; font-size:10px; cursor:pointer; transition:0.3s; margin-top:20px; }
-        .p-back-btn:hover { border-color:#666; color:#eee; }
+        .p-back-btn { background:none; border:1px solid #222; color:#444; padding:12px 24px; font-family:'JetBrains Mono'; font-size:11px; cursor:pointer; transition:0.3s; margin-top:30px; border-radius: 4px; }
+        .p-back-btn:hover { border-color:#fff; color:#fff; }
 
-        .mt-20 { margin-top: 20px; } .mt-30 { margin-top:30px; } .mt-40 { margin-top:40px; }
         .p-loader { height:100vh; background:#000; color:var(--v-accent); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono'; letter-spacing:0.5em; }
 
+        @keyframes pulse { 0% { opacity:0.3; } 50% { opacity:1; } 100% { opacity:0.3; } }
         @media (max-width: 768px) { .p-content-grid { grid-template-columns: 1fr; } }
       `}</style>
     </div>
