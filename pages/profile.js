@@ -62,35 +62,54 @@ export default function Profile() {
     fetchUserData();
   }, [router]);
 
-  // 保存処理の安定化
+  // --- 保存処理 (handleSave) の箇所を以下に差し替えてください ---
+
   const handleSave = async () => {
+    // 1. ボタン連打防止
     if (saveLoading) return;
     setSaveLoading(true);
+    
+    console.log("SAVE_PROCESS_START..."); // ログ
 
-    // 送信データを精査（idの重複送信や余計なカラムを除外）
-    const updateData = {
-      id: user.id,
-      oshi_member: profile.oshi_member,
-      oshi_cosplayer: profile.oshi_cosplayer,
-      x_url: profile.x_url,
-      instagram_url: profile.instagram_url,
-      theme_color: profile.theme_color,
-      updated_at: new Date(),
-    };
+    try {
+      // 2. ユーザーIDチェック
+      if (!user?.id) {
+        throw new Error("USER_ID_NOT_FOUND");
+      }
 
-    const { error } = await supabase.from('profiles').upsert(updateData);
+      // 3. 送信データの構築（必要最低限に絞る）
+      const updateData = {
+        oshi_member: profile.oshi_member || '全員',
+        oshi_cosplayer: profile.oshi_cosplayer || 'UNDEFINED',
+        x_url: profile.x_url || '',
+        instagram_url: profile.instagram_url || '',
+        theme_color: profile.theme_color || '#00f2ff',
+        updated_at: new Date()
+      };
 
-    if (!error) {
+      console.log("SENDING_DATA:", updateData);
+
+      // 4. Supabaseへのリクエスト (upsertからupdate+matchに変更)
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updateData)
+        .match({ id: user.id });
+
+      if (error) throw error;
+
+      // 5. 成功時の処理
       setIsEditing(false);
       document.documentElement.style.setProperty('--v-accent', profile.theme_color);
-      alert("PROFILE_UPDATED_SUCCESSFULLY");
-    } else {
-      console.error(error);
-      alert("SAVE_ERROR: " + error.message);
+      alert("MISSION_SUCCESS: プロフィールを同期しました。");
+      
+    } catch (err) {
+      console.error("SAVE_FAILED:", err);
+      alert(`SAVE_ERROR: ${err.message || '不明なエラー'}`);
+    } finally {
+      setSaveLoading(false);
     }
-    setSaveLoading(false);
   };
-
+  
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/login');
