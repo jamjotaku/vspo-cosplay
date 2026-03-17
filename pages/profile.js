@@ -79,7 +79,6 @@ export default function Profile() {
     fetchUserData();
   }, [router]);
 
-  // 保存処理
   const handleSave = async () => {
     if (saveLoading) return;
     setSaveLoading(true);
@@ -114,7 +113,6 @@ export default function Profile() {
     }
   };
 
-  // プリセット選択時の処理
   const selectPreset = (m) => {
     setProfile({ 
       ...profile, 
@@ -153,7 +151,6 @@ export default function Profile() {
           </div>
 
           <div className="p-content-grid">
-            {/* 左側：設定エリア */}
             <div className="p-glass-panel info-box">
               <span className="p-tag">IDENTIFICATION</span>
               <div className="user-info-row">
@@ -173,7 +170,6 @@ export default function Profile() {
                       <input type="text" value={profile.oshi_cosplayer || ''} onChange={e => setProfile({...profile, oshi_cosplayer: e.target.value})} placeholder="名前を入力..." />
                     </div>
 
-                    {/* ★新設：カラープリセットグリッド */}
                     <div className="form-group">
                       <label><i className="fas fa-palette"></i> COLOR_PRESETS (QUICK_SYNC)</label>
                       <div className="preset-grid">
@@ -207,11 +203,7 @@ export default function Profile() {
                       <input type="text" value={profile.x_url || ''} onChange={e => setProfile({...profile, x_url: e.target.value})} placeholder="https://x.com/..." />
                     </div>
                     
-                    <button 
-                      className={`p-save-btn ${saveLoading ? 'loading' : ''}`} 
-                      onClick={handleSave}
-                      disabled={saveLoading}
-                    >
+                    <button className={`p-save-btn ${saveLoading ? 'loading' : ''}`} onClick={handleSave} disabled={saveLoading}>
                       {saveLoading ? 'SYNCHRONIZING...' : 'UPDATE_IDENT_DATA'}
                     </button>
                   </div>
@@ -228,7 +220,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* 右側：ステータスエリア */}
             <div className="p-glass-panel equipment-box">
               <span className="p-tag">CURRENT_RESONANCE</span>
               <div className="p-value-large resonance-glow">{profile?.oshi_cosplayer}</div>
@@ -247,12 +238,10 @@ export default function Profile() {
                   </div>
                 </Link>
               </div>
-
               <button onClick={handleLogout} className="p-logout-btn mt-30">TERMINATE_SESSION</button>
             </div>
           </div>
 
-          {/* アーカイブ・ギャラリー */}
           <div className="p-glass-panel archive-section mt-20">
             <div className="archive-head">
               <span className="p-tag">ARCHIVED_MISSION_RESOURCES</span>
@@ -264,7 +253,7 @@ export default function Profile() {
                 favorites.map((fav) => (
                   <div key={fav.id} className="p-archive-item">
                     <div className="archive-img-wrap">
-                      <img src={fav.image_url} alt={fav.member_name} />
+                      <img src={fav.image_url} alt={fav.member_name} loading="lazy" />
                       <div className="archive-overlay">
                         <span className="overlay-tag">{fav.member_name}</span>
                       </div>
@@ -312,27 +301,8 @@ export default function Profile() {
         .resonance-glow { text-shadow: 0 0 20px rgba(255,255,255,0.2); }
         .p-sub-value { font-family: 'JetBrains Mono'; font-size: 11px; color: #444; font-weight: 800; }
 
-        /* プリセットグリッドのスタイル */
-        .preset-grid { 
-          display: grid; 
-          grid-template-columns: repeat(auto-fill, minmax(32px, 1fr)); 
-          gap: 10px; 
-          margin-top: 10px; 
-          background: rgba(0,0,0,0.3); 
-          padding: 15px; 
-          border: 1px solid #111; 
-          border-radius: 4px; 
-        }
-        .preset-chip { 
-          width: 32px; 
-          height: 32px; 
-          border-radius: 4px; 
-          border: 1px solid rgba(255,255,255,0.1); 
-          background: var(--chip-color); 
-          cursor: pointer; 
-          transition: 0.2s; 
-          position: relative;
-        }
+        .preset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(32px, 1fr)); gap: 10px; margin-top: 10px; background: rgba(0,0,0,0.3); padding: 15px; border: 1px solid #111; border-radius: 4px; }
+        .preset-chip { width: 32px; height: 32px; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); background: var(--chip-color); cursor: pointer; transition: 0.2s; position: relative; }
         .preset-chip:hover { transform: scale(1.15); z-index: 2; border-color: #fff; }
         .preset-chip.active { border: 2px solid #fff; box-shadow: 0 0 15px var(--chip-color); transform: scale(1.1); }
         
@@ -356,9 +326,36 @@ export default function Profile() {
         .p-save-btn:hover:not(:disabled) { background:#fff; box-shadow: 0 0 30px var(--v-accent); transform: translateY(-2px); }
         .p-save-btn:disabled { opacity: 0.5; cursor: wait; }
 
+        /* ★ギャラリー画像の表示修正★ */
         .p-archive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-        .p-archive-item { background: #000; border: 1px solid #111; border-radius: 4px; overflow: hidden; aspect-ratio: 4 / 5; position: relative; cursor: pointer; transition: 0.4s; }
+        .p-archive-item { 
+          background: #0a0a0a; 
+          border: 1px solid #111; 
+          border-radius: 4px; 
+          overflow: hidden; 
+          aspect-ratio: 4 / 5; 
+          position: relative; 
+          cursor: pointer; 
+          transition: 0.4s; 
+        }
         .p-archive-item:hover { border-color: var(--v-accent); box-shadow: 0 0 25px var(--v-accent); transform: translateY(-5px); }
+
+        .archive-img-wrap { width: 100%; height: 100%; background: #111; }
+        .archive-img-wrap img { 
+          width: 100%; 
+          height: 100%; 
+          object-fit: cover; 
+          /* 顔（上部）を優先して表示し、拡大しすぎによる崩れを防ぐ */
+          object-position: top center; 
+          image-rendering: -webkit-optimize-contrast;
+          opacity: 0.9; 
+          transition: 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+        .p-archive-item:hover img { opacity: 1; transform: scale(1.05); }
+
+        .archive-overlay { position: absolute; inset: 0; background: linear-gradient(transparent 60%, rgba(0,0,0,0.8)); display: flex; align-items: flex-end; padding: 15px; opacity: 0; transition: 0.3s; }
+        .p-archive-item:hover .archive-overlay { opacity: 1; }
+        .overlay-tag { font-family: 'JetBrains Mono'; font-size: 10px; color: var(--v-accent); font-weight: 800; }
 
         .p-app-link-card { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 15px 20px; border-radius: 4px; cursor: pointer; transition: 0.3s; }
         .p-app-link-card:hover { border-color: var(--v-accent); background: rgba(255,255,255,0.06); transform: translateX(5px); }
