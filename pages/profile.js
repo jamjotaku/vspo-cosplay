@@ -4,6 +4,23 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
 
+// --- ぶいすぽメンバー：カラーマトリクス ---
+const VSPO_MEMBERS = [
+  { name: '花芽すみれ', color: '#B0C4DE' }, { name: '花芽なずな', color: '#FABEDC' },
+  { name: '小雀とと', color: '#F5EB4A' }, { name: '一ノ瀬うるは', color: '#4182FA' },
+  { name: '胡桃のあ', color: '#FFDBFE' }, { name: '兎咲ミミ', color: '#C7B2D6' },
+  { name: '空澄セナ', color: '#FFFFFF' }, { name: '橘ひなの', color: '#FA96C8' },
+  { name: '英リサ', color: '#D1DE79' }, { name: '如月れん', color: '#BE2152' },
+  { name: '神成きゅぴ', color: '#FFD23C' }, { name: '八雲べに', color: '#85CAB3' },
+  { name: '藍沢エマ', color: '#B4F1F9' }, { name: '紫宮るな', color: '#D6ADFF' },
+  { name: '猫汰つな', color: '#FF3652' }, { name: '白波らむね', color: '#8ECED9' },
+  { name: '小森めと', color: '#FBA03F' }, { name: '夢野あかり', color: '#FF998D' },
+  { name: '夜乃くろむ', color: '#909EC8' }, { name: '紡木こかげ', color: '#5195E1' },
+  { name: '千燈ゆうひ', color: '#ED784A' }, { name: '蝶屋はなび', color: '#EA5506' },
+  { name: '甘結もか', color: '#ECA0AA' }, { name: '銀城サイネ', color: '#58535E' },
+  { name: '龍巻ちせ', color: '#BEFF77' }
+];
+
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState(null);
@@ -18,7 +35,7 @@ export default function Profile() {
   const [favorites, setFavorites] = useState([]);
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [saveLoading, setSaveLoading] = useState(false); // 保存専用のローディング
+  const [saveLoading, setSaveLoading] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -62,22 +79,14 @@ export default function Profile() {
     fetchUserData();
   }, [router]);
 
-  // --- 保存処理 (handleSave) の箇所を以下に差し替えてください ---
-
+  // 保存処理
   const handleSave = async () => {
-    // 1. ボタン連打防止
     if (saveLoading) return;
     setSaveLoading(true);
-    
-    console.log("SAVE_PROCESS_START..."); // ログ
 
     try {
-      // 2. ユーザーIDチェック
-      if (!user?.id) {
-        throw new Error("USER_ID_NOT_FOUND");
-      }
+      if (!user?.id) throw new Error("USER_ID_NOT_FOUND");
 
-      // 3. 送信データの構築（必要最低限に絞る）
       const updateData = {
         oshi_member: profile.oshi_member || '全員',
         oshi_cosplayer: profile.oshi_cosplayer || 'UNDEFINED',
@@ -87,29 +96,33 @@ export default function Profile() {
         updated_at: new Date()
       };
 
-      console.log("SENDING_DATA:", updateData);
-
-      // 4. Supabaseへのリクエスト (upsertからupdate+matchに変更)
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('profiles')
         .update(updateData)
         .match({ id: user.id });
 
       if (error) throw error;
 
-      // 5. 成功時の処理
       setIsEditing(false);
       document.documentElement.style.setProperty('--v-accent', profile.theme_color);
       alert("MISSION_SUCCESS: プロフィールを同期しました。");
       
     } catch (err) {
-      console.error("SAVE_FAILED:", err);
-      alert(`SAVE_ERROR: ${err.message || '不明なエラー'}`);
+      alert(`SAVE_ERROR: ${err.message}`);
     } finally {
       setSaveLoading(false);
     }
   };
-  
+
+  // プリセット選択時の処理
+  const selectPreset = (m) => {
+    setProfile({ 
+      ...profile, 
+      oshi_member: m.name, 
+      theme_color: m.color 
+    });
+  };
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/login');
@@ -125,7 +138,6 @@ export default function Profile() {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
       </Head>
 
-      {/* 粒子レイヤーを最背面へ移動 */}
       <div className="p-grain"></div>
       
       <main className="p-main-layer">
@@ -141,7 +153,7 @@ export default function Profile() {
           </div>
 
           <div className="p-content-grid">
-            {/* 左側：ID & SNS & 設定 */}
+            {/* 左側：設定エリア */}
             <div className="p-glass-panel info-box">
               <span className="p-tag">IDENTIFICATION</span>
               <div className="user-info-row">
@@ -160,24 +172,41 @@ export default function Profile() {
                       <label><i className="fas fa-user-tag"></i> TARGET_COSPLAYER</label>
                       <input type="text" value={profile.oshi_cosplayer || ''} onChange={e => setProfile({...profile, oshi_cosplayer: e.target.value})} placeholder="名前を入力..." />
                     </div>
+
+                    {/* ★新設：カラープリセットグリッド */}
+                    <div className="form-group">
+                      <label><i className="fas fa-palette"></i> COLOR_PRESETS (QUICK_SYNC)</label>
+                      <div className="preset-grid">
+                        {VSPO_MEMBERS.map(m => (
+                          <button 
+                            key={m.name} 
+                            className={`preset-chip ${profile.oshi_member === m.name ? 'active' : ''}`}
+                            style={{ '--chip-color': m.color }}
+                            onClick={() => selectPreset(m)}
+                            title={m.name}
+                          />
+                        ))}
+                      </div>
+                    </div>
+
                     <div className="form-group">
                       <label><i className="fas fa-mask"></i> TARGET_CHARACTER</label>
                       <input type="text" value={profile.oshi_member || ''} onChange={e => setProfile({...profile, oshi_member: e.target.value})} placeholder="キャラ名を入力..." />
                     </div>
+
+                    <div className="form-group">
+                      <label><i className="fas fa-brush"></i> CUSTOM_THEME_COLOR</label>
+                      <div className="flex-row">
+                        <input type="color" value={profile.theme_color} onChange={e => setProfile({...profile, theme_color: e.target.value})} className="p-color-picker" />
+                        <span className="color-code">{profile.theme_color.toUpperCase()}</span>
+                      </div>
+                    </div>
+
                     <div className="form-group">
                       <label><i className="fab fa-x-twitter"></i> X_URL</label>
                       <input type="text" value={profile.x_url || ''} onChange={e => setProfile({...profile, x_url: e.target.value})} placeholder="https://x.com/..." />
                     </div>
-                    <div className="form-group">
-                      <label><i className="fab fa-instagram"></i> INSTA_URL</label>
-                      <input type="text" value={profile.instagram_url || ''} onChange={e => setProfile({...profile, instagram_url: e.target.value})} placeholder="https://instagram.com/..." />
-                    </div>
-                    <div className="form-group">
-                      <label><i className="fas fa-palette"></i> THEME_COLOR</label>
-                      <input type="color" value={profile.theme_color} onChange={e => setProfile({...profile, theme_color: e.target.value})} className="p-color-picker" />
-                    </div>
                     
-                    {/* 保存ボタン：ローディング中はテキスト変更 & 無効化 */}
                     <button 
                       className={`p-save-btn ${saveLoading ? 'loading' : ''}`} 
                       onClick={handleSave}
@@ -199,7 +228,7 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* 右側：メインステータス */}
+            {/* 右側：ステータスエリア */}
             <div className="p-glass-panel equipment-box">
               <span className="p-tag">CURRENT_RESONANCE</span>
               <div className="p-value-large resonance-glow">{profile?.oshi_cosplayer}</div>
@@ -263,7 +292,6 @@ export default function Profile() {
         :root { --v-accent: ${profile.theme_color}; }
         body { margin:0; background:#000; color:#fff; font-family:'Montserrat', sans-serif; overflow-x:hidden; }
         
-        /* Z-indexを調整してクリックを邪魔しないように修正 */
         .p-grain { position:fixed; inset:0; background:url('https://grainy-gradients.vercel.app/noise.svg'); opacity:0.05; pointer-events:none; z-index:0; }
         .p-main-layer { position:relative; min-height:100vh; padding:60px 20px; box-sizing:border-box; z-index:10; background: radial-gradient(circle at 50% -20%, #0a0a15, #000); }
         .p-container { max-width:1000px; margin:0 auto; }
@@ -274,60 +302,71 @@ export default function Profile() {
         
         h1 { font-size:40px; font-weight:900; margin:0; letter-spacing:0.1em; }
         .p-content-grid { display:grid; grid-template-columns: 1fr 1fr; gap:20px; }
+        
         .user-info-row { display:flex; gap:20px; align-items:center; }
         .p-avatar { width:60px; height:60px; border:1px solid var(--v-accent); border-radius:50%; display:flex; align-items:center; justify-content:center; color:var(--v-accent); font-size:24px; box-shadow:0 0 15px var(--v-accent); }
+        
         .p-label { font-family:'JetBrains Mono'; font-size:9px; color:#555; font-weight:800; }
         .p-value { font-size:14px; color:#eee; font-family: 'JetBrains Mono'; }
         .p-value-large { font-size:42px; font-weight:900; color:#fff; letter-spacing:0.05em; margin-bottom: 5px; }
         .resonance-glow { text-shadow: 0 0 20px rgba(255,255,255,0.2); }
         .p-sub-value { font-family: 'JetBrains Mono'; font-size: 11px; color: #444; font-weight: 800; }
 
-        .p-archive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
-        .p-archive-item { background: #000; border: 1px solid #111; border-radius: 4px; overflow: hidden; aspect-ratio: 4 / 5; position: relative; cursor: pointer; transition: 0.4s; }
-        .p-archive-item:hover { border-color: var(--v-accent); box-shadow: 0 0 25px var(--v-accent); transform: translateY(-5px); }
-        .archive-img-wrap { width: 100%; height: 100%; }
-        .archive-img-wrap img { width: 100%; height: 100%; object-fit: cover; opacity: 0.8; transition: 0.4s; }
-        .p-archive-item:hover img { opacity: 1; transform: scale(1.05); }
-
-        .social-display { display:flex; gap:15px; }
-        .social-icon-btn { width:50px; height:50px; background:rgba(255,255,255,0.03); border:1px solid #222; display:flex; align-items:center; justify-content:center; font-size:20px; color:#fff; transition:0.3s; text-decoration:none; border-radius: 4px; }
-        .social-icon-btn:hover { border-color:var(--v-accent); color:var(--v-accent); box-shadow: 0 0 15px var(--v-accent); transform: translateY(-2px); }
+        /* プリセットグリッドのスタイル */
+        .preset-grid { 
+          display: grid; 
+          grid-template-columns: repeat(auto-fill, minmax(32px, 1fr)); 
+          gap: 10px; 
+          margin-top: 10px; 
+          background: rgba(0,0,0,0.3); 
+          padding: 15px; 
+          border: 1px solid #111; 
+          border-radius: 4px; 
+        }
+        .preset-chip { 
+          width: 32px; 
+          height: 32px; 
+          border-radius: 4px; 
+          border: 1px solid rgba(255,255,255,0.1); 
+          background: var(--chip-color); 
+          cursor: pointer; 
+          transition: 0.2s; 
+          position: relative;
+        }
+        .preset-chip:hover { transform: scale(1.15); z-index: 2; border-color: #fff; }
+        .preset-chip.active { border: 2px solid #fff; box-shadow: 0 0 15px var(--chip-color); transform: scale(1.1); }
+        
+        .flex-row { display: flex; align-items: center; gap: 15px; }
+        .color-code { font-family: 'JetBrains Mono'; font-size: 12px; color: #555; }
 
         .edit-form { display:flex; flex-direction:column; gap:15px; }
         .form-group label { display:block; font-family:'JetBrains Mono'; font-size:10px; color:#555; margin-bottom:8px; font-weight: 800; }
-        .form-group input { width:100%; background:rgba(0,0,0,0.5); border:1px solid #222; color:#fff; padding:12px; font-family:'JetBrains Mono'; font-size:12px; border-radius:4px; transition:0.3s; box-sizing: border-box; }
+        .form-group input { width:100%; background:rgba(0,0,0,0.5); border:1px solid #222; color:#fff; padding:12px; font-family:'JetBrains Mono'; font-size:12px; border-radius:4px; box-sizing: border-box; }
         .form-group input:focus { border-color:var(--v-accent); outline:none; box-shadow: 0 0 10px var(--v-accent); background: #000; }
-        .p-color-picker { height: 45px; cursor: pointer; padding: 5px !important; }
+        
+        .p-color-picker { width: 60px; height: 40px; cursor: pointer; border: none; padding: 2px; background: none; }
         
         .p-edit-toggle { background:none; border:1px solid #333; color:#666; padding:10px 20px; font-family:'JetBrains Mono'; font-size:10px; cursor:pointer; transition:0.3s; border-radius: 4px; z-index: 100; }
-        
-        /* 保存ボタンの強化 */
         .p-save-btn { 
-          background:var(--v-accent); 
-          color:#000; 
-          border:none; 
-          padding:18px; 
-          font-family:'JetBrains Mono'; 
-          font-weight:800; 
-          cursor:pointer; 
-          margin-top:10px; 
-          transition:0.3s; 
-          border-radius: 4px; 
-          letter-spacing: 0.1em;
-          pointer-events: auto; /* 強制的にイベントを有効化 */
-          position: relative;
-          z-index: 100;
+          background:var(--v-accent); color:#000; border:none; padding:18px; 
+          font-family:'JetBrains Mono'; font-weight:800; cursor:pointer; 
+          margin-top:10px; transition:0.3s; border-radius: 4px; letter-spacing: 0.1em;
+          position: relative; z-index: 100;
         }
         .p-save-btn:hover:not(:disabled) { background:#fff; box-shadow: 0 0 30px var(--v-accent); transform: translateY(-2px); }
         .p-save-btn:disabled { opacity: 0.5; cursor: wait; }
+
+        .p-archive-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 15px; }
+        .p-archive-item { background: #000; border: 1px solid #111; border-radius: 4px; overflow: hidden; aspect-ratio: 4 / 5; position: relative; cursor: pointer; transition: 0.4s; }
+        .p-archive-item:hover { border-color: var(--v-accent); box-shadow: 0 0 25px var(--v-accent); transform: translateY(-5px); }
 
         .p-app-link-card { display: flex; align-items: center; gap: 15px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); padding: 15px 20px; border-radius: 4px; cursor: pointer; transition: 0.3s; }
         .p-app-link-card:hover { border-color: var(--v-accent); background: rgba(255,255,255,0.06); transform: translateX(5px); }
         .mini-icon { width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 0 8px var(--v-accent)); }
 
-        .p-logout-btn { background:none; border:1px solid #311; color:#633; padding:12px 20px; font-family:'JetBrains Mono'; font-size:10px; font-weight:800; cursor:pointer; transition:0.3s; border-radius: 4px; }
+        .p-logout-btn { background:none; border:1px solid #311; color:#633; padding:12px 20px; font-family:'JetBrains Mono'; font-size:10px; font-weight:800; cursor:pointer; border-radius: 4px; transition: 0.3s; }
         .p-logout-btn:hover { background:#311; color:#f66; border-color:#f66; }
-        .p-back-btn { background:none; border:1px solid #222; color:#444; padding:12px 24px; font-family:'JetBrains Mono'; font-size:11px; cursor:pointer; transition:0.3s; margin-top:30px; border-radius: 4px; }
+        .p-back-btn { background:none; border:1px solid #222; color:#444; padding:12px 24px; font-family:'JetBrains Mono'; font-size:11px; cursor:pointer; margin-top:30px; border-radius: 4px; transition:0.3s; }
         .p-back-btn:hover { border-color:#fff; color:#fff; }
 
         .p-loader { height:100vh; background:#000; color:var(--v-accent); display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono'; letter-spacing:0.5em; }
