@@ -17,7 +17,7 @@ export default function Portal() {
   const router = useRouter();
 
   // ★ OGP用の基本設定（デプロイ後のURLに合わせて書き換えてください）
-  const SITE_DOMAIN = "https://vspo-cosplay.vercel.app/"; // あなたのサイトURL
+  const SITE_DOMAIN = "https://vspo-cosplay.vercel.app"; // あなたのサイトURL
   const SITE_TITLE = "VSPO! COSPLAY HUB";
   const SITE_DESC = "サイトからデスクトップまで、推しと過ごせる時間を。";
   const OGP_IMAGE = `${SITE_DOMAIN}/OGP.png`;
