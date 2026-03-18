@@ -16,8 +16,8 @@ const MEMBER_ORDER = [
 export default function Portal() {
   const router = useRouter();
 
-  // ★ OGP用の基本設定（デプロイ後のURLに合わせて書き換えてください）
-  const SITE_DOMAIN = "https://vspo-cosplay.vercel.app"; // あなたのサイトURL
+  // ★ OGP用の基本設定（URLの末尾にスラッシュがないことを確認済みです）
+  const SITE_DOMAIN = "https://vspo-cosplay.vercel.app"; 
   const SITE_TITLE = "VSPO! COSPLAY HUB";
   const SITE_DESC = "サイトからデスクトップまで、推しと過ごせる時間を。";
   const OGP_IMAGE = `${SITE_DOMAIN}/OGP.png`;
@@ -219,81 +219,14 @@ export default function Portal() {
     pickFeatured();
   };
 
-  if (!user) {
-    return (
-      <div className="p-boot-loader">
-        <div className="p-boot-content">
-          <div className="p-boot-text">IDENTIFYING_COMMANDER...</div>
-          <div className="p-boot-bar">
-            <div className="p-boot-progress"></div>
-          </div>
-          <div className="p-boot-sub">ESTABLISHING_SECURE_LINK</div>
-        </div>
-        <style jsx>{`
-          .p-boot-loader {
-            position: fixed;
-            inset: 0;
-            background: #000;
-            z-index: 9999;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-          }
-          .p-boot-content { text-align: center; }
-          .p-boot-text {
-            font-family: 'JetBrains Mono', monospace;
-            color: ${config.theme_color || '#00f2ff'};
-            font-size: 14px;
-            font-weight: 800;
-            letter-spacing: 0.5em;
-            text-shadow: 0 0 15px ${config.theme_color || '#00f2ff'};
-            margin-bottom: 25px;
-            animation: boot-pulse 2s infinite ease-in-out;
-          }
-          .p-boot-bar {
-            width: 240px;
-            height: 2px;
-            background: rgba(255, 255, 255, 0.05);
-            margin: 0 auto;
-            position: relative;
-            overflow: hidden;
-            border-radius: 2px;
-          }
-          .p-boot-progress {
-            position: absolute;
-            width: 80px;
-            height: 100%;
-            background: ${config.theme_color || '#00f2ff'};
-            box-shadow: 0 0 20px ${config.theme_color || '#00f2ff'};
-            animation: boot-slide 1.5s infinite ease-in-out;
-          }
-          .p-boot-sub {
-            margin-top: 15px;
-            font-family: 'JetBrains Mono';
-            font-size: 8px;
-            color: #333;
-            letter-spacing: 0.3em;
-          }
-          @keyframes boot-pulse {
-            0%, 100% { opacity: 1; transform: scale(1); }
-            50% { opacity: 0.4; transform: scale(0.98); }
-          }
-          @keyframes boot-slide {
-            from { left: -80px; }
-            to { left: 100%; }
-          }
-        `}</style>
-      </div>
-    );
-  }
-
+  // ★ 修正ポイント: 全ての return をひとつの Fragment で包み、Head を常に一番上に配置します
   return (
-    <div className="p-root" style={{ '--v-bright': config.brightness }}>
+    <>
       <Head>
         <title>{SITE_TITLE}</title>
         <meta name="description" content={SITE_DESC} />
         
-        {/* ★ OGP設定: ここから ★ */}
+        {/* OGP設定 */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content={SITE_DOMAIN} />
         <meta property="og:title" content={SITE_TITLE} />
@@ -302,247 +235,317 @@ export default function Portal() {
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
 
-        {/* X (Twitter) 用設定 */}
+        {/* X (Twitter) 設定 */}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:title" content={SITE_TITLE} />
         <meta name="twitter:description" content={SITE_DESC} />
         <meta name="twitter:image" content={OGP_IMAGE} />
-        {/* ★ OGP設定: ここまで ★ */}
 
         <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&family=Montserrat:wght@100;400;900&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
       </Head>
 
-      {config.grain && <div className="p-grain"></div>}
-      
-      <div className="p-ambient">
-        {config.glow && featured && (
-          <div className="p-glow-wrap" key={featured.image}>
-            <img src={featured.image} alt="" />
-          </div>
-        )}
-        <div className="p-mask"></div>
-      </div>
-
-      <main className="p-main-layer">
-        <div className="p-grid">
-          
-          <div className="p-wing-left">
-            <div className="p-glass-panel">
-              <span className="p-tag">PRODUCTION_STATUS</span>
-              <div className="p-progress-wrap">
-                <div className="p-progress-bar" style={{ width: `${productionProgress}%` }}></div>
-                <span className="p-progress-val">{productionProgress}%</span>
-              </div>
-              <div className="p-meta">UNIT_ID: {user ? user.email.split('@')[0] : "GUEST_LINK"}</div>
+      {!user ? (
+        /* ★ ログイン前のブートローダー画面 ★ */
+        <div className="p-boot-loader">
+          <div className="p-boot-content">
+            <div className="p-boot-text">IDENTIFYING_COMMANDER...</div>
+            <div className="p-boot-bar">
+              <div className="p-boot-progress"></div>
             </div>
-            <button className="p-config-btn" onClick={() => setIsConfigOpen(true)}>
-              <i className="fas fa-sliders-h"></i> CONFIG_SYSTEM
-            </button>
+            <div className="p-boot-sub">ESTABLISHING_SECURE_LINK</div>
           </div>
-
-          <div className="p-chrono-core">
-            <div className="p-clock">{time.toLocaleTimeString('en-US', { hour12: false })}</div>
-            <div className="p-date">{time.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}</div>
-            
-            <div className="p-pulse-monitor">
-              <canvas ref={canvasRef} width={800} height={120} />
-              <div className="p-pulse-info">
-                <div className="p-pulse-stat"><span>FERVOR_AVG</span> <strong>{pulseStats.avgFervor.toFixed(1)}</strong></div>
-                <div className="p-pulse-stat"><span>LAST_SCAN</span> <strong>{pulseStats.lastDays}D_AGO</strong></div>
-                <div className="p-pulse-stat spark-status" style={{ color: pulseStats.hasSpark ? 'var(--v-accent)' : '#444' }}>
-                  <span>SPARK_SIGNAL</span> <strong>{pulseStats.hasSpark ? 'DETECTED' : 'STABLE'}</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-wing-right">
-            <div className="p-stack">
-              {featured && (
-                <div className="p-featured-card">
-                  <div className="p-featured-media">
-                    <img src={featured.image} alt="" key={featured.image} />
-                    <button 
-                      className={`p-archive-trigger ${isArchiving ? 'active' : ''}`}
-                      onClick={handleSaveToArchive}
-                    >
-                      <i className={isArchiving ? "fas fa-check" : "fas fa-bookmark"}></i>
-                    </button>
-                  </div>
-                  <div className="p-featured-info">
-                    <span className="p-tag">FEATURED_ARCHIVE</span>
-                    <h3>{featured.member}</h3>
-                    <p>BY {featured.cosplayer}</p>
-                  </div>
-                </div>
-              )}
-              <div className="p-feed-panel">
-                <div className="p-feed-row mission">
-                  <span className="p-feed-tag">NEXT_MISSION</span>
-                  <p>{nextMission ? nextMission.event_name : 'STANDBY_MODE'}</p>
-                </div>
-                <div className="p-feed-row">
-                  <span className="p-feed-tag">LAST_RECORD</span>
-                  <p>{latestArchive ? latestArchive.event_name : 'NO_RECENT_DATA'}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
+          <style jsx>{`
+            .p-boot-loader {
+              position: fixed;
+              inset: 0;
+              background: #000;
+              z-index: 9999;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .p-boot-content { text-align: center; }
+            .p-boot-text {
+              font-family: 'JetBrains Mono', monospace;
+              color: ${config.theme_color || '#00f2ff'};
+              font-size: 14px;
+              font-weight: 800;
+              letter-spacing: 0.5em;
+              text-shadow: 0 0 15px ${config.theme_color || '#00f2ff'};
+              margin-bottom: 25px;
+              animation: boot-pulse 2s infinite ease-in-out;
+            }
+            .p-boot-bar {
+              width: 240px;
+              height: 2px;
+              background: rgba(255, 255, 255, 0.05);
+              margin: 0 auto;
+              position: relative;
+              overflow: hidden;
+              border-radius: 2px;
+            }
+            .p-boot-progress {
+              position: absolute;
+              width: 80px;
+              height: 100%;
+              background: ${config.theme_color || '#00f2ff'};
+              box-shadow: 0 0 20px ${config.theme_color || '#00f2ff'};
+              animation: boot-slide 1.5s infinite ease-in-out;
+              position: absolute;
+            }
+            .p-boot-sub {
+              margin-top: 15px;
+              font-family: 'JetBrains Mono';
+              font-size: 8px;
+              color: #333;
+              letter-spacing: 0.3em;
+            }
+            @keyframes boot-pulse {
+              0%, 100% { opacity: 1; transform: scale(1); }
+              50% { opacity: 0.4; transform: scale(0.98); }
+            }
+            @keyframes boot-slide {
+              from { left: -80px; }
+              to { left: 100%; }
+            }
+          `}</style>
         </div>
-
-        <nav className="p-dock">
-          <Link href="/gallery"><div className="p-dock-item"><i className="fas fa-th-large"></i><span>GALLERY</span></div></Link>
-          <Link href="/log"><div className="p-dock-item"><i className="fas fa-history"></i><span>LOGS</span></div></Link>
-          <Link href="/tracker"><div className="p-dock-item"><i className="fas fa-compass"></i><span>TRACKER</span></div></Link>
-          <Link href="/chronicle"><div className="p-dock-item"><i className="fas fa-project-diagram"></i><span>CHRONICLE</span></div></Link>
-          <Link href="/analytics"><div className="p-dock-item"><i className="fas fa-chart-line"></i><span>ANALYTICS</span></div></Link>
-          <Link href="/workstation"><div className="p-dock-item"><i className="fas fa-hammer"></i><span>WORKSTATION</span></div></Link>
-          <Link href="/profile">
-            <div className="p-dock-item p-profile-trigger">
-              <i className="fas fa-user-shield"></i>
-              <span>PROFILE</span>
-              <span className="p-notif-dot"></span>
-            </div>
-          </Link>
-        </nav>
-      </main>
-
-      {isConfigOpen && (
-        <div className="p-modal-overlay" onClick={() => setIsConfigOpen(false)}>
-          <div className="p-modal-card" onClick={e => e.stopPropagation()}>
-            <div className="p-modal-head">
-              <h3>SYSTEM_CONFIGURATION</h3>
-              <button onClick={() => setIsConfigOpen(false)} className="close-btn">&times;</button>
-            </div>
-            <div className="p-modal-body">
-              <div className="p-modal-row">
-                <label>TARGET_MEMBER</label>
-                <select className="custom-input" value={config.member} onChange={e => handleUpdate('member', e.target.value)}>
-                  {MEMBER_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
-                </select>
+      ) : (
+        /* ★ ログイン後のメインポータル画面 ★ */
+        <div className="p-root" style={{ '--v-bright': config.brightness }}>
+          {config.grain && <div className="p-grain"></div>}
+          
+          <div className="p-ambient">
+            {config.glow && featured && (
+              <div className="p-glow-wrap" key={featured.image}>
+                <img src={featured.image} alt="" />
               </div>
-              <div className="p-modal-row">
-                <label>IDENTIFIED_COSPLAYER</label>
-                <select className="custom-input" value={config.cosplayer} onChange={e => handleUpdate('cosplayer', e.target.value)}>
-                  {cosplayerList.map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </div>
-              <div className="p-modal-row">
-                <label>RESONANCE_COLOR</label>
-                <div className="color-ctrl">
-                  <input type="color" value={config.theme_color || '#00f2ff'} onChange={e => handleUpdate('theme_color', e.target.value)} />
-                  <input type="text" className="hex-input" value={(config.theme_color || '#00f2ff').toUpperCase()} onChange={e => handleUpdate('theme_color', e.target.value)} />
-                </div>
-              </div>
-              <div className="p-modal-row">
-                <label>AMBIENT_GLOW</label>
-                <div className="custom-check">
-                  <input type="checkbox" id="glow" checked={config.glow} onChange={e => handleUpdate('glow', e.target.checked)} />
-                  <label htmlFor="glow"></label>
-                </div>
-              </div>
-              <div className="p-modal-row">
-                <label>MASTER_BRIGHTNESS</label>
-                <input type="range" min="0.2" max="1" step="0.1" value={config.brightness} onChange={e => handleUpdate('brightness', parseFloat(e.target.value))} className="custom-slider" />
-              </div>
-              <div className="p-modal-row">
-                <label>INTERVAL (ms)</label>
-                <input type="number" step="1000" value={config.interval} onChange={e => handleUpdate('interval', parseInt(e.target.value))} className="custom-input" />
-              </div>
-            </div>
-            <button className="p-modal-save" onClick={saveAllConfig}>APPLY_AND_SYNC_OSHI_JACK</button>
+            )}
+            <div className="p-mask"></div>
           </div>
+
+          <main className="p-main-layer">
+            <div className="p-grid">
+              
+              <div className="p-wing-left">
+                <div className="p-glass-panel">
+                  <span className="p-tag">PRODUCTION_STATUS</span>
+                  <div className="p-progress-wrap">
+                    <div className="p-progress-bar" style={{ width: `${productionProgress}%` }}></div>
+                    <span className="p-progress-val">{productionProgress}%</span>
+                  </div>
+                  <div className="p-meta">UNIT_ID: {user ? user.email.split('@')[0] : "GUEST_LINK"}</div>
+                </div>
+                <button className="p-config-btn" onClick={() => setIsConfigOpen(true)}>
+                  <i className="fas fa-sliders-h"></i> CONFIG_SYSTEM
+                </button>
+              </div>
+
+              <div className="p-chrono-core">
+                <div className="p-clock">{time.toLocaleTimeString('en-US', { hour12: false })}</div>
+                <div className="p-date">{time.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}</div>
+                
+                <div className="p-pulse-monitor">
+                  <canvas ref={canvasRef} width={800} height={120} />
+                  <div className="p-pulse-info">
+                    <div className="p-pulse-stat"><span>FERVOR_AVG</span> <strong>{pulseStats.avgFervor.toFixed(1)}</strong></div>
+                    <div className="p-pulse-stat"><span>LAST_SCAN</span> <strong>{pulseStats.lastDays}D_AGO</strong></div>
+                    <div className="p-pulse-stat spark-status" style={{ color: pulseStats.hasSpark ? 'var(--v-accent)' : '#444' }}>
+                      <span>SPARK_SIGNAL</span> <strong>{pulseStats.hasSpark ? 'DETECTED' : 'STABLE'}</strong>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-wing-right">
+                <div className="p-stack">
+                  {featured && (
+                    <div className="p-featured-card">
+                      <div className="p-featured-media">
+                        <img src={featured.image} alt="" key={featured.image} />
+                        <button 
+                          className={`p-archive-trigger ${isArchiving ? 'active' : ''}`}
+                          onClick={handleSaveToArchive}
+                        >
+                          <i className={isArchiving ? "fas fa-check" : "fas fa-bookmark"}></i>
+                        </button>
+                      </div>
+                      <div className="p-featured-info">
+                        <span className="p-tag">FEATURED_ARCHIVE</span>
+                        <h3>{featured.member}</h3>
+                        <p>BY {featured.cosplayer}</p>
+                      </div>
+                    </div>
+                  )}
+                  <div className="p-feed-panel">
+                    <div className="p-feed-row mission">
+                      <span className="p-feed-tag">NEXT_MISSION</span>
+                      <p>{nextMission ? nextMission.event_name : 'STANDBY_MODE'}</p>
+                    </div>
+                    <div className="p-feed-row">
+                      <span className="p-feed-tag">LAST_RECORD</span>
+                      <p>{latestArchive ? latestArchive.event_name : 'NO_RECENT_DATA'}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <nav className="p-dock">
+              <Link href="/gallery"><div className="p-dock-item"><i className="fas fa-th-large"></i><span>GALLERY</span></div></Link>
+              <Link href="/log"><div className="p-dock-item"><i className="fas fa-history"></i><span>LOGS</span></div></Link>
+              <Link href="/tracker"><div className="p-dock-item"><i className="fas fa-compass"></i><span>TRACKER</span></div></Link>
+              <Link href="/chronicle"><div className="p-dock-item"><i className="fas fa-project-diagram"></i><span>CHRONICLE</span></div></Link>
+              <Link href="/analytics"><div className="p-dock-item"><i className="fas fa-chart-line"></i><span>ANALYTICS</span></div></Link>
+              <Link href="/workstation"><div className="p-dock-item"><i className="fas fa-hammer"></i><span>WORKSTATION</span></div></Link>
+              <Link href="/profile">
+                <div className="p-dock-item p-profile-trigger">
+                  <i className="fas fa-user-shield"></i>
+                  <span>PROFILE</span>
+                  <span className="p-notif-dot"></span>
+                </div>
+              </Link>
+            </nav>
+          </main>
+
+          {isConfigOpen && (
+            <div className="p-modal-overlay" onClick={() => setIsConfigOpen(false)}>
+              <div className="p-modal-card" onClick={e => e.stopPropagation()}>
+                <div className="p-modal-head">
+                  <h3>SYSTEM_CONFIGURATION</h3>
+                  <button onClick={() => setIsConfigOpen(false)} className="close-btn">&times;</button>
+                </div>
+                <div className="p-modal-body">
+                  <div className="p-modal-row">
+                    <label>TARGET_MEMBER</label>
+                    <select className="custom-input" value={config.member} onChange={e => handleUpdate('member', e.target.value)}>
+                      {MEMBER_ORDER.map(m => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                  </div>
+                  <div className="p-modal-row">
+                    <label>IDENTIFIED_COSPLAYER</label>
+                    <select className="custom-input" value={config.cosplayer} onChange={e => handleUpdate('cosplayer', e.target.value)}>
+                      {cosplayerList.map(c => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </div>
+                  <div className="p-modal-row">
+                    <label>RESONANCE_COLOR</label>
+                    <div className="color-ctrl">
+                      <input type="color" value={config.theme_color || '#00f2ff'} onChange={e => handleUpdate('theme_color', e.target.value)} />
+                      <input type="text" className="hex-input" value={(config.theme_color || '#00f2ff').toUpperCase()} onChange={e => handleUpdate('theme_color', e.target.value)} />
+                    </div>
+                  </div>
+                  <div className="p-modal-row">
+                    <label>AMBIENT_GLOW</label>
+                    <div className="custom-check">
+                      <input type="checkbox" id="glow" checked={config.glow} onChange={e => handleUpdate('glow', e.target.checked)} />
+                      <label htmlFor="glow"></label>
+                    </div>
+                  </div>
+                  <div className="p-modal-row">
+                    <label>MASTER_BRIGHTNESS</label>
+                    <input type="range" min="0.2" max="1" step="0.1" value={config.brightness} onChange={e => handleUpdate('brightness', parseFloat(e.target.value))} className="custom-slider" />
+                  </div>
+                  <div className="p-modal-row">
+                    <label>INTERVAL (ms)</label>
+                    <input type="number" step="1000" value={config.interval} onChange={e => handleUpdate('interval', parseInt(e.target.value))} className="custom-input" />
+                  </div>
+                </div>
+                <button className="p-modal-save" onClick={saveAllConfig}>APPLY_AND_SYNC_OSHI_JACK</button>
+              </div>
+            </div>
+          )}
+
+          <style jsx global>{`
+            :root { --v-accent: ${config.theme_color || '#00f2ff'}; --v-magenta: #ff00ff; }
+            body { margin:0; background:#000; color:#fff; font-family:'Montserrat', sans-serif; overflow:hidden; }
+
+            .p-grain { position:fixed; inset:0; background:url('https://grainy-gradients.vercel.app/noise.svg'); opacity:0.05; pointer-events:none; z-index:900; }
+            .p-ambient { position:absolute; inset:0; z-index:1; pointer-events:none; }
+            .p-glow-wrap { position:absolute; inset:-10%; filter:blur(120px); opacity:calc(0.5 * var(--v-bright)); transition:3s; }
+            .p-glow-wrap img { width:100%; height:100%; object-fit:cover; }
+            .p-mask { position:absolute; inset:0; background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.5) 60%, #000 95%); }
+
+            .p-main-layer { position:relative; height:100vh; width:100vw; z-index:10; display:flex; flex-direction:column; }
+            .p-grid { flex:1; display:grid; grid-template-columns: 380px 1fr 380px; padding:60px; box-sizing:border-box; align-items:center; }
+
+            .p-glass-panel, .p-featured-card, .p-feed-panel { background:rgba(255,255,255,0.03); backdrop-filter:blur(30px); border:1px solid rgba(255,255,255,0.08); border-radius:4px; padding:25px; margin-bottom:30px; }
+            .p-tag { font-family:'JetBrains Mono'; font-size:9px; font-weight:800; color:var(--v-accent); letter-spacing:0.2em; display:block; margin-bottom:15px; text-shadow: 0 0 10px var(--v-accent); }
+
+            .p-progress-wrap { position:relative; height:2px; background:rgba(255,255,255,0.1); display:flex; align-items:center; }
+            .p-progress-bar { height:100%; background:var(--v-accent); box-shadow:0 0 15px var(--v-accent); transition:1s; }
+            .p-progress-val { position:absolute; right:0; top:-18px; font-size:10px; font-weight:800; color:var(--v-accent); }
+            .p-meta { font-size:9px; color:#555; font-weight:800; margin-top:20px; font-family: 'JetBrains Mono'; }
+            
+            .p-config-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#999; padding:12px 25px; font-size:10px; font-weight:800; border-radius:4px; cursor:pointer; font-family: 'JetBrains Mono'; }
+            .p-config-btn:hover { border-color:var(--v-accent); color:var(--v-accent); }
+
+            .p-chrono-core { display: flex; flex-direction: column; align-items: center; }
+            .p-clock { font-size:120px; font-weight:100; text-align:center; letter-spacing: -0.05em; line-height: 1; }
+            .p-date { font-size:12px; font-weight:800; color:#333; letter-spacing:0.5em; margin: 10px 0 40px; text-align:center; font-family: 'JetBrains Mono'; }
+
+            .p-pulse-monitor { 
+              width: 800px; 
+              position: relative; 
+              margin: 0 auto;
+              mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+              -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
+            }
+            .p-pulse-info { display: flex; justify-content: space-between; margin-top: 25px; padding: 0 60px; }
+            .p-pulse-stat { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 800; color: #fff; text-align: center; }
+            .p-pulse-stat span { color: #444; margin-bottom: 8px; font-size: 9px; display: block; letter-spacing: 0.1em; }
+            .p-pulse-stat strong { font-size: 18px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
+            .spark-status strong { color: var(--v-accent); text-shadow: 0 0 10px var(--v-accent); }
+
+            .p-featured-card { padding:0; overflow:hidden; position:relative; }
+            .p-featured-media { height:240px; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
+            .p-featured-media img { max-width:100%; max-height:100%; object-fit:contain; }
+            
+            .p-archive-trigger { position:absolute; top:15px; right:15px; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.1); color:#fff; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transform:translateY(-10px); transition:0.3s; z-index:20; }
+            .p-featured-card:hover .p-archive-trigger { opacity:1; transform:translateY(0); }
+            .p-archive-trigger:hover { border-color:var(--v-accent); color:var(--v-accent); box-shadow:0 0 15px var(--v-accent); }
+            .p-archive-trigger.active { background:var(--v-accent); color:#000; border-color:var(--v-accent); opacity:1; transform:scale(1.1); }
+
+            .p-featured-info { padding:20px; }
+            .p-featured-info h3 { margin:0; font-size:18px; font-weight:400; color:#eee; }
+            .p-featured-info p { margin:8px 0 0; font-size:10px; font-weight:800; color:#555; }
+
+            .p-feed-panel { display:flex; flex-direction:column; gap:20px; margin-bottom:0; }
+            .p-feed-tag { font-family:'JetBrains Mono'; font-size:8px; font-weight:800; color:var(--v-accent); letter-spacing:0.2em; display:block; margin-bottom:5px; }
+            .p-feed-row p { margin:0; font-size:14px; color:#fff; font-weight: 400; line-height: 1.4; }
+
+            .p-dock { position:fixed; bottom:40px; left:50%; transform:translateX(-50%); display:flex; gap:10px; background:rgba(0,0,0,0.8); backdrop-filter:blur(30px); padding:8px; border-radius:50px; border:1px solid rgba(255,255,255,0.1); z-index:100; }
+            .p-dock-item { padding:12px 25px; border-radius:40px; color:#666; transition:0.3s; cursor:pointer; display: flex; align-items: center; gap: 10px; text-decoration:none; }
+            .p-dock-item:hover { color:var(--v-accent); background:rgba(255,255,255,0.1); }
+            .p-dock-item span { font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 800; }
+            .p-notif-dot { width:6px; height:6px; background:var(--v-accent); border-radius:50%; box-shadow:0 0 10px var(--v-accent); animation:dot-pulse 2s infinite; }
+            @keyframes dot-pulse { 0% { opacity:0.3; transform:scale(0.8); } 50% { opacity:1; transform:scale(1.1); } 100% { opacity:0.3; transform:scale(0.8); } }
+
+            .p-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(20px); z-index:2000; display:flex; align-items:center; justify-content:center; }
+            .p-modal-card { background:#0a0a0b; width:450px; padding:40px; border:1px solid #222; border-radius:4px; box-shadow: 0 0 100px #000; }
+            .p-modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; border-bottom:1px solid #111; padding-bottom:15px; }
+            .p-modal-head h3 { font-family: 'JetBrains Mono'; font-size:12px; font-weight:800; color:#eee; margin:0; }
+            .close-btn { background:none; border:none; color:#444; font-size:30px; cursor:pointer; }
+            .p-modal-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; }
+            .p-modal-row label { font-family: 'JetBrains Mono'; font-size:10px; font-weight:800; color:#666; }
+            .color-ctrl { display:flex; gap:10px; align-items:center; }
+            .color-ctrl input[type="color"] { background:none; border:1px solid #222; width:40px; height:40px; cursor:pointer; }
+            .hex-input { background:#000; border:1px solid #222; color:#fff; padding:10px; width:100px; font-family:'JetBrains Mono'; text-align:center; outline:none; font-size:12px; }
+            .custom-check { position:relative; width:20px; height:20px; }
+            .custom-check input { opacity:0; position:absolute; }
+            .custom-check label { position:absolute; inset:0; border:2px solid #333; border-radius:2px; cursor:pointer; }
+            .custom-check input:checked + label { border-color:var(--v-accent); background:rgba(0,242,255,0.1); }
+            .custom-check input:checked + label::after { content:'✓'; position:absolute; top:-2px; left:3px; color:var(--v-accent); font-size:14px; }
+            .custom-slider { -webkit-appearance:none; width:150px; height:2px; background:#222; outline:none; }
+            .custom-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; background:var(--v-accent); border-radius:50%; box-shadow:0 0 10px var(--v-accent); cursor:pointer; }
+            .custom-input { background:#111; border:1px solid #222; color:#fff; padding:8px 12px; font-family: 'JetBrains Mono'; font-size:12px; text-align:right; width:150px; outline:none; border-radius:4px; }
+            .p-modal-save { width:100%; padding:20px; background:var(--v-accent); color:#000; font-family: 'JetBrains Mono'; font-weight:800; border:none; margin-top:20px; cursor:pointer; transition:0.3s; }
+            .p-modal-save:hover { background:#fff; box-shadow:0 0 30px var(--v-accent); }
+          `}</style>
         </div>
       )}
-
-      <style jsx global>{`
-        :root { --v-accent: ${config.theme_color || '#00f2ff'}; --v-magenta: #ff00ff; }
-        body { margin:0; background:#000; color:#fff; font-family:'Montserrat', sans-serif; overflow:hidden; }
-
-        .p-grain { position:fixed; inset:0; background:url('https://grainy-gradients.vercel.app/noise.svg'); opacity:0.05; pointer-events:none; z-index:900; }
-        .p-ambient { position:absolute; inset:0; z-index:1; pointer-events:none; }
-        .p-glow-wrap { position:absolute; inset:-10%; filter:blur(120px); opacity:calc(0.5 * var(--v-bright)); transition:3s; }
-        .p-glow-wrap img { width:100%; height:100%; object-fit:cover; }
-        .p-mask { position:absolute; inset:0; background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.5) 60%, #000 95%); }
-
-        .p-main-layer { position:relative; height:100vh; width:100vw; z-index:10; display:flex; flex-direction:column; }
-        .p-grid { flex:1; display:grid; grid-template-columns: 380px 1fr 380px; padding:60px; box-sizing:border-box; align-items:center; }
-
-        .p-glass-panel, .p-featured-card, .p-feed-panel { background:rgba(255,255,255,0.03); backdrop-filter:blur(30px); border:1px solid rgba(255,255,255,0.08); border-radius:4px; padding:25px; margin-bottom:30px; }
-        .p-tag { font-family:'JetBrains Mono'; font-size:9px; font-weight:800; color:var(--v-accent); letter-spacing:0.2em; display:block; margin-bottom:15px; text-shadow: 0 0 10px var(--v-accent); }
-
-        .p-progress-wrap { position:relative; height:2px; background:rgba(255,255,255,0.1); display:flex; align-items:center; }
-        .p-progress-bar { height:100%; background:var(--v-accent); box-shadow:0 0 15px var(--v-accent); transition:1s; }
-        .p-progress-val { position:absolute; right:0; top:-18px; font-size:10px; font-weight:800; color:var(--v-accent); }
-        .p-meta { font-size:9px; color:#555; font-weight:800; margin-top:20px; font-family: 'JetBrains Mono'; }
-        
-        .p-config-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#999; padding:12px 25px; font-size:10px; font-weight:800; border-radius:4px; cursor:pointer; font-family: 'JetBrains Mono'; }
-        .p-config-btn:hover { border-color:var(--v-accent); color:var(--v-accent); }
-
-        .p-chrono-core { display: flex; flex-direction: column; align-items: center; }
-        .p-clock { font-size:120px; font-weight:100; text-align:center; letter-spacing: -0.05em; line-height: 1; }
-        .p-date { font-size:12px; font-weight:800; color:#333; letter-spacing:0.5em; margin: 10px 0 40px; text-align:center; font-family: 'JetBrains Mono'; }
-
-        .p-pulse-monitor { 
-          width: 800px; 
-          position: relative; 
-          margin: 0 auto;
-          mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-          -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
-        }
-        .p-pulse-info { display: flex; justify-content: space-between; margin-top: 25px; padding: 0 60px; }
-        .p-pulse-stat { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 800; color: #fff; text-align: center; }
-        .p-pulse-stat span { color: #444; margin-bottom: 8px; font-size: 9px; display: block; letter-spacing: 0.1em; }
-        .p-pulse-stat strong { font-size: 18px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
-        .spark-status strong { color: var(--v-accent); text-shadow: 0 0 10px var(--v-accent); }
-
-        .p-featured-card { padding:0; overflow:hidden; position:relative; }
-        .p-featured-media { height:240px; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
-        .p-featured-media img { max-width:100%; max-height:100%; object-fit:contain; }
-        
-        .p-archive-trigger { position:absolute; top:15px; right:15px; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.1); color:#fff; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transform:translateY(-10px); transition:0.3s; z-index:20; }
-        .p-featured-card:hover .p-archive-trigger { opacity:1; transform:translateY(0); }
-        .p-archive-trigger:hover { border-color:var(--v-accent); color:var(--v-accent); box-shadow:0 0 15px var(--v-accent); }
-        .p-archive-trigger.active { background:var(--v-accent); color:#000; border-color:var(--v-accent); opacity:1; transform:scale(1.1); }
-
-        .p-featured-info { padding:20px; }
-        .p-featured-info h3 { margin:0; font-size:18px; font-weight:400; color:#eee; }
-        .p-featured-info p { margin:8px 0 0; font-size:10px; font-weight:800; color:#555; }
-
-        .p-feed-panel { display:flex; flex-direction:column; gap:20px; margin-bottom:0; }
-        .p-feed-tag { font-family:'JetBrains Mono'; font-size:8px; font-weight:800; color:var(--v-accent); letter-spacing:0.2em; display:block; margin-bottom:5px; }
-        .p-feed-row p { margin:0; font-size:14px; color:#fff; font-weight: 400; line-height: 1.4; }
-
-        .p-dock { position:fixed; bottom:40px; left:50%; transform:translateX(-50%); display:flex; gap:10px; background:rgba(0,0,0,0.8); backdrop-filter:blur(30px); padding:8px; border-radius:50px; border:1px solid rgba(255,255,255,0.1); z-index:100; }
-        .p-dock-item { padding:12px 25px; border-radius:40px; color:#666; transition:0.3s; cursor:pointer; display: flex; align-items: center; gap: 10px; text-decoration:none; }
-        .p-dock-item:hover { color:var(--v-accent); background:rgba(255,255,255,0.1); }
-        .p-dock-item span { font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 800; }
-        .p-notif-dot { width:6px; height:6px; background:var(--v-accent); border-radius:50%; box-shadow:0 0 10px var(--v-accent); animation:dot-pulse 2s infinite; }
-        @keyframes dot-pulse { 0% { opacity:0.3; transform:scale(0.8); } 50% { opacity:1; transform:scale(1.1); } 100% { opacity:0.3; transform:scale(0.8); } }
-
-        .p-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(20px); z-index:2000; display:flex; align-items:center; justify-content:center; }
-        .p-modal-card { background:#0a0a0b; width:450px; padding:40px; border:1px solid #222; border-radius:4px; box-shadow: 0 0 100px #000; }
-        .p-modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; border-bottom:1px solid #111; padding-bottom:15px; }
-        .p-modal-head h3 { font-family: 'JetBrains Mono'; font-size:12px; font-weight:800; color:#eee; margin:0; }
-        .close-btn { background:none; border:none; color:#444; font-size:30px; cursor:pointer; }
-        .p-modal-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; }
-        .p-modal-row label { font-family: 'JetBrains Mono'; font-size:10px; font-weight:800; color:#666; }
-        .color-ctrl { display:flex; gap:10px; align-items:center; }
-        .color-ctrl input[type="color"] { background:none; border:1px solid #222; width:40px; height:40px; cursor:pointer; }
-        .hex-input { background:#000; border:1px solid #222; color:#fff; padding:10px; width:100px; font-family:'JetBrains Mono'; text-align:center; outline:none; font-size:12px; }
-        .custom-check { position:relative; width:20px; height:20px; }
-        .custom-check input { opacity:0; position:absolute; }
-        .custom-check label { position:absolute; inset:0; border:2px solid #333; border-radius:2px; cursor:pointer; }
-        .custom-check input:checked + label { border-color:var(--v-accent); background:rgba(0,242,255,0.1); }
-        .custom-check input:checked + label::after { content:'✓'; position:absolute; top:-2px; left:3px; color:var(--v-accent); font-size:14px; }
-        .custom-slider { -webkit-appearance:none; width:150px; height:2px; background:#222; outline:none; }
-        .custom-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; background:var(--v-accent); border-radius:50%; box-shadow:0 0 10px var(--v-accent); cursor:pointer; }
-        .custom-input { background:#111; border:1px solid #222; color:#fff; padding:8px 12px; font-family: 'JetBrains Mono'; font-size:12px; text-align:right; width:150px; outline:none; border-radius:4px; }
-        .p-modal-save { width:100%; padding:20px; background:var(--v-accent); color:#000; font-family: 'JetBrains Mono'; font-weight:800; border:none; margin-top:20px; cursor:pointer; transition:0.3s; }
-        .p-modal-save:hover { background:#fff; box-shadow:0 0 30px var(--v-accent); }
-      `}</style>
-    </div>
+    </>
   );
 }
