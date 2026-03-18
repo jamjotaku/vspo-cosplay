@@ -16,6 +16,12 @@ const MEMBER_ORDER = [
 export default function Portal() {
   const router = useRouter();
 
+  // ★ OGP用の基本設定（デプロイ後のURLに合わせて書き換えてください）
+  const SITE_DOMAIN = "https://vspo-cosplay.vercel.app/"; // あなたのサイトURL
+  const SITE_TITLE = "VSPO! COSPLAY HUB";
+  const SITE_DESC = "サイトからデスクトップまで、推しと過ごせる時間を。";
+  const OGP_IMAGE = `${SITE_DOMAIN}/OGP.png`;
+
   const [allData, setAllData] = useState([]);
   const [featured, setFeatured] = useState(null);
   const [user, setUser] = useState(null);
@@ -213,7 +219,6 @@ export default function Portal() {
     pickFeatured();
   };
 
-  // ★ブートローダー：漆黒の認証画面★
   if (!user) {
     return (
       <div className="p-boot-loader">
@@ -285,7 +290,25 @@ export default function Portal() {
   return (
     <div className="p-root" style={{ '--v-bright': config.brightness }}>
       <Head>
-        <title>COMMAND_CENTER // VSPO! HUB v6.0</title>
+        <title>{SITE_TITLE}</title>
+        <meta name="description" content={SITE_DESC} />
+        
+        {/* ★ OGP設定: ここから ★ */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content={SITE_DOMAIN} />
+        <meta property="og:title" content={SITE_TITLE} />
+        <meta property="og:description" content={SITE_DESC} />
+        <meta property="og:image" content={OGP_IMAGE} />
+        <meta property="og:image:width" content="1200" />
+        <meta property="og:image:height" content="630" />
+
+        {/* X (Twitter) 用設定 */}
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content={SITE_TITLE} />
+        <meta name="twitter:description" content={SITE_DESC} />
+        <meta name="twitter:image" content={OGP_IMAGE} />
+        {/* ★ OGP設定: ここまで ★ */}
+
         <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@800&family=Montserrat:wght@100;400;900&display=swap" rel="stylesheet" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
       </Head>
@@ -322,7 +345,6 @@ export default function Portal() {
             <div className="p-clock">{time.toLocaleTimeString('en-US', { hour12: false })}</div>
             <div className="p-date">{time.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' }).toUpperCase()}</div>
             
-            {/* ★パルスモニター：完全センター ＆ フェードエッジ★ */}
             <div className="p-pulse-monitor">
               <canvas ref={canvasRef} width={800} height={120} />
               <div className="p-pulse-info">
@@ -463,7 +485,6 @@ export default function Portal() {
         .p-clock { font-size:120px; font-weight:100; text-align:center; letter-spacing: -0.05em; line-height: 1; }
         .p-date { font-size:12px; font-weight:800; color:#333; letter-spacing:0.5em; margin: 10px 0 40px; text-align:center; font-family: 'JetBrains Mono'; }
 
-        /* パルスモニター：HUD仕様に強化 */
         .p-pulse-monitor { 
           width: 800px; 
           position: relative; 
