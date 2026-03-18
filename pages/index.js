@@ -16,7 +16,6 @@ const MEMBER_ORDER = [
 export default function Portal() {
   const router = useRouter();
 
-  // ★ OGP用の基本設定（URLの末尾にスラッシュがないことを確認済みです）
   const SITE_DOMAIN = "https://vspo-cosplay.vercel.app"; 
   const SITE_TITLE = "VSPO! COSPLAY HUB";
   const SITE_DESC = "サイトからデスクトップまで、推しと過ごせる時間を。";
@@ -219,7 +218,6 @@ export default function Portal() {
     pickFeatured();
   };
 
-  // ★ 修正ポイント: 全ての return をひとつの Fragment で包み、Head を常に一番上に配置します
   return (
     <>
       <Head>
@@ -246,7 +244,6 @@ export default function Portal() {
       </Head>
 
       {!user ? (
-        /* ★ ログイン前のブートローダー画面 ★ */
         <div className="p-boot-loader">
           <div className="p-boot-content">
             <div className="p-boot-text">IDENTIFYING_COMMANDER...</div>
@@ -265,7 +262,9 @@ export default function Portal() {
               align-items: center;
               justify-content: center;
             }
-            .p-boot-content { text-align: center; }
+            .p-boot-content {
+              text-align: center;
+            }
             .p-boot-text {
               font-family: 'JetBrains Mono', monospace;
               color: ${config.theme_color || '#00f2ff'};
@@ -292,7 +291,6 @@ export default function Portal() {
               background: ${config.theme_color || '#00f2ff'};
               box-shadow: 0 0 20px ${config.theme_color || '#00f2ff'};
               animation: boot-slide 1.5s infinite ease-in-out;
-              position: absolute;
             }
             .p-boot-sub {
               margin-top: 15px;
@@ -312,7 +310,6 @@ export default function Portal() {
           `}</style>
         </div>
       ) : (
-        /* ★ ログイン後のメインポータル画面 ★ */
         <div className="p-root" style={{ '--v-bright': config.brightness }}>
           {config.grain && <div className="p-grain"></div>}
           
@@ -394,6 +391,14 @@ export default function Portal() {
             </div>
 
             <nav className="p-dock">
+              {/* ★ 規約・免責事項を一番最初（左）に追加 ★ */}
+              <Link href="/about">
+                <div className="p-dock-item p-legal-tab">
+                  <i className="fas fa-shield-halved"></i>
+                  <span>規約・免責事項</span>
+                </div>
+              </Link>
+
               <Link href="/gallery"><div className="p-dock-item"><i className="fas fa-th-large"></i><span>GALLERY</span></div></Link>
               <Link href="/log"><div className="p-dock-item"><i className="fas fa-history"></i><span>LOGS</span></div></Link>
               <Link href="/chronicle"><div className="p-dock-item"><i className="fas fa-project-diagram"></i><span>CHRONICLE</span></div></Link>
@@ -407,6 +412,16 @@ export default function Portal() {
                 </div>
               </Link>
             </nav>
+
+            {/* ★ ページ下部の免責事項記載を追加 ★ */}
+            <footer className="p-global-legal-footer">
+              <div className="p-legal-box">
+                <p>
+                  【重要】本サイトはファンによる非公式プロジェクトであり、公式とは一切関係ありません。使用素材の著作権・肖像権は各権利者に帰属します。
+                  掲載停止のご依頼、および詳細な免責事項は <Link href="/about">こちらのページ</Link> を必ずご確認ください。
+                </p>
+              </div>
+            </footer>
           </main>
 
           {isConfigOpen && (
@@ -458,90 +473,510 @@ export default function Portal() {
           )}
 
           <style jsx global>{`
-            :root { --v-accent: ${config.theme_color || '#00f2ff'}; --v-magenta: #ff00ff; }
-            body { margin:0; background:#000; color:#fff; font-family:'Montserrat', sans-serif; overflow:hidden; }
-
-            .p-grain { position:fixed; inset:0; background:url('https://grainy-gradients.vercel.app/noise.svg'); opacity:0.05; pointer-events:none; z-index:900; }
-            .p-ambient { position:absolute; inset:0; z-index:1; pointer-events:none; }
-            .p-glow-wrap { position:absolute; inset:-10%; filter:blur(120px); opacity:calc(0.5 * var(--v-bright)); transition:3s; }
-            .p-glow-wrap img { width:100%; height:100%; object-fit:cover; }
-            .p-mask { position:absolute; inset:0; background:radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.5) 60%, #000 95%); }
-
-            .p-main-layer { position:relative; height:100vh; width:100vw; z-index:10; display:flex; flex-direction:column; }
-            .p-grid { flex:1; display:grid; grid-template-columns: 380px 1fr 380px; padding:60px; box-sizing:border-box; align-items:center; }
-
-            .p-glass-panel, .p-featured-card, .p-feed-panel { background:rgba(255,255,255,0.03); backdrop-filter:blur(30px); border:1px solid rgba(255,255,255,0.08); border-radius:4px; padding:25px; margin-bottom:30px; }
-            .p-tag { font-family:'JetBrains Mono'; font-size:9px; font-weight:800; color:var(--v-accent); letter-spacing:0.2em; display:block; margin-bottom:15px; text-shadow: 0 0 10px var(--v-accent); }
-
-            .p-progress-wrap { position:relative; height:2px; background:rgba(255,255,255,0.1); display:flex; align-items:center; }
-            .p-progress-bar { height:100%; background:var(--v-accent); box-shadow:0 0 15px var(--v-accent); transition:1s; }
-            .p-progress-val { position:absolute; right:0; top:-18px; font-size:10px; font-weight:800; color:var(--v-accent); }
-            .p-meta { font-size:9px; color:#555; font-weight:800; margin-top:20px; font-family: 'JetBrains Mono'; }
-            
-            .p-config-btn { background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.1); color:#999; padding:12px 25px; font-size:10px; font-weight:800; border-radius:4px; cursor:pointer; font-family: 'JetBrains Mono'; }
-            .p-config-btn:hover { border-color:var(--v-accent); color:var(--v-accent); }
-
-            .p-chrono-core { display: flex; flex-direction: column; align-items: center; }
-            .p-clock { font-size:120px; font-weight:100; text-align:center; letter-spacing: -0.05em; line-height: 1; }
-            .p-date { font-size:12px; font-weight:800; color:#333; letter-spacing:0.5em; margin: 10px 0 40px; text-align:center; font-family: 'JetBrains Mono'; }
-
-            .p-pulse-monitor { 
-              width: 800px; 
-              position: relative; 
+            :root {
+              --v-accent: ${config.theme_color || '#00f2ff'};
+              --v-magenta: #ff00ff;
+            }
+            body {
+              margin: 0;
+              background: #000;
+              color: #fff;
+              font-family: 'Montserrat', sans-serif;
+              overflow: hidden;
+            }
+            .p-grain {
+              position: fixed;
+              inset: 0;
+              background: url('https://grainy-gradients.vercel.app/noise.svg');
+              opacity: 0.05;
+              pointer-events: none;
+              z-index: 900;
+            }
+            .p-ambient {
+              position: absolute;
+              inset: 0;
+              z-index: 1;
+              pointer-events: none;
+            }
+            .p-glow-wrap {
+              position: absolute;
+              inset: -10%;
+              filter: blur(120px);
+              opacity: calc(0.5 * var(--v-bright));
+              transition: 3s;
+            }
+            .p-glow-wrap img {
+              width: 100%;
+              height: 100%;
+              object-fit: cover;
+            }
+            .p-mask {
+              position: absolute;
+              inset: 0;
+              background: radial-gradient(circle at center, transparent 30%, rgba(0,0,0,0.5) 60%, #000 95%);
+            }
+            .p-main-layer {
+              position: relative;
+              height: 100vh;
+              width: 100vw;
+              z-index: 10;
+              display: flex;
+              flex-direction: column;
+            }
+            .p-grid {
+              flex: 1;
+              display: grid;
+              grid-template-columns: 380px 1fr 380px;
+              padding: 60px;
+              box-sizing: border-box;
+              align-items: center;
+            }
+            .p-glass-panel, .p-featured-card, .p-feed-panel {
+              background: rgba(255, 255, 255, 0.03);
+              backdrop-filter: blur(30px);
+              border: 1px solid rgba(255, 255, 255, 0.08);
+              border-radius: 4px;
+              padding: 25px;
+              margin-bottom: 30px;
+            }
+            .p-tag {
+              font-family: 'JetBrains Mono';
+              font-size: 9px;
+              font-weight: 800;
+              color: var(--v-accent);
+              letter-spacing: 0.2em;
+              display: block;
+              margin-bottom: 15px;
+              text-shadow: 0 0 10px var(--v-accent);
+            }
+            .p-progress-wrap {
+              position: relative;
+              height: 2px;
+              background: rgba(255, 255, 255, 0.1);
+              display: flex;
+              align-items: center;
+            }
+            .p-progress-bar {
+              height: 100%;
+              background: var(--v-accent);
+              box-shadow: 0 0 15px var(--v-accent);
+              transition: 1s;
+            }
+            .p-progress-val {
+              position: absolute;
+              right: 0;
+              top: -18px;
+              font-size: 10px;
+              font-weight: 800;
+              color: var(--v-accent);
+            }
+            .p-meta {
+              font-size: 9px;
+              color: #555;
+              font-weight: 800;
+              margin-top: 20px;
+              font-family: 'JetBrains Mono';
+            }
+            .p-config-btn {
+              background: rgba(255, 255, 255, 0.05);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              color: #999;
+              padding: 12px 25px;
+              font-size: 10px;
+              font-weight: 800;
+              border-radius: 4px;
+              cursor: pointer;
+              font-family: 'JetBrains Mono';
+            }
+            .p-config-btn:hover {
+              border-color: var(--v-accent);
+              color: var(--v-accent);
+            }
+            .p-chrono-core {
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+            }
+            .p-clock {
+              font-size: 120px;
+              font-weight: 100;
+              text-align: center;
+              letter-spacing: -0.05em;
+              line-height: 1;
+            }
+            .p-date {
+              font-size: 12px;
+              font-weight: 800;
+              color: #333;
+              letter-spacing: 0.5em;
+              margin: 10px 0 40px;
+              text-align: center;
+              font-family: 'JetBrains Mono';
+            }
+            .p-pulse-monitor {
+              width: 800px;
+              position: relative;
               margin: 0 auto;
               mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
               -webkit-mask-image: linear-gradient(to right, transparent, black 15%, black 85%, transparent);
             }
-            .p-pulse-info { display: flex; justify-content: space-between; margin-top: 25px; padding: 0 60px; }
-            .p-pulse-stat { font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 800; color: #fff; text-align: center; }
-            .p-pulse-stat span { color: #444; margin-bottom: 8px; font-size: 9px; display: block; letter-spacing: 0.1em; }
-            .p-pulse-stat strong { font-size: 18px; text-shadow: 0 0 10px rgba(255,255,255,0.2); }
-            .spark-status strong { color: var(--v-accent); text-shadow: 0 0 10px var(--v-accent); }
-
-            .p-featured-card { padding:0; overflow:hidden; position:relative; }
-            .p-featured-media { height:240px; background:rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; }
-            .p-featured-media img { max-width:100%; max-height:100%; object-fit:contain; }
+            .p-pulse-info {
+              display: flex;
+              justify-content: space-between;
+              margin-top: 25px;
+              padding: 0 60px;
+            }
+            .p-pulse-stat {
+              font-family: 'JetBrains Mono', monospace;
+              font-size: 14px;
+              font-weight: 800;
+              color: #fff;
+              text-align: center;
+            }
+            .p-pulse-stat span {
+              color: #444;
+              margin-bottom: 8px;
+              font-size: 9px;
+              display: block;
+              letter-spacing: 0.1em;
+            }
+            .p-pulse-stat strong {
+              font-size: 18px;
+              text-shadow: 0 0 10px rgba(255,255,255,0.2);
+            }
+            .spark-status strong {
+              color: var(--v-accent);
+              text-shadow: 0 0 10px var(--v-accent);
+            }
+            .p-featured-card {
+              padding: 0;
+              overflow: hidden;
+              position: relative;
+            }
+            .p-featured-media {
+              height: 240px;
+              background: rgba(0,0,0,0.4);
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              position: relative;
+              overflow: hidden;
+            }
+            .p-featured-media img {
+              max-width: 100%;
+              max-height: 100%;
+              object-fit: contain;
+            }
+            .p-archive-trigger {
+              position: absolute;
+              top: 15px;
+              right: 15px;
+              background: rgba(0,0,0,0.6);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              color: #fff;
+              width: 36px;
+              height: 36px;
+              border-radius: 50%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              opacity: 0;
+              transform: translateY(-10px);
+              transition: 0.3s;
+              z-index: 20;
+            }
+            .p-featured-card:hover .p-archive-trigger {
+              opacity: 1;
+              transform: translateY(0);
+            }
+            .p-archive-trigger:hover {
+              border-color: var(--v-accent);
+              color: var(--v-accent);
+              box-shadow: 0 0 15px var(--v-accent);
+            }
+            .p-archive-trigger.active {
+              background: var(--v-accent);
+              color: #000;
+              border-color: var(--v-accent);
+              opacity: 1;
+              transform: scale(1.1);
+            }
+            .p-featured-info {
+              padding: 20px;
+            }
+            .p-featured-info h3 {
+              margin: 0;
+              font-size: 18px;
+              font-weight: 400;
+              color: #eee;
+            }
+            .p-featured-info p {
+              margin: 8px 0 0;
+              font-size: 10px;
+              font-weight: 800;
+              color: #555;
+            }
+            .p-feed-panel {
+              display: flex;
+              flex-direction: column;
+              gap: 20px;
+              margin-bottom: 0;
+            }
+            .p-feed-tag {
+              font-family: 'JetBrains Mono';
+              font-size: 8px;
+              font-weight: 800;
+              color: var(--v-accent);
+              letter-spacing: 0.2em;
+              display: block;
+              margin-bottom: 5px;
+            }
+            .p-feed-row p {
+              margin: 0;
+              font-size: 14px;
+              color: #fff;
+              font-weight: 400;
+              line-height: 1.4;
+            }
+            .p-dock {
+              position: fixed;
+              bottom: 80px;
+              left: 50%;
+              transform: translateX(-50%);
+              display: flex;
+              gap: 10px;
+              background: rgba(0,0,0,0.8);
+              backdrop-filter: blur(30px);
+              padding: 8px;
+              border-radius: 50px;
+              border: 1px solid rgba(255,255,255,0.1);
+              z-index: 100;
+            }
+            .p-dock-item {
+              padding: 12px 25px;
+              border-radius: 40px;
+              color: #666;
+              transition: 0.3s;
+              cursor: pointer;
+              display: flex;
+              align-items: center;
+              gap: 10px;
+              text-decoration: none;
+            }
+            .p-dock-item:hover {
+              color: var(--v-accent);
+              background: rgba(255,255,255,0.1);
+            }
+            .p-dock-item span {
+              font-family: 'JetBrains Mono';
+              font-size: 10px;
+              font-weight: 800;
+            }
             
-            .p-archive-trigger { position:absolute; top:15px; right:15px; background:rgba(0,0,0,0.6); border:1px solid rgba(255,255,255,0.1); color:#fff; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; opacity:0; transform:translateY(-10px); transition:0.3s; z-index:20; }
-            .p-featured-card:hover .p-archive-trigger { opacity:1; transform:translateY(0); }
-            .p-archive-trigger:hover { border-color:var(--v-accent); color:var(--v-accent); box-shadow:0 0 15px var(--v-accent); }
-            .p-archive-trigger.active { background:var(--v-accent); color:#000; border-color:var(--v-accent); opacity:1; transform:scale(1.1); }
+            /* 特別な法的タブ用スタイル */
+            .p-legal-tab {
+              background: rgba(255, 174, 0, 0.1);
+              border: 1px solid rgba(255, 174, 0, 0.2);
+            }
+            .p-legal-tab i, .p-legal-tab span {
+              color: #ffae00;
+            }
+            .p-legal-tab:hover {
+              background: rgba(255, 174, 0, 0.2);
+            }
 
-            .p-featured-info { padding:20px; }
-            .p-featured-info h3 { margin:0; font-size:18px; font-weight:400; color:#eee; }
-            .p-featured-info p { margin:8px 0 0; font-size:10px; font-weight:800; color:#555; }
+            .p-notif-dot {
+              width: 6px;
+              height: 6px;
+              background: var(--v-accent);
+              border-radius: 50%;
+              box-shadow: 0 0 10px var(--v-accent);
+              animation: dot-pulse 2s infinite;
+            }
+            @keyframes dot-pulse {
+              0% { opacity: 0.3; transform: scale(0.8); }
+              50% { opacity: 1; transform: scale(1.1); }
+              100% { opacity: 0.3; transform: scale(0.8); }
+            }
 
-            .p-feed-panel { display:flex; flex-direction:column; gap:20px; margin-bottom:0; }
-            .p-feed-tag { font-family:'JetBrains Mono'; font-size:8px; font-weight:800; color:var(--v-accent); letter-spacing:0.2em; display:block; margin-bottom:5px; }
-            .p-feed-row p { margin:0; font-size:14px; color:#fff; font-weight: 400; line-height: 1.4; }
+            /* 免責フッターのスタイル */
+            .p-global-legal-footer {
+              position: fixed;
+              bottom: 0;
+              left: 0;
+              width: 100%;
+              background: rgba(0, 0, 0, 0.9);
+              border-top: 1px solid rgba(255, 255, 255, 0.05);
+              padding: 15px 0;
+              z-index: 1000;
+            }
+            .p-legal-box {
+              max-width: 1000px;
+              margin: 0 auto;
+              text-align: center;
+              padding: 0 20px;
+            }
+            .p-legal-box p {
+              color: #666;
+              font-size: 11px;
+              line-height: 1.6;
+              margin: 0;
+              font-family: "Hiragino Kaku Gothic ProN", sans-serif;
+            }
+            .p-legal-box a {
+              color: var(--v-accent);
+              text-decoration: underline;
+              font-weight: bold;
+            }
 
-            .p-dock { position:fixed; bottom:40px; left:50%; transform:translateX(-50%); display:flex; gap:10px; background:rgba(0,0,0,0.8); backdrop-filter:blur(30px); padding:8px; border-radius:50px; border:1px solid rgba(255,255,255,0.1); z-index:100; }
-            .p-dock-item { padding:12px 25px; border-radius:40px; color:#666; transition:0.3s; cursor:pointer; display: flex; align-items: center; gap: 10px; text-decoration:none; }
-            .p-dock-item:hover { color:var(--v-accent); background:rgba(255,255,255,0.1); }
-            .p-dock-item span { font-family: 'JetBrains Mono'; font-size: 10px; font-weight: 800; }
-            .p-notif-dot { width:6px; height:6px; background:var(--v-accent); border-radius:50%; box-shadow:0 0 10px var(--v-accent); animation:dot-pulse 2s infinite; }
-            @keyframes dot-pulse { 0% { opacity:0.3; transform:scale(0.8); } 50% { opacity:1; transform:scale(1.1); } 100% { opacity:0.3; transform:scale(0.8); } }
-
-            .p-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.95); backdrop-filter:blur(20px); z-index:2000; display:flex; align-items:center; justify-content:center; }
-            .p-modal-card { background:#0a0a0b; width:450px; padding:40px; border:1px solid #222; border-radius:4px; box-shadow: 0 0 100px #000; }
-            .p-modal-head { display:flex; justify-content:space-between; align-items:center; margin-bottom:40px; border-bottom:1px solid #111; padding-bottom:15px; }
-            .p-modal-head h3 { font-family: 'JetBrains Mono'; font-size:12px; font-weight:800; color:#eee; margin:0; }
-            .close-btn { background:none; border:none; color:#444; font-size:30px; cursor:pointer; }
-            .p-modal-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:25px; }
-            .p-modal-row label { font-family: 'JetBrains Mono'; font-size:10px; font-weight:800; color:#666; }
-            .color-ctrl { display:flex; gap:10px; align-items:center; }
-            .color-ctrl input[type="color"] { background:none; border:1px solid #222; width:40px; height:40px; cursor:pointer; }
-            .hex-input { background:#000; border:1px solid #222; color:#fff; padding:10px; width:100px; font-family:'JetBrains Mono'; text-align:center; outline:none; font-size:12px; }
-            .custom-check { position:relative; width:20px; height:20px; }
-            .custom-check input { opacity:0; position:absolute; }
-            .custom-check label { position:absolute; inset:0; border:2px solid #333; border-radius:2px; cursor:pointer; }
-            .custom-check input:checked + label { border-color:var(--v-accent); background:rgba(0,242,255,0.1); }
-            .custom-check input:checked + label::after { content:'✓'; position:absolute; top:-2px; left:3px; color:var(--v-accent); font-size:14px; }
-            .custom-slider { -webkit-appearance:none; width:150px; height:2px; background:#222; outline:none; }
-            .custom-slider::-webkit-slider-thumb { -webkit-appearance:none; width:12px; height:12px; background:var(--v-accent); border-radius:50%; box-shadow:0 0 10px var(--v-accent); cursor:pointer; }
-            .custom-input { background:#111; border:1px solid #222; color:#fff; padding:8px 12px; font-family: 'JetBrains Mono'; font-size:12px; text-align:right; width:150px; outline:none; border-radius:4px; }
-            .p-modal-save { width:100%; padding:20px; background:var(--v-accent); color:#000; font-family: 'JetBrains Mono'; font-weight:800; border:none; margin-top:20px; cursor:pointer; transition:0.3s; }
-            .p-modal-save:hover { background:#fff; box-shadow:0 0 30px var(--v-accent); }
+            .p-modal-overlay {
+              position: fixed;
+              inset: 0;
+              background: rgba(0,0,0,0.95);
+              backdrop-filter: blur(20px);
+              z-index: 2000;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .p-modal-card {
+              background: #0a0a0b;
+              width: 450px;
+              padding: 40px;
+              border: 1px solid #222;
+              border-radius: 4px;
+              box-shadow: 0 0 100px #000;
+            }
+            .p-modal-head {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 40px;
+              border-bottom: 1px solid #111;
+              padding-bottom: 15px;
+            }
+            .p-modal-head h3 {
+              font-family: 'JetBrains Mono';
+              font-size: 12px;
+              font-weight: 800;
+              color: #eee;
+              margin: 0;
+            }
+            .close-btn {
+              background: none;
+              border: none;
+              color: #444;
+              font-size: 30px;
+              cursor: pointer;
+            }
+            .p-modal-row {
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 25px;
+            }
+            .p-modal-row label {
+              font-family: 'JetBrains Mono';
+              font-size: 10px;
+              font-weight: 800;
+              color: #666;
+            }
+            .color-ctrl {
+              display: flex;
+              gap: 10px;
+              align-items: center;
+            }
+            .color-ctrl input[type="color"] {
+              background: none;
+              border: 1px solid #222;
+              width: 40px;
+              height: 40px;
+              cursor: pointer;
+            }
+            .hex-input {
+              background: #000;
+              border: 1px solid #222;
+              color: #fff;
+              padding: 10px;
+              width: 100px;
+              font-family: 'JetBrains Mono';
+              text-align: center;
+              outline: none;
+              font-size: 12px;
+            }
+            .custom-check {
+              position: relative;
+              width: 20px;
+              height: 20px;
+            }
+            .custom-check input {
+              opacity: 0;
+              position: absolute;
+            }
+            .custom-check label {
+              position: absolute;
+              inset: 0;
+              border: 2px solid #333;
+              border-radius: 2px;
+              cursor: pointer;
+            }
+            .custom-check input:checked + label {
+              border-color: var(--v-accent);
+              background: rgba(0,242,255,0.1);
+            }
+            .custom-check input:checked + label::after {
+              content: '✓';
+              position: absolute;
+              top: -2px;
+              left: 3px;
+              color: var(--v-accent);
+              font-size: 14px;
+            }
+            .custom-slider {
+              -webkit-appearance: none;
+              width: 150px;
+              height: 2px;
+              background: #222;
+              outline: none;
+            }
+            .custom-slider::-webkit-slider-thumb {
+              -webkit-appearance: none;
+              width: 12px;
+              height: 12px;
+              background: var(--v-accent);
+              border-radius: 50%;
+              box-shadow: 0 0 10px var(--v-accent);
+              cursor: pointer;
+            }
+            .custom-input {
+              background: #111;
+              border: 1px solid #222;
+              color: #fff;
+              padding: 8px 12px;
+              font-family: 'JetBrains Mono';
+              font-size: 12px;
+              text-align: right;
+              width: 150px;
+              outline: none;
+              border-radius: 4px;
+            }
+            .p-modal-save {
+              width: 100%;
+              padding: 20px;
+              background: var(--v-accent);
+              color: #000;
+              font-family: 'JetBrains Mono';
+              font-weight: 800;
+              border: none;
+              margin-top: 20px;
+              cursor: pointer;
+              transition: 0.3s;
+            }
+            .p-modal-save:hover {
+              background: #fff;
+              box-shadow: 0 0 30px var(--v-accent);
+            }
           `}</style>
         </div>
       )}
