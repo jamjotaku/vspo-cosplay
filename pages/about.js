@@ -56,7 +56,7 @@ export default function About() {
             ご本人確認の後、速やかに削除・除外対応を実行いたします。
           </p>
           <div className="contact-box">
-            <a href="https://forms.google.com/..." target="_blank" rel="noreferrer" className="btn">削除申請用フォーム</a>
+            <a href="https://docs.google.com/forms/d/e/1FAIpQLScOeevJJLGm7kWo48V9YR4xAWYBU7vSBHKZQPnFCdEljE1-xQ/viewform?usp=dialog" target="_blank" rel="noreferrer" className="btn">削除申請用フォーム</a>
             <p>※または運営者のSNS（@アカウント名）のダイレクトメッセージまでご連絡ください。</p>
           </div>
         </section>
